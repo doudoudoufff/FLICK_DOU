@@ -201,35 +201,38 @@ struct DayCell: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                Text("\(calendar.component(.day, from: date))")
-                    .font(.system(.body, design: .rounded))
-                    .fontWeight(isToday ? .bold : .regular)
-                
-                // 任务标记点
-                if hasTasks {
+            ZStack {
+                // 背景圆圈
+                if isSelected {
                     Circle()
                         .fill(Color.accentColor)
-                        .frame(width: 4, height: 4)
-                } else {
-                    Color.clear
-                        .frame(width: 4, height: 4)
+                        .frame(width: 36, height: 36)
+                } else if isToday {
+                    Circle()
+                        .stroke(Color.accentColor, lineWidth: 1)
+                        .frame(width: 36, height: 36)
                 }
-            }
-            .frame(width: 36, height: 36)
-            .background(
-                ZStack {
-                    if isSelected {
+                
+                // 日期和任务标记
+                VStack(spacing: 2) {
+                    Text("\(calendar.component(.day, from: date))")
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(isToday ? .bold : .regular)
+                    
+                    // 任务标记点
+                    if hasTasks {
                         Circle()
                             .fill(Color.accentColor)
-                    } else if isToday {
-                        Circle()
-                            .stroke(Color.accentColor, lineWidth: 1)
+                            .frame(width: 4, height: 4)
+                    } else {
+                        Color.clear
+                            .frame(width: 4, height: 4)
                     }
                 }
-            )
+            }
             .foregroundColor(isSelected ? .white : (isToday ? .accentColor : .primary))
         }
         .buttonStyle(PlainButtonStyle())
+        .frame(height: 44) // 固定单元格高度
     }
 }

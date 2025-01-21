@@ -8,23 +8,30 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var projectStore = ProjectStore()
+    
     var body: some View {
         TabView {
-            OverviewView()
-                .tabItem {
-                    Label("总览", systemImage: "chart.bar")
-                }
+            NavigationStack {
+                OverviewView()
+            }
+            .tabItem {
+                Label("总览", systemImage: "calendar")
+            }
             
-            ProjectsView()
-                .tabItem {
-                    Label("项目", systemImage: "folder")
-                }
+            NavigationStack {
+                ProjectsView()
+            }
+            .tabItem {
+                Label("项目", systemImage: "folder")
+            }
             
             SettingsView()
                 .tabItem {
                     Label("设置", systemImage: "gear")
                 }
         }
+        .environmentObject(projectStore)
     }
 }
 

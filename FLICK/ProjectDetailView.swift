@@ -2,53 +2,14 @@ import SwiftUI
 
 struct ProjectDetailView: View {
     @Binding var project: Project
-    @State private var tasks: [ProjectTask] = [
-        ProjectTask(
-            title: "完成剧本终稿",
-            assignee: "张三",
-            dueDate: Date().addingTimeInterval(86400 * 7)
-        ),
-        ProjectTask(
-            title: "确定主要演员阵容",
-            assignee: "李四",
-            dueDate: Date().addingTimeInterval(86400 * 14)
-        ),
-        ProjectTask(
-            title: "场地勘察",
-            assignee: "王五",
-            dueDate: Date().addingTimeInterval(86400 * 3)
-        ),
-        ProjectTask(
-            title: "道具采购清单确认",
-            assignee: "赵六",
-            dueDate: Date().addingTimeInterval(86400 * 5)
-        )
-    ]
     @State private var showingEditProject = false
     @State private var showingAddTask = false
     
     // 添加进度计算属性
     private var taskProgress: Double {
-        guard !tasks.isEmpty else { return 0.0 }
-        let completedTasks = tasks.filter { $0.isCompleted }.count
-        return Double(completedTasks) / Double(tasks.count)
-    }
-    
-    // 添加排序后的任务计算属性
-    private var sortedTasks: Binding<[ProjectTask]> {
-        Binding(
-            get: {
-                tasks.sorted { task1, task2 in
-                    if task1.isCompleted == task2.isCompleted {
-                        return task1.dueDate < task2.dueDate  // 相同完成状态按截止日期排序
-                    }
-                    return !task1.isCompleted  // 未完成的任务排在前面
-                }
-            },
-            set: { newValue in
-                tasks = newValue
-            }
-        )
+        guard !project.tasks.isEmpty else { return 0.0 }
+        let completedTasks = project.tasks.filter { $0.isCompleted }.count
+        return Double(completedTasks) / Double(project.tasks.count)
     }
     
     var body: some View {
@@ -97,42 +58,42 @@ struct ProjectDetailView: View {
                             
                             Spacer()
                             
-                            Text("\(tasks.filter { $0.isCompleted }.count)/\(tasks.count)个任务")
+                            Text("\(project.tasks.filter { $0.isCompleted }.count)/\(project.tasks.count)个任务")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
                         
                         ProgressView(value: taskProgress)
-                            .tint(project.color) // 使用项目颜色
+                            .tint(project.color)
                     }
                     .padding(.vertical, 8)
                     
                     Divider()
                     
-                    if tasks.isEmpty {
+                    if project.tasks.isEmpty {
                         Text("暂无任务")
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, 20)
                     } else {
                         List {
-                            ForEach(sortedTasks) { $task in
+                            ForEach($project.tasks) { $task in
                                 TaskRow(task: $task) {
                                     withAnimation {
-                                        if let index = tasks.firstIndex(where: { $0.id == task.id }) {
-                                            tasks.remove(at: index)
+                                        if let index = project.tasks.firstIndex(where: { $0.id == task.id }) {
+                                            project.tasks.remove(at: index)
                                         }
                                     }
                                 }
                                 .listRowInsets(EdgeInsets())
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)
-                                .transition(.opacity)
                             }
                         }
                         .listStyle(.plain)
-                        .frame(height: CGFloat(tasks.count) * 110)
-                        .animation(.easeInOut, value: tasks.map { $0.isCompleted })
+                        .frame(height: CGFloat(project.tasks.count) * 110)
+                        .background(Color.clear)
+                        .scrollContentBackground(.hidden)
                     }
                 }
                 .padding()
@@ -162,7 +123,7 @@ struct ProjectDetailView: View {
             EditProjectView(isPresented: $showingEditProject, project: $project)
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(isPresented: $showingAddTask, tasks: $tasks)
+            AddTaskView(isPresented: $showingAddTask, project: $project)
         }
     }
 }

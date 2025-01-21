@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AddTaskView: View {
     @Binding var isPresented: Bool
-    @Binding var tasks: [ProjectTask]
+    @Binding var project: Project
     
     @State private var taskTitle = ""
     @State private var assignee = ""
@@ -41,7 +41,7 @@ struct AddTaskView: View {
                             assignee: assignee,
                             dueDate: dueDate
                         )
-                        tasks.append(newTask)
+                        project.tasks.append(newTask)
                         isPresented = false
                     }
                     .disabled(taskTitle.isEmpty)

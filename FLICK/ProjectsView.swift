@@ -96,20 +96,6 @@ struct StatCard: View {
 struct ProjectCard: View {
     let project: Project
     
-    // 添加日期格式化器
-    private let monthDayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日"
-        return formatter
-    }()
-    
-    private let yearFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy年"
-        return formatter
-    }()
-    
     var body: some View {
         HStack(spacing: 16) {
             // 左侧内容
@@ -164,15 +150,17 @@ struct ProjectCard: View {
             
             // 右侧时间显示
             VStack(alignment: .trailing) {
-                Text(monthDayFormatter.string(from: project.startDate))
+                Text(project.startDate.formatted(.dateTime.month().day()))
                     .font(.system(.title3, design: .rounded))
                     .fontWeight(.medium)
                 
-                Text(yearFormatter.string(from: project.startDate))
+                Text(project.startDate.formatted(.dateTime.year()))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            .frame(width: 80) // 调整宽度以适应中文显示
+            .frame(width: 60)
+            
+            Spacer()
         }
         .padding()
         .background(Color(.systemBackground))

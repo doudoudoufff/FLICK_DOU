@@ -1,7 +1,9 @@
 import SwiftUI
 
 class ProjectStore: ObservableObject {
-    @Published var projects: [Project] = [
+    @Published var projects: [Project]
+    
+    init(projects: [Project] = [
         Project(
             name: "流浪地球3",
             director: "郭帆",
@@ -61,7 +63,9 @@ class ProjectStore: ObservableObject {
                 )
             ]
         )
-    ]
+    ]) {
+        self.projects = projects
+    }
     
     // 添加、删除、更新项目的方法
     func addProject(_ project: Project) {

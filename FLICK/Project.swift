@@ -1,8 +1,8 @@
 import Foundation
 import SwiftUI
 
-struct Project: Identifiable {
-    let id = UUID()
+struct Project: Identifiable, Codable, Hashable {
+    let id: UUID
     var name: String
     var director: String
     var producer: String
@@ -12,20 +12,22 @@ struct Project: Identifiable {
     var color: Color
     var tasks: [ProjectTask]
     
-    enum ProjectStatus {
+    enum ProjectStatus: String, Codable {
         case planning
         case shooting
         case postProduction
         case completed
     }
     
-    init(name: String, 
+    init(id: UUID = UUID(),
+         name: String, 
          director: String = "", 
          producer: String = "", 
          startDate: Date = Date(), 
          status: ProjectStatus = .planning, 
          color: Color = .blue,
          tasks: [ProjectTask] = []) {
+        self.id = id
         self.name = name
         self.director = director
         self.producer = producer
@@ -33,5 +35,70 @@ struct Project: Identifiable {
         self.status = status
         self.color = color
         self.tasks = tasks
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: Project, rhs: Project) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, director, producer, startDate, endDate, status, colorHex, tasks
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        director = try container.decode(String.self, forKey: .director)
+        producer = try container.decode(String.self, forKey: .producer)
+        startDate = try container.decode(Date.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+        status = try container.decode(ProjectStatus.self, forKey: .status)
+        tasks = try container.decode([ProjectTask].self, forKey: .tasks)
+        
+        // 解码颜色
+        let colorHex = try container.decode(UInt.self, forKey: .colorHex)
+        color = Color(hex: colorHex) ?? .blue
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(director, forKey: .director)
+        try container.encode(producer, forKey: .producer)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encodeIfPresent(endDate, forKey: .endDate)
+        try container.encode(status, forKey: .status)
+        try container.encode(tasks, forKey: .tasks)
+        
+        // 编码颜色
+        let colorHex = color.toHex() ?? 0x0000FF // 默认蓝色
+        try container.encode(colorHex, forKey: .colorHex)
+    }
+}
+
+// 添加 Color 扩展来支持十六进制转换
+extension Color {
+    func toHex() -> UInt? {
+        guard let components = UIColor(self).cgColor.components else { return nil }
+        
+        let r = UInt(components[0] * 255.0)
+        let g = UInt(components[1] * 255.0)
+        let b = UInt(components[2] * 255.0)
+        
+        return (r << 16) + (g << 8) + b
+    }
+    
+    init?(hex: UInt) {
+        let r = Double((hex >> 16) & 0xFF) / 255.0
+        let g = Double((hex >> 8) & 0xFF) / 255.0
+        let b = Double(hex & 0xFF) / 255.0
+        
+        self.init(red: r, green: g, blue: b)
     }
 } 

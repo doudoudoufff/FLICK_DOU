@@ -123,7 +123,7 @@ struct ProjectDetailView: View {
             EditProjectView(isPresented: $showingEditProject, project: $project)
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(isPresented: $showingAddTask, project: $project)
+            AddTaskView(isPresented: $showingAddTask, project: project)
         }
     }
 }

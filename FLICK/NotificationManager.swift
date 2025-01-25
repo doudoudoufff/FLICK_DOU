@@ -140,8 +140,9 @@ class NotificationManager: ObservableObject {
             print("\n当前待发送的通知：")
             for request in requests {
                 print("ID: \(request.identifier)")
-                if let trigger = request.trigger as? UNCalendarNotificationTrigger {
-                    print("预计发送时间: \(trigger.nextTriggerDate()?.formatted() ?? "unknown")")
+                if let trigger = request.trigger as? UNCalendarNotificationTrigger,
+                   let nextDate = trigger.nextTriggerDate() {
+                    print("预计发送时间: \(nextDate.chineseStyleString())")
                 }
                 print("标题: \(request.content.title)")
                 print("内容: \(request.content.body)\n")

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AddProjectView: View {
     @Binding var isPresented: Bool
-    @Binding var projects: [Project]
+    @ObservedObject var projectStore: ProjectStore
     
     @State private var name = ""
     @State private var director = ""
@@ -20,7 +20,7 @@ struct AddProjectView: View {
             tasks: [],
             invoices: []  // 添加空的发票数组
         )
-        projects.append(project)
+        projectStore.addProject(project)
         isPresented = false
     }
     
@@ -71,4 +71,11 @@ struct AddProjectView: View {
     }
     
     @FocusState private var nameFieldFocused: Bool
+}
+
+#Preview {
+    AddProjectView(
+        isPresented: .constant(true),
+        projectStore: ProjectStore()
+    )
 } 

@@ -44,7 +44,7 @@ struct TaskRow: View {
                 
                 // 截止日期
                 Label {
-                    Text(task.dueDate.formatted(date: .abbreviated, time: .omitted))
+                    Text(task.dueDate.chineseStyleShortString())
                         .foregroundColor(task.isCompleted ? .secondary : .primary)
                 } icon: {
                     Image(systemName: "calendar")

@@ -1,63 +1,69 @@
 import SwiftUI
 
 struct ProjectsView: View {
-    @EnvironmentObject private var projectStore: ProjectStore
-    @State private var searchText = ""
+    @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
+    @State private var searchText = ""
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // 项目统计卡片
-                HStack(spacing: 16) {
-                    StatCard(
-                        title: "全部项目",
-                        value: "\(projectStore.projects.count)",
-                        icon: "film.fill",
-                        color: .blue
-                    )
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // 项目统计卡片
+                    HStack(spacing: 16) {
+                        StatCard(
+                            title: "全部项目",
+                            value: "\(projectStore.projects.count)",
+                            icon: "film.fill",
+                            color: .blue
+                        )
+                        
+                        StatCard(
+                            title: "总任务数",
+                            value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
+                            icon: "list.bullet.clipboard.fill",
+                            color: .orange
+                        )
+                    }
+                    .padding(.horizontal)
                     
-                    StatCard(
-                        title: "总任务数",
-                        value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
-                        icon: "list.bullet.clipboard.fill",
-                        color: .orange
-                    )
-                }
-                .padding(.horizontal)
-                
-                // 项目列表
-                LazyVStack(spacing: 16) {
-                    ForEach($projectStore.projects) { $project in
-                        if searchText.isEmpty || 
-                           project.name.localizedCaseInsensitiveContains(searchText) ||
-                           project.director.localizedCaseInsensitiveContains(searchText) ||
-                           project.producer.localizedCaseInsensitiveContains(searchText) {
-                            NavigationLink(destination: ProjectDetailView(project: $project)) {
-                                ProjectCard(project: project)
+                    // 项目列表
+                    LazyVStack(spacing: 16) {
+                        ForEach(projectStore.projects) { project in
+                            if searchText.isEmpty || 
+                               project.name.localizedCaseInsensitiveContains(searchText) ||
+                               project.director.localizedCaseInsensitiveContains(searchText) ||
+                               project.producer.localizedCaseInsensitiveContains(searchText) {
+                                NavigationLink {
+                                    if let binding = projectStore.binding(for: project.id) {
+                                        ProjectDetailView(project: binding)
+                                    }
+                                } label: {
+                                    ProjectCard(project: project)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
                         }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+                .padding(.vertical)
             }
-            .padding(.vertical)
-        }
-        .background(Color(.systemGroupedBackground))
-        .searchable(text: $searchText, prompt: "搜索项目")
-        .navigationTitle("项目")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: { showingAddProject = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.accentColor)
-                        .imageScale(.large)
+            .background(Color(.systemGroupedBackground))
+            .searchable(text: $searchText, prompt: "搜索项目")
+            .navigationTitle("项目")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showingAddProject = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(.accentColor)
+                            .imageScale(.large)
+                    }
                 }
             }
-        }
-        .sheet(isPresented: $showingAddProject) {
-            AddProjectView(isPresented: $showingAddProject, projects: $projectStore.projects)
+            .sheet(isPresented: $showingAddProject) {
+                AddProjectView(isPresented: $showingAddProject, projectStore: projectStore)
+            }
         }
     }
 }
@@ -150,11 +156,11 @@ struct ProjectCard: View {
             
             // 右侧时间显示
             VStack(alignment: .trailing) {
-                Text(project.startDate.formatted(.dateTime.month().day()))
+                Text(project.startDate.chineseStyleShortString())
                     .font(.system(.title3, design: .rounded))
                     .fontWeight(.medium)
                 
-                Text(project.startDate.formatted(.dateTime.year()))
+                Text("\(Calendar.current.component(.year, from: project.startDate))年")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -222,4 +228,5 @@ struct InfoRow: View {
 
 #Preview {
     ProjectsView()
+        .environmentObject(ProjectStore())
 } 

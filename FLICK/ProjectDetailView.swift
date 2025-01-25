@@ -23,7 +23,7 @@ struct ProjectDetailView: View {
                     Divider()
                     
                     VStack(alignment: .leading, spacing: 12) {
-                        DetailRow(title: "开始时间", content: project.startDate.formatted(date: .long, time: .omitted))
+                        DetailRow(title: "开始时间", content: project.startDate.chineseStyleString())
                         DetailRow(title: "导演", content: project.director)
                         DetailRow(title: "制片", content: project.producer)
                     }

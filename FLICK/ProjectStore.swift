@@ -176,14 +176,14 @@ class ProjectStore: ObservableObject {
 
 // 用于获取项目 Binding 的扩展
 extension ProjectStore {
-    func binding(for projectId: UUID) -> Binding<Project> {
-        Binding(
-            get: { self.projects.first(where: { $0.id == projectId })! },
-            set: { newValue in
-                if let index = self.projects.firstIndex(where: { $0.id == projectId }) {
-                    self.projects[index] = newValue
-                }
-            }
+    func binding(for projectId: UUID) -> Binding<Project>? {  // 返回可选的 Binding
+        guard let index = projects.firstIndex(where: { $0.id == projectId }) else {
+            return nil
+        }
+        
+        return Binding(
+            get: { self.projects[index] },
+            set: { self.projects[index] = $0 }
         )
     }
 } 

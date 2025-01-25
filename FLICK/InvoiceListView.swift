@@ -50,33 +50,34 @@ struct InvoiceRow: View {
     let invoice: Invoice
     
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                // 第一行：姓名和身份证
-                HStack(spacing: 8) {
-                    Text(invoice.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    Text("•")
-                        .foregroundColor(.secondary)
-                    
-                    Text(invoice.idNumber)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(invoice.name)
+                    .font(.headline)
+                Spacer()
+                Text(invoice.date.chineseStyleString())
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            // 第一行：姓名和身份证
+            HStack(spacing: 8) {
+                Text(invoice.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                 
-                // 第二行：银行信息
-                Text("\(invoice.bankName) \(formatBankAccount(invoice.bankAccount))")
+                Text("•")
+                    .foregroundColor(.secondary)
+                
+                Text(invoice.idNumber)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
-            Spacer()
-            
-            Image(systemName: "chevron.right")
+            // 第二行：银行信息
+            Text("\(invoice.bankName) \(formatBankAccount(invoice.bankAccount))")
+                .font(.caption)
                 .foregroundColor(.secondary)
-                .imageScale(.small)
         }
         .padding(.vertical, 8)
     }
@@ -109,7 +110,7 @@ struct InvoiceDetailView: View {
                 }
                 
                 Section("记录信息") {
-                    InvoiceDetailRow(label: "记录日期", text: invoice.date.formatted(date: .long, time: .omitted))
+                    InvoiceDetailRow(label: "记录日期", text: invoice.date.chineseStyleString())
                 }
             }
             .navigationTitle("开票信息")

@@ -28,6 +28,7 @@ struct EditTaskView: View {
                     TextField("任务内容", text: $title)
                     TextField("负责人员", text: $assignee)
                     DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
+                        .environment(\.locale, Locale(identifier: "zh_CN"))
                 }
                 
                 Section("提醒设置") {

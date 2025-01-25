@@ -50,6 +50,7 @@ struct AddTaskView: View {
                 Section {
                     TextField("负责人员", text: $assignee)
                     DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
+                        .environment(\.locale, Locale(identifier: "zh_CN"))
                 } header: {
                     Text("任务详情")
                 }

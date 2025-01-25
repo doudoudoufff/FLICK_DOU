@@ -103,6 +103,9 @@ struct ProjectDetailView: View {
                 
                 // 发票列表卡片
                 InvoiceListView(project: $project)
+                
+                // 账户列表卡片
+                AccountListView(project: $project)
             }
             .padding(.horizontal)
             .padding(.vertical)

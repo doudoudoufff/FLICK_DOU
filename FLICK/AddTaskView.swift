@@ -5,10 +5,10 @@ struct AddTaskView: View {
     let selectedDate: Date
     let projectStore: ProjectStore
     
-    @State private var selectedProject: Project?
     @State private var title = ""
     @State private var assignee = ""
-    @State private var dueDate: Date
+    @State private var dueDate = Date()
+    @State private var selectedProject: Project?
     
     init(isPresented: Binding<Bool>, project: Project) {
         let today = Date()
@@ -85,7 +85,10 @@ struct AddTaskView: View {
             isCompleted: false
         )
         
-        projectStore.projects[projectIndex].tasks.append(task)
+        var updatedProject = project
+        updatedProject.tasks.append(task)
+        projectStore.projects[projectIndex] = updatedProject
+        
         isPresented = false
     }
     

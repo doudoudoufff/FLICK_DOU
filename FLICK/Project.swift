@@ -12,6 +12,7 @@ struct Project: Identifiable, Codable, Hashable {
     var color: Color
     var tasks: [ProjectTask]
     var invoices: [Invoice]
+    var accounts: [Account]
     
     enum ProjectStatus: String, Codable {
         case planning
@@ -21,23 +22,27 @@ struct Project: Identifiable, Codable, Hashable {
     }
     
     init(id: UUID = UUID(),
-         name: String, 
-         director: String = "", 
-         producer: String = "", 
-         startDate: Date = Date(), 
-         status: ProjectStatus = .planning, 
+         name: String,
+         director: String = "",
+         producer: String = "",
+         startDate: Date = Date(),
+         endDate: Date? = nil,
+         status: ProjectStatus = .planning,
          color: Color = .blue,
          tasks: [ProjectTask] = [],
-         invoices: [Invoice] = []) {
+         invoices: [Invoice] = [],
+         accounts: [Account] = []) {
         self.id = id
         self.name = name
         self.director = director
         self.producer = producer
         self.startDate = startDate
+        self.endDate = endDate
         self.status = status
         self.color = color
         self.tasks = tasks
         self.invoices = invoices
+        self.accounts = accounts
     }
     
     func hash(into hasher: inout Hasher) {
@@ -49,7 +54,7 @@ struct Project: Identifiable, Codable, Hashable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, director, producer, startDate, endDate, status, colorHex, tasks, invoices
+        case id, name, director, producer, startDate, endDate, status, colorHex, tasks, invoices, accounts
     }
     
     init(from decoder: Decoder) throws {
@@ -63,6 +68,7 @@ struct Project: Identifiable, Codable, Hashable {
         status = try container.decode(ProjectStatus.self, forKey: .status)
         tasks = try container.decode([ProjectTask].self, forKey: .tasks)
         invoices = try container.decode([Invoice].self, forKey: .invoices)
+        accounts = try container.decode([Account].self, forKey: .accounts)
         
         // 解码颜色
         let colorHex = try container.decode(UInt.self, forKey: .colorHex)
@@ -80,6 +86,7 @@ struct Project: Identifiable, Codable, Hashable {
         try container.encode(status, forKey: .status)
         try container.encode(tasks, forKey: .tasks)
         try container.encode(invoices, forKey: .invoices)
+        try container.encode(accounts, forKey: .accounts)
         
         // 编码颜色
         let colorHex = color.toHex() ?? 0x0000FF // 默认蓝色

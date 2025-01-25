@@ -43,6 +43,29 @@ class ProjectStore: ObservableObject {
                     bankName: "中国建设银行北京分行",
                     date: Date()
                 )
+            ],
+            accounts: [
+                Account(
+                    name: "张艺谋",
+                    type: .artist,
+                    bankName: "中国工商银行",
+                    bankBranch: "北京东城支行",
+                    bankAccount: "6222021234567890123",
+                    idNumber: "110101196001011234",
+                    contactName: "王助理",
+                    contactPhone: "13800138000",
+                    notes: "导演账户"
+                ),
+                Account(
+                    name: "北京影视器材租赁有限公司",
+                    type: .equipment,
+                    bankName: "中国建设银行",
+                    bankBranch: "北京西城支行",
+                    bankAccount: "6227001234567890123",
+                    contactName: "李经理",
+                    contactPhone: "13900139000",
+                    notes: "摄影器材供应商"
+                )
             ]
         ),
         Project(
@@ -62,7 +85,8 @@ class ProjectStore: ObservableObject {
                     dueDate: Date().addingTimeInterval(86400 * 3)
                 )
             ],
-            invoices: []
+            invoices: [],
+            accounts: []
         ),
         Project(
             name: "独行月球2",
@@ -90,7 +114,8 @@ class ProjectStore: ObservableObject {
                     bankName: "中国农业银行北京分行",
                     date: Date()
                 )
-            ]
+            ],
+            accounts: []
         )
     ]) {
         self.projects = projects

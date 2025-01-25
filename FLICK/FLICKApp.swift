@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct FLICKApp: App {
+    @StateObject private var projectStore = ProjectStore()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(projectStore)
+                .onAppear {
+                    NotificationManager.shared.requestAuthorization()
+                }
         }
     }
 }

@@ -78,13 +78,17 @@ struct ProjectDetailView: View {
                     } else {
                         List {
                             ForEach($project.tasks) { $task in
-                                TaskRow(task: $task) {
-                                    withAnimation {
-                                        if let index = project.tasks.firstIndex(where: { $0.id == task.id }) {
-                                            project.tasks.remove(at: index)
+                                TaskRow(
+                                    task: $task,
+                                    project: project,
+                                    onDelete: {
+                                        withAnimation {
+                                            if let index = project.tasks.firstIndex(where: { $0.id == task.id }) {
+                                                project.tasks.remove(at: index)
+                                            }
                                         }
                                     }
-                                }
+                                )
                                 .listRowInsets(EdgeInsets())
                                 .listRowSeparator(.hidden)
                                 .listRowBackground(Color.clear)

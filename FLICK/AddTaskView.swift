@@ -9,6 +9,8 @@ struct AddTaskView: View {
     @State private var assignee = ""
     @State private var dueDate = Date()
     @State private var selectedProject: Project?
+    @State private var reminder: ProjectTask.TaskReminder?
+    @State private var reminderHour: Double = 9 // 默认9点
     
     init(isPresented: Binding<Bool>, project: Project) {
         let today = Date()
@@ -51,6 +53,28 @@ struct AddTaskView: View {
                 } header: {
                     Text("任务详情")
                 }
+                
+                Section("提醒设置") {
+                    Picker("提醒频率", selection: $reminder) {
+                        Text("不提醒").tag(nil as ProjectTask.TaskReminder?)
+                        ForEach(ProjectTask.TaskReminder.allCases, id: \.self) { reminder in
+                            Text(reminder.rawValue).tag(reminder as ProjectTask.TaskReminder?)
+                        }
+                    }
+                    
+                    if reminder != nil {
+                        VStack(alignment: .leading) {
+                            HStack {
+                                Text("提醒时间")
+                                Spacer()
+                                Text("\(Int(reminderHour)):00")
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Slider(value: $reminderHour, in: 0...23, step: 1)
+                        }
+                    }
+                }
             }
             .navigationTitle("添加任务")
             .navigationBarTitleDisplayMode(.inline)
@@ -82,7 +106,9 @@ struct AddTaskView: View {
             title: title,
             assignee: assignee,
             dueDate: dueDate,
-            isCompleted: false
+            isCompleted: false,
+            reminder: reminder,
+            reminderHour: Int(reminderHour)
         )
         
         var updatedProject = project

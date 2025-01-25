@@ -1,7 +1,9 @@
 import SwiftUI
 
 class ProjectStore: ObservableObject {
+    static var shared: ProjectStore?
     @Published var projects: [Project]
+    @AppStorage("enableNotifications") private var enableNotifications: Bool = true
     
     init(projects: [Project] = [
         Project(
@@ -119,6 +121,7 @@ class ProjectStore: ObservableObject {
         )
     ]) {
         self.projects = projects
+        ProjectStore.shared = self
     }
     
     // 添加、删除、更新项目的方法
@@ -133,6 +136,40 @@ class ProjectStore: ObservableObject {
     func updateProject(_ project: Project) {
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
             projects[index] = project
+        }
+    }
+    
+    private func handleTaskChange(task: ProjectTask, in project: Project) {
+        if enableNotifications {
+            if task.isCompleted {
+                // 如果任务完成，移除提醒
+                NotificationManager.shared.removeTaskReminders(for: task)
+            } else if task.reminder != nil {
+                // 如果设置了提醒，更新提醒
+                NotificationManager.shared.scheduleTaskReminder(for: task, in: project)
+            }
+        }
+    }
+    
+    func updateTask(_ task: ProjectTask, in project: Project) {
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+           let taskIndex = projects[projectIndex].tasks.firstIndex(where: { $0.id == task.id }) {
+            projects[projectIndex].tasks[taskIndex] = task
+            handleTaskChange(task: task, in: project)
+        }
+    }
+    
+    func addTask(_ task: ProjectTask, to project: Project) {
+        if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[index].tasks.append(task)
+            handleTaskChange(task: task, in: project)
+        }
+    }
+    
+    func deleteTask(_ task: ProjectTask, from project: Project) {
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[projectIndex].tasks.removeAll(where: { $0.id == task.id })
+            NotificationManager.shared.removeTaskReminders(for: task)
         }
     }
 }

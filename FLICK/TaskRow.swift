@@ -2,8 +2,9 @@ import SwiftUI
 
 struct TaskRow: View {
     @Binding var task: ProjectTask
-    var onDelete: () -> Void
+    let project: Project
     @State private var showingEditTask = false
+    let onDelete: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -14,10 +15,18 @@ struct TaskRow: View {
                     .labelsHidden()
                     .frame(width: 45)
                 
-                // 任务标题
-                Text(task.title)
-                    .font(.headline)
-                    .foregroundColor(task.isCompleted ? .secondary : .primary)
+                // 任务标题和提醒图标
+                HStack(spacing: 6) {
+                    Text(task.title)
+                        .font(.headline)
+                        .foregroundColor(task.isCompleted ? .secondary : .primary)
+                    
+                    if task.reminder != nil {
+                        Image(systemName: "bell.fill")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                }
                 
                 Spacer()
             }
@@ -40,6 +49,17 @@ struct TaskRow: View {
                 } icon: {
                     Image(systemName: "calendar")
                         .foregroundColor(task.isCompleted ? .secondary : .primary)
+                }
+                
+                // 提醒时间
+                if task.reminder != nil {
+                    Label {
+                        Text("\(task.reminderHour):00")
+                            .foregroundColor(task.isCompleted ? .secondary : .blue)
+                    } icon: {
+                        Image(systemName: "clock")
+                            .foregroundColor(task.isCompleted ? .secondary : .blue)
+                    }
                 }
             }
             .font(.subheadline)
@@ -65,7 +85,7 @@ struct TaskRow: View {
             .tint(.blue)
         }
         .sheet(isPresented: $showingEditTask) {
-            EditTaskView(isPresented: $showingEditTask, task: $task)
+            EditTaskView(task: $task, project: project)
         }
     }
 } 

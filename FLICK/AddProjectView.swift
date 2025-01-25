@@ -4,17 +4,31 @@ struct AddProjectView: View {
     @Binding var isPresented: Bool
     @Binding var projects: [Project]
     
-    @State private var projectName = ""
+    @State private var name = ""
     @State private var director = ""
     @State private var producer = ""
     @State private var startDate = Date()
-    @State private var projectColor: Color = .blue
+    @State private var color = Color.blue
+    
+    private func addProject() {
+        let project = Project(
+            name: name,
+            director: director,
+            producer: producer,
+            startDate: startDate,
+            color: color,
+            tasks: [],
+            invoices: []  // 添加空的发票数组
+        )
+        projects.append(project)
+        isPresented = false
+    }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("项目名称", text: $projectName)
+                    TextField("项目名称", text: $name)
                         .focused($nameFieldFocused)
                 } header: {
                     Text("必填信息")
@@ -29,7 +43,7 @@ struct AddProjectView: View {
                 }
                 
                 Section {
-                    ColorPickerView(selectedColor: $projectColor)
+                    ColorPickerView(selectedColor: $color)
                 } header: {
                     Text("项目颜色")
                 }
@@ -45,17 +59,9 @@ struct AddProjectView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("创建") {
-                        let newProject = Project(
-                            name: projectName,
-                            director: director,
-                            producer: producer,
-                            startDate: startDate,
-                            color: projectColor
-                        )
-                        projects.append(newProject)
-                        isPresented = false
+                        addProject()
                     }
-                    .disabled(projectName.isEmpty)
+                    .disabled(name.isEmpty)
                 }
             }
         }

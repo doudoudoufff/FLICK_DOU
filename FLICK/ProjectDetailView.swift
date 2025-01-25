@@ -100,8 +100,12 @@ struct ProjectDetailView: View {
                 .background(Color(.systemBackground))
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                
+                // 发票列表卡片
+                InvoiceListView(project: $project)
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical)
         }
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
@@ -123,7 +127,7 @@ struct ProjectDetailView: View {
             EditProjectView(isPresented: $showingEditProject, project: $project)
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(isPresented: $showingAddTask, project: project)
+            AddTaskView(isPresented: $showingAddTask, selectedDate: Date(), projectStore: ProjectStore(projects: [project]))
         }
     }
 }

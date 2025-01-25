@@ -25,6 +25,24 @@ class ProjectStore: ObservableObject {
                     assignee: "李四",
                     dueDate: Date().addingTimeInterval(86400 * 7)
                 )
+            ],
+            invoices: [
+                Invoice(
+                    name: "张三",
+                    phone: "13800138000",
+                    idNumber: "110101199001011234",
+                    bankAccount: "6222021234567890123",
+                    bankName: "中国工商银行北京分行",
+                    date: Date().addingTimeInterval(-86400 * 5)
+                ),
+                Invoice(
+                    name: "李四",
+                    phone: "13900139000",
+                    idNumber: "110101199001011235",
+                    bankAccount: "6222021234567890124",
+                    bankName: "中国建设银行北京分行",
+                    date: Date()
+                )
             ]
         ),
         Project(
@@ -43,7 +61,8 @@ class ProjectStore: ObservableObject {
                     assignee: "赵六",
                     dueDate: Date().addingTimeInterval(86400 * 3)
                 )
-            ]
+            ],
+            invoices: []
         ),
         Project(
             name: "独行月球2",
@@ -60,6 +79,16 @@ class ProjectStore: ObservableObject {
                     title: "预算评估会议",
                     assignee: "马飞",
                     dueDate: Date().addingTimeInterval(86400 * 6)
+                )
+            ],
+            invoices: [
+                Invoice(
+                    name: "王五",
+                    phone: "13700137000",
+                    idNumber: "110101199001011236",
+                    bankAccount: "6222021234567890125",
+                    bankName: "中国农业银行北京分行",
+                    date: Date()
                 )
             ]
         )

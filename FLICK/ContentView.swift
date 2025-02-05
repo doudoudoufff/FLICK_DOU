@@ -10,14 +10,11 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var projectStore = ProjectStore()
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
-    @StateObject private var lcManager = LCManager.shared
     
     var body: some View {
         Group {
             if !hasSeenOnboarding {
                 OnboardingView()
-            } else if !lcManager.isLoggedIn {
-                LoginView()
             } else {
                 MainTabView()
                     .environmentObject(projectStore)
@@ -26,7 +23,6 @@ struct ContentView: View {
                     }
             }
         }
-        
     }
 }
 

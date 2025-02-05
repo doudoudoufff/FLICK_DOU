@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		09393689BED14B44C82510B0 /* Pods_FLICK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3599ACE595123C868FABAD64 /* Pods_FLICK.framework */; };
 		98DEAC8393B7B0986287F4D8 /* Pods_FLICK_FLICKUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4E9A8DCDA5286221EEA20628 /* Pods_FLICK_FLICKUITests.framework */; };
+		9E8C71362D539BA90057BBDB /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 9E8C71352D539BA90057BBDB /* FirebaseAnalytics */; };
 		D675C6FA74EDBE0DC7393EFD /* Pods_FLICKTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A590F61396E63C38F9D6575 /* Pods_FLICKTests.framework */; };
 /* End PBXBuildFile section */
 
@@ -55,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9E8C71362D539BA90057BBDB /* FirebaseAnalytics in Frameworks */,
 				09393689BED14B44C82510B0 /* Pods_FLICK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -746,6 +748,13 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9E8C71352D539BA90057BBDB /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FirebaseAnalytics;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0FE0110A2D3F8916007A7B5B /* Project object */;
 }

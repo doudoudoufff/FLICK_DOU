@@ -10,35 +10,23 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var projectStore = ProjectStore()
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @StateObject private var lcManager = LCManager.shared
     
     var body: some View {
         Group {
-            if hasSeenOnboarding {
-                TabView {
-                    NavigationStack {
-                        OverviewView()
-                    }
-                    .tabItem {
-                        Label("总览", systemImage: "calendar")
-                    }
-                    
-                    NavigationStack {
-                        ProjectsView()
-                    }
-                    .tabItem {
-                        Label("项目", systemImage: "folder")
-                    }
-                    
-                    SettingsView()
-                        .tabItem {
-                            Label("设置", systemImage: "gear")
-                        }
-                }
-                .environmentObject(projectStore)
-            } else {
+            if !hasSeenOnboarding {
                 OnboardingView()
+            } else if !lcManager.isLoggedIn {
+                LoginView()
+            } else {
+                MainTabView()
+                    .environmentObject(projectStore)
+                    .task {
+                        await projectStore.loadProjects()
+                    }
             }
         }
+        
     }
 }
 

@@ -1,0 +1,6 @@
+framework module Pods_FLICK_FLICKUITests {
+  umbrella header "Pods-FLICK-FLICKUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var projectStore = ProjectStore()
+    @StateObject private var projectStore = ProjectStore.withTestData()
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     
     var body: some View {

@@ -13,12 +13,15 @@ struct Project: Identifiable, Codable, Hashable {
     var tasks: [ProjectTask]
     var invoices: [Invoice]
     var accounts: [Account]
+    var isLocationScoutingEnabled: Bool
+    var locationPhotos: [LocationPhoto] = []
     
     enum ProjectStatus: String, Codable {
-        case planning
-        case shooting
-        case postProduction
-        case completed
+        case preProduction = "筹备"
+        case production = "拍摄"
+        case postProduction = "后期"
+        
+        static var all: Self { .preProduction }  // 用于过滤器
     }
     
     init(id: UUID = UUID(),
@@ -27,11 +30,13 @@ struct Project: Identifiable, Codable, Hashable {
          producer: String = "",
          startDate: Date = Date(),
          endDate: Date? = nil,
-         status: ProjectStatus = .planning,
+         status: ProjectStatus = .preProduction,
          color: Color = .blue,
          tasks: [ProjectTask] = [],
          invoices: [Invoice] = [],
-         accounts: [Account] = []) {
+         accounts: [Account] = [],
+         isLocationScoutingEnabled: Bool = false,
+         locationPhotos: [LocationPhoto] = []) {
         self.id = id
         self.name = name
         self.director = director
@@ -43,6 +48,8 @@ struct Project: Identifiable, Codable, Hashable {
         self.tasks = tasks
         self.invoices = invoices
         self.accounts = accounts
+        self.isLocationScoutingEnabled = isLocationScoutingEnabled
+        self.locationPhotos = locationPhotos
     }
     
     func hash(into hasher: inout Hasher) {
@@ -54,7 +61,7 @@ struct Project: Identifiable, Codable, Hashable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, director, producer, startDate, endDate, status, colorHex, tasks, invoices, accounts
+        case id, name, director, producer, startDate, endDate, status, colorHex, tasks, invoices, accounts, isLocationScoutingEnabled, locationPhotos
     }
     
     init(from decoder: Decoder) throws {
@@ -69,6 +76,8 @@ struct Project: Identifiable, Codable, Hashable {
         tasks = try container.decode([ProjectTask].self, forKey: .tasks)
         invoices = try container.decode([Invoice].self, forKey: .invoices)
         accounts = try container.decode([Account].self, forKey: .accounts)
+        isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)
+        locationPhotos = try container.decodeIfPresent([LocationPhoto].self, forKey: .locationPhotos) ?? []
         
         // 解码颜色
         let colorHex = try container.decode(UInt.self, forKey: .colorHex)
@@ -87,6 +96,8 @@ struct Project: Identifiable, Codable, Hashable {
         try container.encode(tasks, forKey: .tasks)
         try container.encode(invoices, forKey: .invoices)
         try container.encode(accounts, forKey: .accounts)
+        try container.encode(isLocationScoutingEnabled, forKey: .isLocationScoutingEnabled)
+        try container.encode(locationPhotos, forKey: .locationPhotos)
         
         // 编码颜色
         let colorHex = color.toHex() ?? 0x0000FF // 默认蓝色

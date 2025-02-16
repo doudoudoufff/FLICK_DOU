@@ -1,89 +1,28 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("defaultReminderHour") private var defaultReminderHour: Int = 9
-    @AppStorage("enableNotifications") private var enableNotifications: Bool = true
-    @Environment(\.openURL) private var openURL
-    
-    private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-    private let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    @AppStorage("enableNotifications") private var enableNotifications = true
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = true
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
-                // 通用设置
-                Section("通用") {
-                    Toggle("启用通知", isOn: $enableNotifications)
-                        .listRowBackground(Color(.systemBackground))
-                        .tint(.blue)
-                    
-                    if enableNotifications {
-                        Picker("默认提醒时间", selection: $defaultReminderHour) {
-                            ForEach(0..<24) { hour in
-                                Text(String(format: "%02d:00", hour)).tag(hour)
-                            }
-                        }
-                    }
-                }
-                
-                // 其他
-                Section("其他") {
-                    // 分享
-                    Button {
-                        shareApp()
-                    } label: {
-                        Label {
-                            Text("分享给朋友")
-                        } icon: {
-                            Image(systemName: "square.and.arrow.up")
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    
-                    // App Store 评分
-                    Link(destination: URL(string: "https://apps.apple.com/app/idXXXXXXXXXX?action=write-review")!) {
-                        HStack {
-                            Label {
-                                Text("给个五星好评")
-                            } icon: {
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(.yellow)
-                            }
-                            Spacer()
-                            Image(systemName: "arrow.up.forward.app")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    // 报告问题
-                    Link(destination: URL(string: "mailto:support@example.com?subject=FLICK%20Bug%20Report")!) {
-                        HStack {
-                            Label {
-                                Text("报告 Bug")
-                            } icon: {
-                                Image(systemName: "ant.fill")
-                                    .foregroundColor(.purple)
-                            }
-                            Spacer()
-                            Image(systemName: "arrow.up.forward.app")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                
-                // 关于
+                // 通知设置
                 Section {
-                    NavigationLink {
-                        CreditsView()
-                    } label: {
+                    Toggle(isOn: $enableNotifications) {
                         Label {
-                            Text("特别鸣谢")
+                            Text("任务提醒")
                         } icon: {
-                            Image(systemName: "heart.text.square.fill")
-                                .foregroundColor(.pink)
+                            Image(systemName: "bell.badge.fill")
+                                .foregroundStyle(.orange)
                         }
                     }
-                    
+                } header: {
+                    Text("通知设置")
+                }
+                
+                // 法律条款
+                Section {
                     NavigationLink {
                         UserAgreementView()
                     } label: {
@@ -91,7 +30,7 @@ struct SettingsView: View {
                             Text("用户协议")
                         } icon: {
                             Image(systemName: "doc.text.fill")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                     }
                     
@@ -102,53 +41,55 @@ struct SettingsView: View {
                             Text("隐私政策")
                         } icon: {
                             Image(systemName: "hand.raised.fill")
-                                .foregroundColor(.teal)
+                                .foregroundStyle(.blue)
                         }
                     }
+                } header: {
+                    Text("法律条款")
                 }
                 
-                // 版本信息
+                // 关于
                 Section {
+                    NavigationLink {
+                        CreditsView()
+                    } label: {
+                        Label {
+                            Text("特别鸣谢")
+                        } icon: {
+                            Image(systemName: "heart.fill")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                    
                     HStack {
                         Label {
                             Text("版本")
                         } icon: {
                             Image(systemName: "info.circle.fill")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.purple)
                         }
                         Spacer()
-                        Text("\(appVersion) (\(buildNumber))")
-                            .foregroundColor(.secondary)
+                        Text("1.0.0")
+                            .foregroundStyle(.secondary)
                     }
-                    
-                    HStack {
+                } header: {
+                    Text("关于")
+                }
+                
+                // 其他设置
+                Section {
+                    Button(role: .destructive) {
+                        hasSeenOnboarding = false
+                    } label: {
                         Label {
-                            Text("备案号")
+                            Text("重置引导页")
                         } icon: {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.green)
+                            Image(systemName: "arrow.counterclockwise")
                         }
-                        Spacer()
-                        Text("京ICP备XXXXXXXX号")
-                            .foregroundColor(.secondary)
                     }
                 }
             }
             .navigationTitle("设置")
-        }
-    }
-    
-    private func shareApp() {
-        let url = URL(string: "https://apps.apple.com/app/idXXXXXXXXXX")!
-        let activityVC = UIActivityViewController(
-            activityItems: ["FLICK - 影视项目管理工具", url],
-            applicationActivities: nil
-        )
-        
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first,
-           let rootVC = window.rootViewController {
-            rootVC.present(activityVC, animated: true)
         }
     }
 }
@@ -157,10 +98,49 @@ struct SettingsView: View {
 struct UserAgreementView: View {
     var body: some View {
         ScrollView {
-            Text("用户协议内容...")
-                .padding()
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Terms of Service")
+                    .font(.title)
+                    .bold()
+                
+                Group {
+                    Text("1. Acceptance of Terms")
+                        .font(.headline)
+                    Text("By accessing or using FLICK (the \"App\"), you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree to these Terms, do not use the App.")
+                    
+                    Text("2. Description of Service")
+                        .font(.headline)
+                    Text("FLICK is a project management application designed for film and television industry professionals. The App provides tools for managing projects, tasks, and financial records.")
+                    
+                    Text("3. User Account")
+                        .font(.headline)
+                    Text("You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account.")
+                    
+                    Text("4. User Content")
+                        .font(.headline)
+                    Text("You retain all rights to any content you submit, post or display on or through the App. By submitting content, you grant FLICK a worldwide, non-exclusive, royalty-free license to use, copy, and display such content.")
+                    
+                    Text("5. Intellectual Property Rights")
+                        .font(.headline)
+                    Text("The App and its original content, features, and functionality are owned by FLICK and are protected by international copyright, trademark, patent, trade secret, and other intellectual property laws.")
+                    
+                    Text("6. Termination")
+                        .font(.headline)
+                    Text("We may terminate or suspend your access to the App immediately, without prior notice, for any reason whatsoever.")
+                    
+                    Text("7. Changes to Terms")
+                        .font(.headline)
+                    Text("We reserve the right to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days' notice prior to any new terms taking effect.")
+                    
+                    Text("8. Contact Us")
+                        .font(.headline)
+                    Text("If you have any questions about these Terms, please contact us at support@flickapp.com")
+                }
+                .padding(.bottom, 8)
+            }
+            .padding()
         }
-        .navigationTitle("用户协议")
+        .navigationTitle("Terms of Service")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -169,10 +149,49 @@ struct UserAgreementView: View {
 struct PrivacyPolicyView: View {
     var body: some View {
         ScrollView {
-            Text("隐私政策内容...")
-                .padding()
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Privacy Policy")
+                    .font(.title)
+                    .bold()
+                
+                Group {
+                    Text("1. Information We Collect")
+                        .font(.headline)
+                    Text("We collect information that you provide directly to us when using the App, including:\n• Project details and management information\n• Task and schedule information\n• Financial records and invoices\n• Device information and usage data")
+                    
+                    Text("2. How We Use Your Information")
+                        .font(.headline)
+                    Text("We use the information we collect to:\n• Provide, maintain, and improve our services\n• Develop new features and functionality\n• Understand how users interact with our App\n• Send you technical notices and support messages\n• Detect and prevent fraud and abuse")
+                    
+                    Text("3. Data Storage and Security")
+                        .font(.headline)
+                    Text("All data is stored locally on your device. We implement appropriate technical and organizational measures to protect your information against unauthorized access, alteration, disclosure, or destruction.")
+                    
+                    Text("4. Your Rights")
+                        .font(.headline)
+                    Text("You have the right to:\n• Access your personal information\n• Correct inaccurate data\n• Request deletion of your data\n• Export your data\n• Opt-out of data collection")
+                    
+                    Text("5. Children's Privacy")
+                        .font(.headline)
+                    Text("The App is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13.")
+                    
+                    Text("6. Changes to This Policy")
+                        .font(.headline)
+                    Text("We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last Updated\" date.")
+                    
+                    Text("7. Contact Us")
+                        .font(.headline)
+                    Text("If you have any questions about this Privacy Policy, please contact us at privacy@flickapp.com")
+                    
+                    Text("Last Updated: March 15, 2024")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.bottom, 8)
+            }
+            .padding()
         }
-        .navigationTitle("隐私政策")
+        .navigationTitle("Privacy Policy")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -184,15 +203,17 @@ struct CreditsView: View {
             Section {
                 HStack {
                     Image(systemName: "medal.fill")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                     Text("感谢以下人员对项目的贡献")
                 }
                 .font(.headline)
-                .padding(.vertical, 8)
             }
             
-            Section("贡献者") {
-                ContributorRow(name: "孙尚前", role: "合伙", country: "🇨🇳")
+            Section("核心团队") {
+                ContributorRow(name: "孙尚前", role: "产品", country: "🇨🇳")
+            }
+            
+            Section("测试团队") {
                 ContributorRow(name: "王小跳", role: "测试", country: "🇨🇳")
                 ContributorRow(name: "杨欣蕾", role: "测试", country: "🇨🇳")
                 ContributorRow(name: "吴韩臻", role: "测试", country: "🇨🇳")
@@ -218,7 +239,7 @@ struct ContributorRow: View {
                 HStack {
                     Text(role)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     Text(country)
                 }
             }

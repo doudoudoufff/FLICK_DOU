@@ -9,6 +9,7 @@ struct EditProjectView: View {
     @State private var producer: String
     @State private var startDate: Date
     @State private var color: Color
+    @State private var status: Project.ProjectStatus
     
     init(isPresented: Binding<Bool>, project: Binding<Project>) {
         self._isPresented = isPresented
@@ -19,6 +20,7 @@ struct EditProjectView: View {
         _producer = State(initialValue: project.wrappedValue.producer)
         _startDate = State(initialValue: project.wrappedValue.startDate)
         _color = State(initialValue: project.wrappedValue.color)
+        _status = State(initialValue: project.wrappedValue.status)
     }
     
     private func updateProject() {
@@ -27,6 +29,7 @@ struct EditProjectView: View {
         project.producer = producer
         project.startDate = startDate
         project.color = color
+        project.status = status
         // 保持原有的任务和发票数组不变
         isPresented = false
     }
@@ -48,6 +51,14 @@ struct EditProjectView: View {
                     ColorPickerView(selectedColor: $color)
                 } header: {
                     Text("项目颜色")
+                }
+                
+                Section {
+                    Picker("项目状态", selection: $status) {
+                        Text("筹备").tag(Project.ProjectStatus.preProduction)
+                        Text("拍摄").tag(Project.ProjectStatus.production)
+                        Text("后期").tag(Project.ProjectStatus.postProduction)
+                    }
                 }
             }
             .navigationTitle("编辑项目")

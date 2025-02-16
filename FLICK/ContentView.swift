@@ -18,9 +18,6 @@ struct ContentView: View {
             } else {
                 MainTabView()
                     .environmentObject(projectStore)
-                    .task {
-                        await projectStore.loadProjects()
-                    }
             }
         }
     }

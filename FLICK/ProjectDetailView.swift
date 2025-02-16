@@ -4,6 +4,7 @@ struct ProjectDetailView: View {
     @Binding var project: Project
     @State private var showingEditProject = false
     @State private var showingAddTask = false
+    @State private var showingLocationScoutingView = false
     
     // 添加进度计算属性
     private var taskProgress: Double {
@@ -110,6 +111,31 @@ struct ProjectDetailView: View {
                 
                 // 账户列表卡片
                 AccountListView(project: $project)
+                
+                // 堪景模块卡片
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("堪景")
+                        .font(.headline)
+                    
+                    Divider()
+                    
+                    VStack(spacing: 16) {
+                        Toggle("启用堪景模块", isOn: $project.isLocationScoutingEnabled)
+                            .tint(project.color)
+                        
+                        if project.isLocationScoutingEnabled {
+                            NavigationLink {
+                                LocationScoutingView(project: $project)
+                            } label: {
+                                Label("堪景", systemImage: "camera.viewfinder")
+                            }
+                        }
+                    }
+                }
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
             }
             .padding(.horizontal)
             .padding(.vertical)
@@ -153,4 +179,5 @@ struct DetailRow: View {
         }
         .font(.subheadline)
     }
-} 
+}
+

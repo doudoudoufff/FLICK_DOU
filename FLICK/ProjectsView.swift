@@ -4,6 +4,7 @@ struct ProjectsView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
     @State private var searchText = ""
+    @State private var selectedStatus: Project.ProjectStatus = .all
     
     var body: some View {
         NavigationStack {
@@ -29,7 +30,7 @@ struct ProjectsView: View {
                     
                     // 项目列表
                     LazyVStack(spacing: 16) {
-                        ForEach(projectStore.projects) { project in
+                        ForEach(filteredProjects) { project in
                             if searchText.isEmpty || 
                                project.name.localizedCaseInsensitiveContains(searchText) ||
                                project.director.localizedCaseInsensitiveContains(searchText) ||
@@ -63,6 +64,17 @@ struct ProjectsView: View {
             }
             .sheet(isPresented: $showingAddProject) {
                 AddProjectView(isPresented: $showingAddProject, projectStore: projectStore)
+            }
+        }
+    }
+    
+    private var filteredProjects: [Project] {
+        projectStore.projects.filter { project in
+            switch selectedStatus {
+            case .all: return true
+            case .preProduction: return project.status == .preProduction
+            case .production: return project.status == .production
+            case .postProduction: return project.status == .postProduction
             }
         }
     }
@@ -181,14 +193,12 @@ struct StatusBadge: View {
     
     var statusInfo: (text: String, color: Color) {
         switch status {
-        case .planning:
+        case .preProduction:
             return ("筹备中", .orange)
-        case .shooting:
+        case .production:
             return ("拍摄中", .blue)
         case .postProduction:
             return ("后期中", .purple)
-        case .completed:
-            return ("已完成", .green)
         }
     }
     

@@ -50,40 +50,31 @@ struct AddAccountView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { isPresented = false }
+                    Button("取消") {
+                        isPresented = false
+                    }
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("添加") { addAccount() }
-                        .disabled(isFormInvalid)
+                    Button("保存") {
+                        let account = Account(
+                            name: name,
+                            type: type,
+                            bankName: bankName,
+                            bankBranch: bankBranch,
+                            bankAccount: bankAccount,
+                            idNumber: idNumber.isEmpty ? nil : idNumber,
+                            contactName: contactName,
+                            contactPhone: contactPhone,
+                            notes: notes.isEmpty ? nil : notes
+                        )
+                        // 添加账户到项目
+                        project.accounts.append(account)
+                        isPresented = false
+                    }
+                    .disabled(name.isEmpty || bankName.isEmpty || bankAccount.isEmpty || contactName.isEmpty || contactPhone.isEmpty)
                 }
             }
         }
-    }
-    
-    private var isFormInvalid: Bool {
-        name.isEmpty ||
-        bankName.isEmpty ||
-        bankBranch.isEmpty ||
-        bankAccount.isEmpty ||
-        contactName.isEmpty ||
-        contactPhone.isEmpty
-    }
-    
-    private func addAccount() {
-        let account = Account(
-            name: name,
-            type: type,
-            bankName: bankName,
-            bankBranch: bankBranch,
-            bankAccount: bankAccount,
-            idNumber: idNumber.isEmpty ? nil : idNumber,
-            contactName: contactName,
-            contactPhone: contactPhone,
-            notes: notes.isEmpty ? nil : notes
-        )
-        
-        project.accounts.append(account)
-        isPresented = false
     }
 } 

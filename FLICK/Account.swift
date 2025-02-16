@@ -18,10 +18,11 @@ struct Account: Identifiable, Codable, Hashable {
     var notes: String?          // 备注
     
     enum AccountType: String, Codable, CaseIterable {
-        case artist = "艺人"
-        case equipment = "器材租赁"
-        case venue = "场地"
-        case props = "美术道具"
+        case location = "场地"
+        case prop = "道具"
+        case equipment = "器材"
+        case artist = "演员"
+        case staff = "工作人员"
         case other = "其他"
     }
     

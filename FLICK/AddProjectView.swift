@@ -9,6 +9,7 @@ struct AddProjectView: View {
     @State private var producer = ""
     @State private var startDate = Date()
     @State private var color = Color.blue
+    @State private var status = Project.ProjectStatus.preProduction
     
     private func addProject() {
         let project = Project(
@@ -16,9 +17,10 @@ struct AddProjectView: View {
             director: director,
             producer: producer,
             startDate: startDate,
+            status: status,
             color: color,
             tasks: [],
-            invoices: []  // 添加空的发票数组
+            invoices: []
         )
         projectStore.addProject(project)
         isPresented = false
@@ -46,6 +48,16 @@ struct AddProjectView: View {
                     ColorPickerView(selectedColor: $color)
                 } header: {
                     Text("项目颜色")
+                }
+                
+                Section {
+                    Picker("项目状态", selection: $status) {
+                        Text("筹备").tag(Project.ProjectStatus.preProduction)
+                        Text("拍摄").tag(Project.ProjectStatus.production)
+                        Text("后期").tag(Project.ProjectStatus.postProduction)
+                    }
+                } header: {
+                    Text("项目状态")
                 }
             }
             .navigationTitle("新建项目")

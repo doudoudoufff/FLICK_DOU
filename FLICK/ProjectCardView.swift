@@ -64,14 +64,20 @@ struct ProjectCardView: View {
     
     private var statusColor: Color {
         switch project.status {
-        case .planning:
+        case .preProduction:
             return .blue
-        case .shooting:
+        case .production:
             return .orange
         case .postProduction:
             return .purple
-        case .completed:
-            return .green
+        }
+    }
+    
+    private func statusText(_ status: Project.ProjectStatus) -> String {
+        switch status {
+        case .preProduction: return "筹备中"
+        case .production: return "拍摄中"
+        case .postProduction: return "后期中"
         }
     }
 } 

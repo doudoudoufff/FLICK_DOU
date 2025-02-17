@@ -1,7 +1,7 @@
 import SwiftUI
 
-// 堪景场地模型
-struct LocationGroup: Identifiable, Codable {
+// 堪景场景
+struct LocationScene: Identifiable, Codable {
     let id: UUID
     var name: String
     var date: Date

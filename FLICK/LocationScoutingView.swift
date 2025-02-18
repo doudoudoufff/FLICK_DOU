@@ -95,8 +95,8 @@ struct LocationScoutingView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack {
-                    Button {
-                        showingDailyPhotos = true
+                    NavigationLink {
+                        DailyPhotosView(project: $project)
                     } label: {
                         Image(systemName: "clock.fill")
                     }
@@ -111,11 +111,6 @@ struct LocationScoutingView: View {
         }
         .sheet(isPresented: $showingAddLocation) {
             AddLocationView(project: $project)
-        }
-        .sheet(isPresented: $showingDailyPhotos) {
-            NavigationStack {
-                DailyPhotosView(project: $project)
-            }
         }
     }
 }

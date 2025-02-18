@@ -57,9 +57,13 @@ struct DailyPhotosView: View {
                     ContentUnavailableView(
                         filterDate == nil ? "暂无照片" : "该日期暂无照片",
                         systemImage: "photo.fill",
-                        description: Text(filterDate == nil ? "在场地详情页添加照片" : "选择其他日期查看")
+                        description: Text(filterDate == nil ? 
+                            "在场地详情页添加照片" : 
+                            "这一天还没有拍摄任何照片\n选择其他日期或清除筛选查看所有照片"
+                        )
                     )
                     .padding(.top, 40)
+                    .multilineTextAlignment(.center)
                 } else {
                     LazyVStack(spacing: 0) {
                         ForEach(photosByDate, id: \.0) { date, photos in
@@ -282,38 +286,94 @@ private struct DatePickerSheet: View {
     let availableDates: Set<Date>
     let projectColor: Color
     @State private var tempDate: Date?
+    @State private var displayMonth: Date = Date()  // 当前显示的月份
+    
+    private let calendar = Calendar.current
+    private let weekdaySymbols = Calendar.current.veryShortWeekdaySymbols
     
     var body: some View {
         NavigationStack {
-            ScrollView {
+            VStack(spacing: 0) {
+                // 月份选择器
+                HStack {
+                    Button {
+                        displayMonth = calendar.date(
+                            byAdding: .month,
+                            value: -1,
+                            to: displayMonth
+                        ) ?? displayMonth
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundStyle(projectColor)
+                    }
+                    
+                    Spacer()
+                    
+                    Text(displayMonth.formatted(.dateTime.year().month(.wide)))
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Button {
+                        displayMonth = calendar.date(
+                            byAdding: .month,
+                            value: 1,
+                            to: displayMonth
+                        ) ?? displayMonth
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(projectColor)
+                    }
+                }
+                .padding()
+                
+                Divider()
+                
+                // 星期标题
+                HStack {
+                    ForEach(weekdaySymbols, id: \.self) { symbol in
+                        Text(symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.vertical, 8)
+                
+                // 日历网格
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
                     ForEach(getCalendarDays(), id: \.self) { date in
                         let hasPhotos = availableDates.contains(date)
                         Button {
-                            if hasPhotos {
-                                tempDate = date
-                            }
+                            tempDate = date
                         } label: {
-                            Text(date.formatted(.dateTime.day()))
-                                .font(.subheadline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(
-                                    Group {
-                                        if hasPhotos {
-                                            projectColor.opacity(tempDate == date ? 1 : 0.1)
-                                        } else {
-                                            Color.clear
-                                        }
+                            VStack(spacing: 4) {
+                                Text(date.formatted(.dateTime.day()))
+                                    .font(.subheadline)
+                                
+                                // 照片指示器
+                                if hasPhotos {
+                                    Circle()
+                                        .fill(projectColor)
+                                        .frame(width: 4, height: 4)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(
+                                Group {
+                                    if tempDate == date {
+                                        projectColor
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }
-                                )
-                                .foregroundStyle(
-                                    hasPhotos ?
-                                    (tempDate == date ? .white : projectColor) :
-                                    .secondary
-                                )
+                                }
+                            )
+                            .foregroundStyle(
+                                tempDate == date ? .white :
+                                calendar.isDate(date, equalTo: Date(), toGranularity: .month) ? .primary :
+                                .secondary
+                            )
                         }
-                        .disabled(!hasPhotos)
                     }
                 }
                 .padding()
@@ -332,30 +392,47 @@ private struct DatePickerSheet: View {
                         selectedDate = tempDate
                         dismiss()
                     }
-                    .disabled(tempDate == nil)
                 }
             }
         }
         .onAppear {
             tempDate = selectedDate
+            if let date = selectedDate {
+                displayMonth = date
+            }
         }
     }
     
     private func getCalendarDays() -> [Date] {
-        // 获取当前月份的所有日期
         let calendar = Calendar.current
-        let now = Date()
-        let month = calendar.component(.month, from: now)
-        let year = calendar.component(.year, from: now)
         
-        guard let monthStart = calendar.date(from: DateComponents(year: year, month: month)) else {
-            return []
+        // 获取当月第一天
+        let monthInterval = calendar.dateInterval(of: .month, for: displayMonth)!
+        let firstDate = monthInterval.start
+        
+        // 获取当月天数
+        let monthLength = calendar.range(of: .day, in: .month, for: firstDate)!.count
+        
+        // 获取第一天是星期几
+        let firstWeekday = calendar.component(.weekday, from: firstDate)
+        let offsetDays = (firstWeekday + 5) % 7  // 调整为周一开始
+        
+        // 生成上个月的尾部日期
+        let previousMonthDates = (0..<offsetDays).map { offset in
+            calendar.date(byAdding: .day, value: -offset - 1, to: firstDate)!
+        }.reversed()
+        
+        // 生成当月日期
+        let currentMonthDates = (0..<monthLength).map { day in
+            calendar.date(byAdding: .day, value: day, to: firstDate)!
         }
         
-        let monthLength = calendar.range(of: .day, in: .month, for: monthStart)?.count ?? 0
-        
-        return (1...monthLength).compactMap { day in
-            calendar.date(from: DateComponents(year: year, month: month, day: day))
+        // 计算需要补充的下个月日期数
+        let remainingDays = (42 - offsetDays - monthLength)  // 保持6行
+        let nextMonthDates = (0..<remainingDays).map { day in
+            calendar.date(byAdding: .day, value: day, to: monthInterval.end)!
         }
+        
+        return Array(previousMonthDates) + currentMonthDates + nextMonthDates
     }
 } 

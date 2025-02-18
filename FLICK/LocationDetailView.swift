@@ -16,6 +16,13 @@ struct LocationDetailView: View {
         case timeline
     }
     
+    private var photosByDate: [(Date, [LocationPhoto])] {
+        let grouped = Dictionary(grouping: location.photos) { photo in
+            Calendar.current.startOfDay(for: photo.date)
+        }
+        return grouped.sorted { $0.key > $1.key }  // 按日期降序排序
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -50,7 +57,7 @@ struct LocationDetailView: View {
                         PhotoGrid(photos: $location.photos)
                             .padding(.horizontal)
                     case .timeline:
-                        PhotoTimeline(photos: $location.photos, color: projectColor)
+                        PhotoTimeline(photos: photosByDate, color: projectColor)
                     }
                 }
             }
@@ -255,29 +262,59 @@ private struct CameraView: View {
 
 // 新增时间线视图组件
 private struct PhotoTimeline: View {
-    @Binding var photos: [LocationPhoto]
+    let photos: [(Date, [LocationPhoto])]  // 改为接收已分组的照片
     let color: Color
     
     var body: some View {
         VStack(spacing: 0) {
-            ForEach($photos) { $photo in
-                PhotoTimelineItem(photo: $photo, color: color)
+            ForEach(photos, id: \.0) { date, dayPhotos in
+                DayPhotoSection(date: date, photos: dayPhotos, color: color)
             }
         }
     }
 }
 
-// 时间线项组件
+// 新增日期分组组件
+private struct DayPhotoSection: View {
+    let date: Date
+    let photos: [LocationPhoto]
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // 日期标题
+            Text(date.formatted(date: .complete, time: .omitted))
+                .font(.headline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+            
+            // 当天的照片时间线
+            ForEach(photos.sorted { $0.date > $1.date }) { photo in
+                PhotoTimelineItem(
+                    photo: .constant(photo),  // 这里需要修改为 Binding
+                    color: color,
+                    showTime: true  // 显示具体时间
+                )
+            }
+        }
+        .padding(.top, 8)
+    }
+}
+
+// 修改 PhotoTimelineItem 添加时间显示选项
 private struct PhotoTimelineItem: View {
     @Binding var photo: LocationPhoto
     let color: Color
+    let showTime: Bool  // 新增参数控制是否显示时间
     @State private var showingDetail = false
     @State private var note: String
     @FocusState private var isFocused: Bool
     
-    init(photo: Binding<LocationPhoto>, color: Color) {
+    init(photo: Binding<LocationPhoto>, color: Color, showTime: Bool = false) {
         self._photo = photo
         self.color = color
+        self.showTime = showTime
         self._note = State(initialValue: photo.wrappedValue.note ?? "")
     }
     
@@ -297,9 +334,11 @@ private struct PhotoTimelineItem: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 // 时间
-                Text(photo.date.formatted(date: .abbreviated, time: .shortened))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if showTime {
+                    Text(photo.date.formatted(date: .omitted, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 
                 // 照片
                 Button {

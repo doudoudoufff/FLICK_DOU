@@ -7,6 +7,7 @@ struct LocationScoutingView: View {
     @State private var showingAddLocation = false
     @State private var selectedFilter: LocationType?
     @State private var searchText = ""
+    @State private var showingDailyPhotos = false
     
     // 按类型分组的场地
     var locationsByType: [LocationType: [Location]] {
@@ -93,15 +94,28 @@ struct LocationScoutingView: View {
         .searchable(text: $searchText, prompt: "搜索场地")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingAddLocation = true
-                } label: {
-                    Image(systemName: "plus.circle.fill")
+                HStack {
+                    Button {
+                        showingDailyPhotos = true
+                    } label: {
+                        Image(systemName: "clock.fill")
+                    }
+                    
+                    Button {
+                        showingAddLocation = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                    }
                 }
             }
         }
         .sheet(isPresented: $showingAddLocation) {
             AddLocationView(project: $project)
+        }
+        .sheet(isPresented: $showingDailyPhotos) {
+            NavigationStack {
+                DailyPhotosView(project: $project)
+            }
         }
     }
 }

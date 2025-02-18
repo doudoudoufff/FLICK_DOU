@@ -14,8 +14,7 @@ struct Project: Identifiable, Codable, Hashable {
     var invoices: [Invoice]
     var accounts: [Account]
     var isLocationScoutingEnabled: Bool
-    var locationPhotos: [LocationPhoto]
-    var locationGroups: [LocationGroup]
+    var locations: [Location] = []  // 只保留 locations
     
     enum ProjectStatus: String, Codable {
         case preProduction = "筹备"
@@ -37,8 +36,7 @@ struct Project: Identifiable, Codable, Hashable {
          invoices: [Invoice] = [],
          accounts: [Account] = [],
          isLocationScoutingEnabled: Bool = false,
-         locationPhotos: [LocationPhoto] = [],
-         locationGroups: [LocationGroup] = []) {
+         locations: [Location] = []) {
         self.id = id
         self.name = name
         self.director = director
@@ -51,8 +49,7 @@ struct Project: Identifiable, Codable, Hashable {
         self.invoices = invoices
         self.accounts = accounts
         self.isLocationScoutingEnabled = isLocationScoutingEnabled
-        self.locationPhotos = locationPhotos
-        self.locationGroups = locationGroups
+        self.locations = locations
     }
     
     func hash(into hasher: inout Hasher) {
@@ -64,7 +61,9 @@ struct Project: Identifiable, Codable, Hashable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, director, producer, startDate, endDate, status, colorHex, tasks, invoices, accounts, isLocationScoutingEnabled, locationPhotos, locationGroups
+        case id, name, director, producer, startDate, endDate, status, 
+             colorHex, tasks, invoices, accounts, isLocationScoutingEnabled, 
+             locations
     }
     
     init(from decoder: Decoder) throws {
@@ -80,8 +79,7 @@ struct Project: Identifiable, Codable, Hashable {
         invoices = try container.decode([Invoice].self, forKey: .invoices)
         accounts = try container.decode([Account].self, forKey: .accounts)
         isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)
-        locationPhotos = try container.decodeIfPresent([LocationPhoto].self, forKey: .locationPhotos) ?? []
-        locationGroups = try container.decodeIfPresent([LocationGroup].self, forKey: .locationGroups) ?? []
+        locations = try container.decode([Location].self, forKey: .locations)
         
         // 解码颜色
         let colorHex = try container.decode(UInt.self, forKey: .colorHex)
@@ -101,8 +99,7 @@ struct Project: Identifiable, Codable, Hashable {
         try container.encode(invoices, forKey: .invoices)
         try container.encode(accounts, forKey: .accounts)
         try container.encode(isLocationScoutingEnabled, forKey: .isLocationScoutingEnabled)
-        try container.encode(locationPhotos, forKey: .locationPhotos)
-        try container.encode(locationGroups, forKey: .locationGroups)
+        try container.encode(locations, forKey: .locations)
         
         // 编码颜色
         let colorHex = color.toHex() ?? 0x0000FF // 默认蓝色

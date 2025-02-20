@@ -1,5 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import QuickLook
+import Foundation
+import ZIPFoundation
 
 struct DailyPhotosView: View {
     @Binding var project: Project
@@ -7,6 +10,9 @@ struct DailyPhotosView: View {
     @State private var showingExportOptions = false
     @State private var showingDatePicker = false
     @State private var filterDate: Date?
+    @State private var showingExportProgress = false
+    @State private var exportProgress: Float = 0
+    @State private var exportStatus = "准备导出..."
     
     // 获取所有场地的照片并按日期分组
     private var photosByDate: [(Date, [(Location, LocationPhoto)])] {
@@ -123,13 +129,146 @@ struct DailyPhotosView: View {
                 projectColor: project.color
             )
         }
+        .sheet(isPresented: $showingExportProgress) {
+            ExportProgressView(progress: exportProgress, status: exportStatus)
+        }
+        .overlay {
+            if showingExportProgress {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                ExportProgressView(
+                    progress: exportProgress,
+                    status: exportStatus
+                )
+            }
+        }
     }
     
     private func exportReport(for date: Date) {
-        // TODO: 生成并导出堪景报告
-        // 1. 收集当天的所有照片和场地信息
-        // 2. 生成 PDF 报告
-        // 3. 分享报告
+        // 获取当天的照片和场地信息
+        let dayPhotos = photosByDate.first { Calendar.current.isDate($0.0, inSameDayAs: date) }?.1 ?? []
+        
+        // 创建临时文件夹
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("堪景报告_\(date.formatted(date: .abbreviated, time: .omitted))")
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        
+        // 创建照片文件夹
+        let photosDir = tempDir.appendingPathComponent("photos")
+        try? FileManager.default.createDirectory(at: photosDir, withIntermediateDirectories: true)
+        
+        // 准备 Excel 数据
+        var rows: [[String]] = [
+            ["时间", "场地", "类型", "地址", "照片", "备注"]  // 表头
+        ]
+        
+        // 保存照片并生成数据行
+        for (index, (location, photo)) in dayPhotos.enumerated() {
+            // 保存照片
+            let photoName = "photo_\(index + 1).jpg"
+            let photoPath = photosDir.appendingPathComponent(photoName)
+            if let imageData = photo.image?.jpegData(compressionQuality: 0.8) {
+                try? imageData.write(to: photoPath)
+            }
+            
+            // 添加数据行
+            let row = [
+                photo.date.formatted(date: .omitted, time: .shortened),
+                location.name,
+                location.type.rawValue,
+                location.address,
+                "=HYPERLINK(\"./photos/\(photoName)\", \"查看照片\")",  // Excel 中的图片链接
+                photo.note ?? ""
+            ]
+            rows.append(row)
+        }
+        
+        // 生成 Excel 文件
+        let excelPath = tempDir.appendingPathComponent("堪景报告_\(date.formatted(date: .abbreviated, time: .omitted)).xlsx")
+        createExcelFile(at: excelPath, rows: rows)
+        
+        // 压缩文件夹
+        let zipPath = tempDir.deletingLastPathComponent()
+            .appendingPathComponent("堪景报告_\(date.formatted(date: .abbreviated, time: .omitted)).zip")
+        
+        if createZipFile(at: zipPath, containing: tempDir) {
+            // 分享文件
+            shareReport(at: zipPath)
+        }
+        
+        // 清理临时文件
+        try? FileManager.default.removeItem(at: tempDir)
+    }
+    
+    private func createExcelFile(at path: URL, rows: [[String]]) {
+        // 使用 CSV 格式作为替代方案
+        let csvString = rows.map { row in
+            row.map { cell in
+                // 处理包含逗号的单元格
+                if cell.contains(",") {
+                    return "\"\(cell)\""
+                }
+                return cell
+            }.joined(separator: ",")
+        }.joined(separator: "\n")
+        
+        try? csvString.write(to: path, atomically: true, encoding: .utf8)
+    }
+    
+    private func createZipFile(at path: URL, containing directory: URL) -> Bool {
+        do {
+            let archive = try Archive(url: path, accessMode: .create)
+            
+            // 获取源目录中的所有文件
+            let fileManager = FileManager.default
+            let contents = try fileManager.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )
+            
+            // 添加每个文件到压缩包
+            for fileURL in contents {
+                let fileName = fileURL.lastPathComponent
+                
+                if fileName == "photos" {
+                    // 处理照片文件夹
+                    let photos = try fileManager.contentsOfDirectory(
+                        at: fileURL,
+                        includingPropertiesForKeys: nil,
+                        options: [.skipsHiddenFiles]
+                    )
+                    
+                    // 创建照片文件夹
+                    for photoURL in photos {
+                        let photoPath = "photos/" + photoURL.lastPathComponent
+                        try archive.addEntry(with: photoPath, fileURL: photoURL)
+                    }
+                } else {
+                    // 处理其他文件
+                    try archive.addEntry(with: fileName, fileURL: fileURL)
+                }
+            }
+            
+            return true
+        } catch {
+            print("Zip creation failed: \(error)")
+            return false
+        }
+    }
+    
+    private func shareReport(at path: URL) {
+        let activityVC = UIActivityViewController(
+            activityItems: [path],
+            applicationActivities: nil
+        )
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootViewController = window.rootViewController {
+            rootViewController.present(activityVC, animated: true)
+        }
     }
     
     private func exportPhotos(for date: Date) {
@@ -434,5 +573,31 @@ private struct DatePickerSheet: View {
         }
         
         return Array(previousMonthDates) + currentMonthDates + nextMonthDates
+    }
+}
+
+// 添加进度指示器视图
+private struct ExportProgressView: View {
+    let progress: Float
+    let status: String
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            ProgressView(value: progress) {
+                Text(status)
+                    .font(.headline)
+            }
+            .progressViewStyle(.linear)
+            .tint(.accentColor)
+            
+            Text("\(Int(progress * 100))%")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .frame(width: 300)
+        .background(.background)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(radius: 20)
     }
 } 

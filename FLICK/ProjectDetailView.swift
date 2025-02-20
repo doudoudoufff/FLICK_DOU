@@ -5,6 +5,7 @@ struct ProjectDetailView: View {
     @State private var showingEditProject = false
     @State private var showingAddTask = false
     @State private var showingLocationScoutingView = false
+    @State private var showingBaiBai = false
     
     // 添加进度计算属性
     private var taskProgress: Double {
@@ -33,6 +34,20 @@ struct ProjectDetailView: View {
                 .background(Color(.systemBackground))
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                
+                // 开机拜拜按钮
+                Button {
+                    showingBaiBai = true
+                } label: {
+                    Label("开机拜拜", systemImage: "sparkles.rectangle.stack.fill")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(height: 44)
+                        .frame(maxWidth: .infinity)
+                        .background(project.color.gradient)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.horizontal)
                 
                 // 任务列表卡片
                 VStack(alignment: .leading, spacing: 12) {
@@ -155,12 +170,31 @@ struct ProjectDetailView: View {
                     Text("编辑")
                 }
             }
+            
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    // ... 现有的菜单项 ...
+                    
+                    NavigationLink {
+                        BaiBaiView(projectColor: project.color)
+                    } label: {
+                        Label("开机拜拜", systemImage: "sparkles")
+                    }
+                    
+                    // ... 其他菜单项 ...
+                } label: {
+                    Image(systemName: "ellipsis.circle.fill")
+                }
+            }
         }
         .sheet(isPresented: $showingEditProject) {
             EditProjectView(isPresented: $showingEditProject, project: $project)
         }
         .sheet(isPresented: $showingAddTask) {
             AddTaskView(isPresented: $showingAddTask, selectedDate: Date(), projectStore: ProjectStore(projects: [project]))
+        }
+        .navigationDestination(isPresented: $showingBaiBai) {
+            BaiBaiView(projectColor: project.color)
         }
     }
 }

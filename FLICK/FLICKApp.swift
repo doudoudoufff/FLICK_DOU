@@ -9,15 +9,19 @@ import SwiftUI
 
 @main
 struct FLICKApp: App {
-    @StateObject private var projectStore = ProjectStore()
+    let persistenceController = PersistenceController.shared
+    
+    init() {
+        // 执行数据迁移
+        DataMigrationManager.shared.checkAndMigrateDataIfNeeded(
+            context: persistenceController.container.viewContext
+        )
+    }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(projectStore)
-                .onAppear {
-                    NotificationManager.shared.requestAuthorization()
-                }
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
 }

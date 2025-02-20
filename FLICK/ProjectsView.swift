@@ -1,7 +1,12 @@
 import SwiftUI
+import CoreData
 
 struct ProjectsView: View {
-    @EnvironmentObject var projectStore: ProjectStore
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Project.createdAt, ascending: false)],
+        animation: .default)
+    private var projects: FetchedResults<Project>
     @State private var showingAddProject = false
     @State private var searchText = ""
     @State private var selectedStatus: Project.ProjectStatus = .all
@@ -14,14 +19,14 @@ struct ProjectsView: View {
                     HStack(spacing: 16) {
                         StatCard(
                             title: "全部项目",
-                            value: "\(projectStore.projects.count)",
+                            value: "\(projects.count)",
                             icon: "film.fill",
                             color: .blue
                         )
                         
                         StatCard(
                             title: "总任务数",
-                            value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
+                            value: "\(projects.flatMap { $0.tasks }.count)",
                             icon: "list.bullet.clipboard.fill",
                             color: .orange
                         )
@@ -69,12 +74,12 @@ struct ProjectsView: View {
     }
     
     private var filteredProjects: [Project] {
-        projectStore.projects.filter { project in
+        projects.filter { project in
             switch selectedStatus {
             case .all: return true
-            case .preProduction: return project.status == .preProduction
-            case .production: return project.status == .production
-            case .postProduction: return project.status == .postProduction
+            case .preProduction: return project.projectStatus == .preProduction
+            case .production: return project.projectStatus == .production
+            case .postProduction: return project.projectStatus == .postProduction
             }
         }
     }
@@ -238,5 +243,5 @@ struct InfoRow: View {
 
 #Preview {
     ProjectsView()
-        .environmentObject(ProjectStore())
+        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 } 

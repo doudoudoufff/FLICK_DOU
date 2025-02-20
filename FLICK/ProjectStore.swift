@@ -1,3 +1,4 @@
+import CoreData
 import SwiftUI
 
 class ProjectStore: ObservableObject {
@@ -5,36 +6,50 @@ class ProjectStore: ObservableObject {
     @Published var projects: [Project] = []
     @AppStorage("enableNotifications") private var enableNotifications: Bool = true
     
-    init(projects: [Project] = []) {
-        self.projects = projects
+    private let context: NSManagedObjectContext
+    
+    init(context: NSManagedObjectContext) {
+        self.context = context
         ProjectStore.shared = self
         loadProjects()  // 改为加载本地数据
     }
     
     // 从本地加载项目
     func loadProjects() {
-        if let data = UserDefaults.standard.data(forKey: "savedProjects"),
-           let decoded = try? JSONDecoder().decode([Project].self, from: data) {
-            self.projects = decoded
+        projects = fetchProjects()
+    }
+    
+    // 获取所有项目
+    func fetchProjects() -> [Project] {
+        let request = NSFetchRequest<Project>(entityName: "Project")
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Project.createdAt, ascending: false)]
+        
+        do {
+            return try context.fetch(request)
+        } catch {
+            print("Error fetching projects: \(error)")
+            return []
         }
     }
     
     // 保存到本地
     private func saveProjects() {
-        if let encoded = try? JSONEncoder().encode(projects) {
-            UserDefaults.standard.set(encoded, forKey: "savedProjects")
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context: \(error)")
         }
     }
     
-    // 添加项目
-    func addProject(_ project: Project) {
-        projects.append(project)
+    // 添加新项目
+    func addProject(_ project: OldProject) {
+        let _ = Project.create(from: project, in: context)
         saveProjects()
     }
     
     // 删除项目
-    func deleteProject(at index: Int) {
-        projects.remove(at: index)
+    func deleteProject(_ project: Project) {
+        context.delete(project)
         saveProjects()
     }
     
@@ -84,7 +99,7 @@ class ProjectStore: ObservableObject {
     }
     
     static func withTestData() -> ProjectStore {
-        let store = ProjectStore()
+        let store = ProjectStore(context: NSManagedObjectContext())
         
         // 测试项目1：网剧
         let webSeries = Project(

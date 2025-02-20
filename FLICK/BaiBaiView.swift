@@ -55,7 +55,6 @@ struct BaiBaiView: View {
                         showingBlessing = false
                     }
                     
-                    // 短暂延迟后显示新的祈福语
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         currentBlessing = blessings.randomElement()
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {

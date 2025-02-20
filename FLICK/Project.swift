@@ -1,7 +1,8 @@
 import Foundation
 import SwiftUI
 
-struct Project: Identifiable, Codable, Hashable {
+// 将 Project 重命名为 ProjectModel
+struct ProjectModel: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
     var director: String
@@ -10,29 +11,37 @@ struct Project: Identifiable, Codable, Hashable {
     var endDate: Date?
     var status: ProjectStatus
     var color: Color
-    var tasks: [ProjectTask]
+    var tasks: [Task]
     var invoices: [Invoice]
     var accounts: [Account]
     var isLocationScoutingEnabled: Bool
-    var locations: [Location] = []  // 只保留 locations
+    var locations: [Location] = []
     
-    enum ProjectStatus: String, Codable {
-        case preProduction = "筹备"
-        case production = "拍摄"
-        case postProduction = "后期"
+    enum ProjectStatus: Int, Codable {
+        case all = -1 // 用于筛选
+        case preProduction = 0
+        case production = 1
+        case postProduction = 2
         
-        static var all: Self { .preProduction }  // 用于过滤器
+        var description: String {
+            switch self {
+            case .all: return "全部"
+            case .preProduction: return "筹备"
+            case .production: return "拍摄"
+            case .postProduction: return "后期"
+            }
+        }
     }
     
     init(id: UUID = UUID(),
-         name: String,
+         name: String = "",
          director: String = "",
          producer: String = "",
          startDate: Date = Date(),
          endDate: Date? = nil,
          status: ProjectStatus = .preProduction,
          color: Color = .blue,
-         tasks: [ProjectTask] = [],
+         tasks: [Task] = [],
          invoices: [Invoice] = [],
          accounts: [Account] = [],
          isLocationScoutingEnabled: Bool = false,
@@ -56,7 +65,7 @@ struct Project: Identifiable, Codable, Hashable {
         hasher.combine(id)
     }
     
-    static func == (lhs: Project, rhs: Project) -> Bool {
+    static func == (lhs: ProjectModel, rhs: ProjectModel) -> Bool {
         lhs.id == rhs.id
     }
     
@@ -75,7 +84,7 @@ struct Project: Identifiable, Codable, Hashable {
         startDate = try container.decode(Date.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
         status = try container.decode(ProjectStatus.self, forKey: .status)
-        tasks = try container.decode([ProjectTask].self, forKey: .tasks)
+        tasks = try container.decode([Task].self, forKey: .tasks)
         invoices = try container.decode([Invoice].self, forKey: .invoices)
         accounts = try container.decode([Account].self, forKey: .accounts)
         isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)

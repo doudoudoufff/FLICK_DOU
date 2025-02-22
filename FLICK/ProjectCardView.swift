@@ -75,7 +75,7 @@ struct ProjectCardView: View {
     
     private func statusText(_ status: Project.ProjectStatus) -> String {
         switch status {
-        case .preProduction: return "筹备中"
+        case .preProduction: return "准备中"
         case .production: return "拍摄中"
         case .postProduction: return "后期中"
         }

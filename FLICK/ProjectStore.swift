@@ -102,9 +102,9 @@ class ProjectStore: ObservableObject {
             invoices: [
                 Invoice(
                     name: "场地公司",
-                    phone: "13100131000",
+                    phone: "131001000",
                     idNumber: "110101199001011234",
-                    bankAccount: "6222021234567890",
+                    bankAccount: "62220212347890",
                     bankName: "工商银行",
                     date: Date()
                 )

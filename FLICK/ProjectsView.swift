@@ -146,72 +146,63 @@ struct ProjectCard: View {
     let project: Project
     
     var body: some View {
-        HStack(spacing: 16) {
-            // 左侧内容
-            VStack(alignment: .leading, spacing: 16) {
-                // 顶部：项目名称和任务数
-                HStack(alignment: .center, spacing: 12) {
-                    // 颜色标识
-                    RoundedRectangle(cornerRadius: 3)
+        VStack(alignment: .leading, spacing: 16) {
+            // 顶部：项目名称、状态和时间
+            HStack(alignment: .center) {
+                // 左侧：颜色标识和项目名称
+                HStack(spacing: 10) {
+                    RoundedRectangle(cornerRadius: 2)
                         .fill(project.color)
-                        .frame(width: 6, height: 40)
+                        .frame(width: 4, height: 24)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(project.name)
                             .font(.headline)
-                        
                         Text("\(project.tasks.count)个任务")
-                            .font(.subheadline)
+                            .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
                 
-                // 中间：项目信息
-                HStack(spacing: 16) {
-                    // 导演信息
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("导演")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(project.director)
-                            .font(.subheadline)
-                    }
-                    
-                    Divider()
-                        .frame(height: 24)
-                    
-                    // 制片信息
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("制片")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(project.producer)
-                            .font(.subheadline)
-                    }
-                }
+                Spacer()
                 
-                // 底部：进度条（如果有任务）
-                if !project.tasks.isEmpty {
-                    ProgressView(value: Double(project.tasks.filter { $0.isCompleted }.count) / Double(project.tasks.count))
-                        .tint(project.color)
+                // 右侧：时间显示
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(project.startDate.chineseStyleShortString())
+                        .font(.system(.subheadline, design: .rounded))
+                        .fontWeight(.medium)
+                    Text("\(Calendar.current.component(.year, from: project.startDate))年")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
             }
             
-            // 右侧时间显示
-            VStack(alignment: .trailing) {
-                Text(project.startDate.chineseStyleShortString())
-                    .font(.system(.title3, design: .rounded))
-                    .fontWeight(.medium)
+            // 底部：项目信息
+            HStack {
+                // 导演信息
+                if !project.director.isEmpty {
+                    Label(project.director, systemImage: "megaphone")
+                }
                 
-                Text("\(Calendar.current.component(.year, from: project.startDate))年")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                // 制片信息
+                if !project.producer.isEmpty {
+                    if !project.director.isEmpty {
+                        Text("·")
+                            .foregroundColor(.secondary)
+                    }
+                    Label(project.producer, systemImage: "person")
+                }
+                
+                Spacer()
+                
+                // 状态标签
+                StatusBadge(status: project.status)
             }
-            .frame(width: 60)
-            
-            Spacer()
+            .font(.subheadline)
+            .foregroundColor(.secondary)
         }
-        .padding()
+        .padding(.vertical, 14)
+        .padding(.horizontal)
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)

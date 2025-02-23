@@ -1,4 +1,5 @@
 import Foundation
+import CoreData
 
 struct ProjectTask: Identifiable, Codable, Hashable {
     let id: UUID
@@ -45,5 +46,42 @@ struct ProjectTask: Identifiable, Codable, Hashable {
         self.isCompleted = isCompleted
         self.reminder = reminder
         self.reminderHour = reminderHour
+    }
+}
+
+extension ProjectTask {
+    // Model -> Entity
+    func toEntity(context: NSManagedObjectContext) -> TaskEntity {
+        let entity = TaskEntity(context: context)
+        entity.id = id
+        entity.title = title
+        entity.assignee = assignee
+        entity.dueDate = dueDate
+        entity.isCompleted = isCompleted
+        entity.reminder = reminder?.rawValue
+        entity.reminderHour = Int16(reminderHour)
+        return entity
+    }
+    
+    // Entity -> Model
+    static func fromEntity(_ entity: TaskEntity) -> ProjectTask? {
+        guard let id = entity.id,
+              let title = entity.title,
+              let assignee = entity.assignee,
+              let dueDate = entity.dueDate
+        else { return nil }
+        
+        // 从字符串转回枚举
+        let reminder = entity.reminder.flatMap { TaskReminder(rawValue: $0) }
+        
+        return ProjectTask(
+            id: id,
+            title: title,
+            assignee: assignee,
+            dueDate: dueDate,
+            isCompleted: entity.isCompleted,
+            reminder: reminder,
+            reminderHour: Int(entity.reminderHour)  // 转换回 Int
+        )
     }
 } 

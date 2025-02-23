@@ -4,7 +4,7 @@ struct ProjectsView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
     @State private var searchText = ""
-    @State private var selectedStatus: Project.ProjectStatus = .all
+    @State private var selectedStatus: ProjectStatus = .all
     
     var body: some View {
         NavigationStack {
@@ -75,6 +75,8 @@ struct ProjectsView: View {
             case .preProduction: return project.status == .preProduction
             case .production: return project.status == .production
             case .postProduction: return project.status == .postProduction
+            case .completed: return project.status == .completed
+            case .cancelled: return project.status == .cancelled
             }
         }
     }
@@ -189,7 +191,7 @@ struct ProjectCard: View {
 
 // 状态标签组件
 struct StatusBadge: View {
-    let status: Project.ProjectStatus
+    let status: ProjectStatus
     
     var statusInfo: (text: String, color: Color) {
         switch status {
@@ -199,6 +201,10 @@ struct StatusBadge: View {
             return ("拍摄中", .blue)
         case .postProduction:
             return ("后期中", .purple)
+        case .completed:
+            return ("已完成", .green)
+        case .cancelled:
+            return ("已取消", .red)
         }
     }
     

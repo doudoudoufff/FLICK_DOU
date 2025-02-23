@@ -14,30 +14,76 @@ class ProjectStore: ObservableObject {
     }
     
     private func loadProjects() {
-        // 先尝试从 CoreData 加载
-        let fetchRequest: NSFetchRequest<LocationEntity> = LocationEntity.fetchRequest()
-        if let locations = try? context.fetch(fetchRequest) {
-            print("从 CoreData 加载到 \(locations.count) 个位置")
-            // TODO: 转换为 Project 模型
-        }
+        // 从 CoreData 加载所有项目
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
         
-        // 临时：如果 CoreData 没有数据，从 UserDefaults 加载
-        if let data = UserDefaults.standard.data(forKey: "savedProjects"),
-           let decoded = try? JSONDecoder().decode([Project].self, from: data) {
-            self.projects = decoded
+        do {
+            let projectEntities = try context.fetch(fetchRequest)
+            print("从 CoreData 加载到 \(projectEntities.count) 个项目")
+            
+            // 转换为 Project 模型
+            self.projects = projectEntities.compactMap { projectEntity in
+                projectEntity.toModel()
+            }
+            
+            if projects.isEmpty {
+                print("CoreData 中没有数据，尝试从 UserDefaults 加载")
+                // 临时：如果 CoreData 没有数据，从 UserDefaults 加载
+                if let data = UserDefaults.standard.data(forKey: "savedProjects"),
+                   let decoded = try? JSONDecoder().decode([Project].self, from: data) {
+                    self.projects = decoded
+                    
+                    // 将 UserDefaults 中的数据保存到 CoreData
+                    for project in projects {
+                        _ = project.toEntity(context: context)
+                    }
+                    try? context.save()
+                }
+            }
+        } catch {
+            print("从 CoreData 加载项目失败: \(error)")
+            
+            // 出错时尝试从 UserDefaults 加载
+            if let data = UserDefaults.standard.data(forKey: "savedProjects"),
+               let decoded = try? JSONDecoder().decode([Project].self, from: data) {
+                self.projects = decoded
+            }
         }
     }
     
     func saveProjects() {
         // 保存到 CoreData
         for project in projects {
+            let projectEntity = project.toEntity(context: context)
+            
+            // 保存任务
+            for task in project.tasks {
+                let taskEntity = task.toEntity(context: context)
+                taskEntity.project = projectEntity
+            }
+            
+            // 保存位置和照片
             for location in project.locations {
                 let locationEntity = location.toEntity(context: context)
+                locationEntity.project = projectEntity
+                
                 // 保存照片
                 for photo in location.photos {
                     let photoEntity = photo.toEntity(context: context)
                     photoEntity.location = locationEntity
                 }
+            }
+            
+            // 保存发票
+            for invoice in project.invoices {
+                let invoiceEntity = invoice.toEntity(context: context)
+                invoiceEntity.project = projectEntity
+            }
+            
+            // 保存账户
+            for account in project.accounts {
+                let accountEntity = account.toEntity(context: context)
+                accountEntity.project = projectEntity
             }
         }
         
@@ -48,7 +94,7 @@ class ProjectStore: ObservableObject {
             print("保存到 CoreData 失败: \(error)")
         }
         
-        // 临时：同时保存到 UserDefaults
+        // 临时：同时保存到 UserDefaults（作为备份）
         if let encoded = try? JSONEncoder().encode(projects) {
             UserDefaults.standard.set(encoded, forKey: "savedProjects")
         }
@@ -89,36 +135,112 @@ class ProjectStore: ObservableObject {
     func updateTask(_ task: ProjectTask, in project: Project) {
         if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
            let taskIndex = projects[projectIndex].tasks.firstIndex(where: { $0.id == task.id }) {
+            // 更新内存中的数据
             projects[projectIndex].tasks[taskIndex] = task
+            
+            // 更新 CoreData
+            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", task.id as CVarArg)
+            
+            if let taskEntity = try? context.fetch(fetchRequest).first {
+                // 更新实体属性
+                taskEntity.title = task.title
+                taskEntity.assignee = task.assignee
+                taskEntity.dueDate = task.dueDate
+                taskEntity.isCompleted = task.isCompleted
+                taskEntity.reminder = task.reminder?.rawValue  // 使用枚举的原始值
+                taskEntity.reminderHour = Int16(task.reminderHour)  // 转换为 Int16
+                
+                do {
+                    try context.save()
+                    print("任务更新成功")
+                } catch {
+                    print("更新任务失败: \(error)")
+                }
+            }
+            
             handleTaskChange(task: task, in: project)
-            saveProjects()
         }
     }
     
     func addTask(_ task: ProjectTask, to project: Project) {
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            // 更新内存中的数据
             projects[index].tasks.append(task)
+            
+            // 保存到 CoreData
+            let taskEntity = task.toEntity(context: context)
+            
+            // 设置与 Project 的关系
+            if let projectEntity = try? context.fetch(ProjectEntity.fetchRequest())
+                .first(where: { $0.id == project.id }) {
+                taskEntity.project = projectEntity
+            }
+            
+            do {
+                try context.save()
+                print("任务保存到 CoreData 成功")
+            } catch {
+                print("保存任务失败: \(error)")
+            }
+            
             handleTaskChange(task: task, in: project)
-            saveProjects()
         }
     }
     
     func deleteTask(_ task: ProjectTask, from project: Project) {
         if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+            // 从内存中删除
             projects[projectIndex].tasks.removeAll(where: { $0.id == task.id })
+            
+            // 从 CoreData 中删除
+            let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", task.id as CVarArg)
+            
+            if let taskEntity = try? context.fetch(fetchRequest).first {
+                context.delete(taskEntity)
+                
+                do {
+                    try context.save()
+                    print("任务删除成功")
+                } catch {
+                    print("删除任务失败: \(error)")
+                }
+            }
+            
             NotificationManager.shared.removeTaskReminders(for: task)
-            saveProjects()
         }
     }
     
     // 添加 CoreData 相关方法
     func saveLocation(_ location: Location, for project: Project) {
+        // 1. 先获取或创建 ProjectEntity
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", project.id as CVarArg)
+        
+        let projectEntity: ProjectEntity
+        if let existingProject = try? context.fetch(fetchRequest).first {
+            projectEntity = existingProject
+        } else {
+            // 如果项目不存在，创建新的
+            projectEntity = project.toEntity(context: context)
+        }
+        
+        // 2. 创建 LocationEntity 并设置关系
         let locationEntity = location.toEntity(context: context)
-        // 保存到 CoreData
-        try? context.save()
-        // 更新项目
-        if let index = projects.firstIndex(where: { $0.id == project.id }) {
-            projects[index].locations.append(location)
+        locationEntity.project = projectEntity  // 设置必需的关系
+        
+        // 3. 保存到 CoreData
+        do {
+            try context.save()
+            print("位置保存到 CoreData 成功")
+            
+            // 4. 更新内存中的数据
+            if let index = projects.firstIndex(where: { $0.id == project.id }) {
+                projects[index].locations.append(location)
+            }
+        } catch {
+            print("保存位置失败: \(error)")
         }
     }
     

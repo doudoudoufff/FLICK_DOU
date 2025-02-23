@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23605" systemVersion="24D70" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
-    <entity name="AccountEntity" representedClassName="AccountEntity" syncable="YES" codeGenerationType="class">
+    <entity name="AccountEntity" representedClassName=".AccountEntity" syncable="YES">
         <attribute name="bankAccount" attributeType="String"/>
         <attribute name="bankBranch" attributeType="String"/>
         <attribute name="bankName" attributeType="String"/>
@@ -13,7 +13,7 @@
         <attribute name="type" attributeType="String"/>
         <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="accounts" inverseEntity="ProjectEntity"/>
     </entity>
-    <entity name="InvoiceEntity" representedClassName="InvoiceEntity" syncable="YES" codeGenerationType="class">
+    <entity name="InvoiceEntity" representedClassName=".InvoiceEntity" syncable="YES">
         <attribute name="bankAccount" attributeType="String"/>
         <attribute name="bankName" attributeType="String"/>
         <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
@@ -23,7 +23,8 @@
         <attribute name="phone" attributeType="String"/>
         <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="invoices" inverseEntity="ProjectEntity"/>
     </entity>
-    <entity name="LocationEntity" representedClassName=".LocationEntity" syncable="YES" codeGenerationType="class">
+    <entity name="LocationEntity" representedClassName=".LocationEntity" syncable="YES">
+        <attribute name="address" attributeType="String"/>
         <attribute name="contactName" optional="YES" attributeType="String"/>
         <attribute name="contactPhone" optional="YES" attributeType="String"/>
         <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
@@ -32,7 +33,7 @@
         <attribute name="notes" optional="YES" attributeType="String"/>
         <attribute name="status" attributeType="String"/>
         <attribute name="type" attributeType="String"/>
-        <relationship name="photos" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="LocationPhotoEntity"/>
+        <relationship name="photos" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LocationPhotoEntity" inverseName="location" inverseEntity="LocationPhotoEntity"/>
         <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="locations" inverseEntity="ProjectEntity"/>
     </entity>
     <entity name="LocationPhotoEntity" representedClassName=".LocationPhotoEntity" syncable="YES">
@@ -41,9 +42,9 @@
         <attribute name="imageData" attributeType="Binary"/>
         <attribute name="note" optional="YES" attributeType="String"/>
         <attribute name="weather" optional="YES" attributeType="String"/>
-        <relationship name="location" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="LocationEntity"/>
+        <relationship name="location" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="LocationEntity" inverseName="photos" inverseEntity="LocationEntity"/>
     </entity>
-    <entity name="ProjectEntity" representedClassName="ProjectEntity" syncable="YES" codeGenerationType="class">
+    <entity name="ProjectEntity" representedClassName=".ProjectEntity" syncable="YES">
         <attribute name="color" attributeType="Binary"/>
         <attribute name="director" attributeType="String"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
@@ -57,7 +58,7 @@
         <relationship name="locations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LocationEntity" inverseName="project" inverseEntity="LocationEntity"/>
         <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TaskEntity" inverseName="project" inverseEntity="TaskEntity"/>
     </entity>
-    <entity name="TaskEntity" representedClassName="TaskEntity" syncable="YES" codeGenerationType="class">
+    <entity name="TaskEntity" representedClassName=".TaskEntity" syncable="YES">
         <attribute name="assignee" attributeType="String"/>
         <attribute name="dueDate" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>

@@ -64,7 +64,11 @@ struct Location: Identifiable, Codable {
         entity.date = date
         
         // 转换照片
-        let photoEntities = photos.map { $0.toEntity(context: context) }
+        let photoEntities = photos.map { photo -> LocationPhotoEntity in
+            let photoEntity = photo.toEntity(context: context)
+            photoEntity.location = entity
+            return photoEntity
+        }
         entity.photos = NSSet(array: photoEntities)
         
         return entity

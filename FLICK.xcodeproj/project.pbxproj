@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9E3F082C2D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08252D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift */; };
+		9E3F082D2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F082A2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift */; };
+		9E3F082E2D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08262D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift */; };
+		9E3F082F2D6AE23400E2EC1B /* InvoiceEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08272D6AE23400E2EC1B /* InvoiceEntity+CoreDataProperties.swift */; };
+		9E3F08302D6AE23400E2EC1B /* ProjectEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08292D6AE23400E2EC1B /* ProjectEntity+CoreDataProperties.swift */; };
+		9E3F08312D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08242D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift */; };
+		9E3F08322D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F082B2D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift */; };
+		9E3F08332D6AE23400E2EC1B /* ProjectEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08282D6AE23400E2EC1B /* ProjectEntity+CoreDataClass.swift */; };
 		9EAAE6832D69F11800131C8A /* LocationPhotoEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAAE6812D69F11800131C8A /* LocationPhotoEntity+CoreDataClass.swift */; };
 		9EAAE6842D69F11800131C8A /* LocationEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAAE67F2D69F11800131C8A /* LocationEntity+CoreDataClass.swift */; };
 		9EAAE6852D69F11800131C8A /* LocationEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAAE6802D69F11800131C8A /* LocationEntity+CoreDataProperties.swift */; };
@@ -35,6 +43,14 @@
 		0FE011122D3F8916007A7B5B /* FLICK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FLICK.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FE011232D3F8918007A7B5B /* FLICKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FLICKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FE0112D2D3F8918007A7B5B /* FLICKUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FLICKUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9E3F08242D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccountEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		9E3F08252D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccountEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9E3F08262D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InvoiceEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		9E3F08272D6AE23400E2EC1B /* InvoiceEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InvoiceEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9E3F08282D6AE23400E2EC1B /* ProjectEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		9E3F08292D6AE23400E2EC1B /* ProjectEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9E3F082A2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		9E3F082B2D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TaskEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9EAAE67F2D69F11800131C8A /* LocationEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LocationEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9EAAE6802D69F11800131C8A /* LocationEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LocationEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9EAAE6812D69F11800131C8A /* LocationPhotoEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LocationPhotoEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
@@ -101,6 +117,14 @@
 		0FE011092D3F8916007A7B5B = {
 			isa = PBXGroup;
 			children = (
+				9E3F08242D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift */,
+				9E3F08252D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift */,
+				9E3F08262D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift */,
+				9E3F08272D6AE23400E2EC1B /* InvoiceEntity+CoreDataProperties.swift */,
+				9E3F08282D6AE23400E2EC1B /* ProjectEntity+CoreDataClass.swift */,
+				9E3F08292D6AE23400E2EC1B /* ProjectEntity+CoreDataProperties.swift */,
+				9E3F082A2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift */,
+				9E3F082B2D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift */,
 				9EAAE67F2D69F11800131C8A /* LocationEntity+CoreDataClass.swift */,
 				9EAAE6802D69F11800131C8A /* LocationEntity+CoreDataProperties.swift */,
 				9EAAE6812D69F11800131C8A /* LocationPhotoEntity+CoreDataClass.swift */,
@@ -271,6 +295,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9E3F082C2D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift in Sources */,
+				9E3F082D2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift in Sources */,
+				9E3F082E2D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift in Sources */,
+				9E3F082F2D6AE23400E2EC1B /* InvoiceEntity+CoreDataProperties.swift in Sources */,
+				9E3F08302D6AE23400E2EC1B /* ProjectEntity+CoreDataProperties.swift in Sources */,
+				9E3F08312D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift in Sources */,
+				9E3F08322D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift in Sources */,
+				9E3F08332D6AE23400E2EC1B /* ProjectEntity+CoreDataClass.swift in Sources */,
 				9EAAE6832D69F11800131C8A /* LocationPhotoEntity+CoreDataClass.swift in Sources */,
 				9EAAE6842D69F11800131C8A /* LocationEntity+CoreDataClass.swift in Sources */,
 				9EAAE6852D69F11800131C8A /* LocationEntity+CoreDataProperties.swift in Sources */,

@@ -191,10 +191,13 @@ struct ProjectDetailView: View {
             }
         }
         .sheet(isPresented: $showingEditProject) {
-            EditProjectView(isPresented: $showingEditProject, project: $project)
+            EditProjectView(
+                project: $project,
+                isPresented: $showingEditProject
+            )
         }
         .sheet(isPresented: $showingAddTask) {
-           AddTaskView(
+            AddTaskView(
                 isPresented: $showingAddTask,
                 project: project
             )

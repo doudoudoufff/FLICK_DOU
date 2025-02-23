@@ -2,7 +2,7 @@
 //  LocationEntity+CoreDataProperties.swift
 //  FLICK
 //
-//  Created by 豆子 on 2025/2/22.
+//  Created by 豆子 on 2025/2/23.
 //
 //
 
@@ -16,33 +16,17 @@ extension LocationEntity {
         return NSFetchRequest<LocationEntity>(entityName: "LocationEntity")
     }
 
-    @NSManaged public var id: UUID?
-    @NSManaged public var name: String?
-    @NSManaged public var type: String?
-    @NSManaged public var status: String?
     @NSManaged public var address: String?
     @NSManaged public var contactName: String?
     @NSManaged public var contactPhone: String?
-    @NSManaged public var notes: String?
     @NSManaged public var date: Date?
+    @NSManaged public var id: UUID?
+    @NSManaged public var name: String?
+    @NSManaged public var notes: String?
+    @NSManaged public var status: String?
+    @NSManaged public var type: String?
     @NSManaged public var photos: NSSet?
-
-    func toModel() -> Location {
-        let photosArray = (photos?.allObjects as? [LocationPhotoEntity])?.compactMap { $0.toModel() } ?? []
-        
-        return Location(
-            id: id ?? UUID(),
-            name: name ?? "",
-            type: LocationType(rawValue: type ?? "") ?? .exterior,
-            status: LocationStatus(rawValue: status ?? "") ?? .pending,
-            address: address ?? "",
-            contactName: contactName,
-            contactPhone: contactPhone,
-            photos: photosArray,
-            notes: notes,
-            date: date ?? Date()
-        )
-    }
+    @NSManaged public var project: ProjectEntity?
 
 }
 

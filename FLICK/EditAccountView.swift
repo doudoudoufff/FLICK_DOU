@@ -6,7 +6,7 @@ struct EditAccountView: View {
     let account: Account
     
     @State private var name: String
-    @State private var type: Account.AccountType
+    @State private var type: AccountType
     @State private var bankName: String
     @State private var bankBranch: String
     @State private var bankAccount: String
@@ -38,7 +38,7 @@ struct EditAccountView: View {
                 Section("基本信息") {
                     TextField("收款方名称", text: $name)
                     Picker("账户类型", selection: $type) {
-                        ForEach(Account.AccountType.allCases, id: \.self) { type in
+                        ForEach(AccountType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }

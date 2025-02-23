@@ -31,4 +31,26 @@ extension Color {
             blue: Double(rgb & 0x0000FF) / 255.0
         )
     }
+}
+
+extension UIColor {
+    convenience init?(data: Data) {
+        guard let color = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: data) else {
+            return nil
+        }
+        self.init(cgColor: color.cgColor)
+    }
+    
+    func encode() -> Data? {
+        try? NSKeyedArchiver.archivedData(withRootObject: self, requiringSecureCoding: false)
+    }
+}
+
+extension Color {
+    init(uiColor: UIColor) {
+        self.init(red: Double(uiColor.cgColor.components?[0] ?? 0),
+                 green: Double(uiColor.cgColor.components?[1] ?? 0),
+                 blue: Double(uiColor.cgColor.components?[2] ?? 0),
+                 opacity: Double(uiColor.cgColor.components?[3] ?? 1))
+    }
 } 

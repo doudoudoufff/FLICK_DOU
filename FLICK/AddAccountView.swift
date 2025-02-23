@@ -5,7 +5,7 @@ struct AddAccountView: View {
     @Binding var project: Project
     
     @State private var name = ""
-    @State private var type = Account.AccountType.artist
+    @State private var selectedType: AccountType = .location
     @State private var bankName = ""
     @State private var bankBranch = ""
     @State private var bankAccount = ""
@@ -19,8 +19,8 @@ struct AddAccountView: View {
             Form {
                 Section("基本信息") {
                     TextField("收款方名称", text: $name)
-                    Picker("账户类型", selection: $type) {
-                        ForEach(Account.AccountType.allCases, id: \.self) { type in
+                    Picker("账户类型", selection: $selectedType) {
+                        ForEach(AccountType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
@@ -59,7 +59,7 @@ struct AddAccountView: View {
                     Button("保存") {
                         let account = Account(
                             name: name,
-                            type: type,
+                            type: selectedType,
                             bankName: bankName,
                             bankBranch: bankBranch,
                             bankAccount: bankAccount,

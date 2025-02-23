@@ -11,5 +11,32 @@ import CoreData
 
 
 public class LocationEntity: NSManagedObject {
-
+    func toModel() -> Location? {
+        guard let id = self.id,
+              let name = self.name,
+              let type = self.type,
+              let status = self.status,
+              let address = self.address,
+              let date = self.date,
+              let typeEnum = LocationType(rawValue: type),
+              let statusEnum = LocationStatus(rawValue: status)
+        else { return nil }
+        
+        // 转换照片数组
+        let photosArray = (photos?.allObjects as? [LocationPhotoEntity])?
+            .compactMap { $0.toModel() } ?? []
+        
+        return Location(
+            id: id,
+            name: name,
+            type: typeEnum,
+            status: statusEnum,
+            address: address,
+            contactName: contactName,
+            contactPhone: contactPhone,
+            photos: photosArray,
+            notes: notes,
+            date: date
+        )
+    }
 }

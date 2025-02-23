@@ -70,14 +70,25 @@ struct ProjectCardView: View {
             return .orange
         case .postProduction:
             return .purple
+        case .completed:
+            return .green
+        case .cancelled:
+            return .red
         }
     }
     
-    private func statusText(_ status: Project.ProjectStatus) -> String {
+    private func statusText(_ status: ProjectStatus) -> String {
         switch status {
-        case .preProduction: return "准备中"
-        case .production: return "拍摄中"
-        case .postProduction: return "后期中"
+        case .preProduction:
+            return "准备中"
+        case .production:
+            return "拍摄中"
+        case .postProduction:
+            return "后期中"
+        case .completed:
+            return "已完成"
+        case .cancelled:
+            return "已取消"
         }
     }
 } 

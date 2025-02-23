@@ -1,4 +1,14 @@
 import Foundation
+import CoreData
+
+// 将 AccountType 移到外部，并添加 public 访问级别
+public enum AccountType: String, Codable, CaseIterable {
+    case location = "场地"
+    case prop = "道具"
+    case costume = "服装"
+    case makeup = "化妆"
+    case other = "其他"
+}
 
 struct Account: Identifiable, Codable, Hashable {
     let id: UUID
@@ -16,15 +26,6 @@ struct Account: Identifiable, Codable, Hashable {
     var contactPhone: String    // 联系电话
     
     var notes: String?          // 备注
-    
-    enum AccountType: String, Codable, CaseIterable {
-        case location = "场地"
-        case prop = "道具"
-        case equipment = "器材"
-        case artist = "演员"
-        case staff = "工作人员"
-        case other = "其他"
-    }
     
     init(id: UUID = UUID(),
          name: String,
@@ -46,5 +47,22 @@ struct Account: Identifiable, Codable, Hashable {
         self.contactName = contactName
         self.contactPhone = contactPhone
         self.notes = notes
+    }
+}
+
+extension Account {
+    func toEntity(context: NSManagedObjectContext) -> AccountEntity {
+        let entity = AccountEntity(context: context)
+        entity.id = id
+        entity.name = name
+        entity.type = type.rawValue
+        entity.bankName = bankName
+        entity.bankBranch = bankBranch
+        entity.bankAccount = bankAccount
+        entity.idNumber = idNumber
+        entity.contactName = contactName
+        entity.contactPhone = contactPhone
+        entity.notes = notes
+        return entity
     }
 } 

@@ -1,5 +1,17 @@
 import Foundation
 import SwiftUI
+import CoreData
+
+// 保持在外部，但确保正确的访问级别
+public enum ProjectStatus: String, Codable, CaseIterable {
+    case preProduction = "筹备"
+    case production = "拍摄"
+    case postProduction = "后期"
+    case completed = "完成"
+    case cancelled = "取消"
+    
+    public static var all: Self { .preProduction }  // 用于过滤器
+}
 
 struct Project: Identifiable, Codable, Hashable {
     let id: UUID
@@ -8,21 +20,13 @@ struct Project: Identifiable, Codable, Hashable {
     var producer: String
     var startDate: Date
     var endDate: Date?
-    var status: ProjectStatus
+    var status: ProjectStatus  // 直接使用 ProjectStatus，不需要 Project.ProjectStatus
     var color: Color
     var tasks: [ProjectTask]
     var invoices: [Invoice]
     var accounts: [Account]
     var isLocationScoutingEnabled: Bool
     var locations: [Location] = []  // 只保留 locations
-    
-    enum ProjectStatus: String, Codable {
-        case preProduction = "筹备"
-        case production = "拍摄"
-        case postProduction = "后期"
-        
-        static var all: Self { .preProduction }  // 用于过滤器
-    }
     
     init(id: UUID = UUID(),
          name: String,
@@ -104,6 +108,24 @@ struct Project: Identifiable, Codable, Hashable {
         // 编码颜色
         let colorHex = color.toHex() ?? 0x0000FF // 默认蓝色
         try container.encode(colorHex, forKey: .colorHex)
+    }
+    
+    func toEntity(context: NSManagedObjectContext) -> ProjectEntity {
+        let entity = ProjectEntity(context: context)
+        entity.id = id
+        entity.name = name
+        entity.director = director
+        entity.producer = producer
+        entity.startDate = startDate
+        entity.status = status.rawValue
+        
+        // 转换 Color 为 Data
+        if let colorData = try? NSKeyedArchiver.archivedData(withRootObject: UIColor(color), requiringSecureCoding: false) {
+            entity.color = colorData
+        }
+        
+        // 关系会在 ProjectStore 中处理
+        return entity
     }
 }
 

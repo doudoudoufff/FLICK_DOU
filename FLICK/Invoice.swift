@@ -1,4 +1,5 @@
 import Foundation
+import CoreData
 
 struct Invoice: Identifiable, Codable, Hashable {
     let id: UUID
@@ -32,5 +33,19 @@ struct Invoice: Identifiable, Codable, Hashable {
     
     static func == (lhs: Invoice, rhs: Invoice) -> Bool {
         lhs.id == rhs.id
+    }
+}
+
+extension Invoice {
+    func toEntity(context: NSManagedObjectContext) -> InvoiceEntity {
+        let entity = InvoiceEntity(context: context)
+        entity.id = id
+        entity.name = name
+        entity.phone = phone
+        entity.idNumber = idNumber
+        entity.bankAccount = bankAccount
+        entity.bankName = bankName
+        entity.date = date
+        return entity
     }
 } 

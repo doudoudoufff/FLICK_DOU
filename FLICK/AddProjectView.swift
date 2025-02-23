@@ -8,56 +8,30 @@ struct AddProjectView: View {
     @State private var director = ""
     @State private var producer = ""
     @State private var startDate = Date()
-    @State private var color = Color.blue
-    @State private var status = Project.ProjectStatus.preProduction
-    
-    private func addProject() {
-        let project = Project(
-            name: name,
-            director: director,
-            producer: producer,
-            startDate: startDate,
-            status: status,
-            color: color,
-            tasks: [],
-            invoices: []
-        )
-        projectStore.addProject(project)
-        isPresented = false
-    }
+    @State private var status: ProjectStatus = .preProduction
+    @State private var selectedColor: Color = .blue
+    @State private var showingColorPicker = false
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
-                Section {
+                Section("基本信息") {
                     TextField("项目名称", text: $name)
-                        .focused($nameFieldFocused)
-                } header: {
-                    Text("必填信息")
-                }
-                
-                Section {
                     TextField("导演", text: $director)
                     TextField("制片", text: $producer)
-                    DatePicker("开始时间", selection: $startDate, displayedComponents: .date)
-                } header: {
-                    Text("选填信息")
                 }
                 
-                Section {
-                    ColorPickerView(selectedColor: $color)
-                } header: {
-                    Text("项目颜色")
-                }
-                
-                Section {
+                Section("项目状态") {
+                    DatePicker("开始日期", selection: $startDate, displayedComponents: .date)
                     Picker("项目状态", selection: $status) {
-                        Text("筹备").tag(Project.ProjectStatus.preProduction)
-                        Text("拍摄").tag(Project.ProjectStatus.production)
-                        Text("后期").tag(Project.ProjectStatus.postProduction)
+                        ForEach(ProjectStatus.allCases, id: \.self) { status in
+                            Text(status.rawValue).tag(status)
+                        }
                     }
-                } header: {
-                    Text("项目状态")
+                }
+                
+                Section("外观") {
+                    ColorPicker("项目颜色", selection: $selectedColor)
                 }
             }
             .navigationTitle("新建项目")
@@ -71,18 +45,22 @@ struct AddProjectView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("创建") {
-                        addProject()
+                        let project = Project(
+                            name: name,
+                            director: director,
+                            producer: producer,
+                            startDate: startDate,
+                            status: status,
+                            color: selectedColor
+                        )
+                        projectStore.addProject(project)
+                        isPresented = false
                     }
                     .disabled(name.isEmpty)
                 }
             }
         }
-        .onAppear {
-            nameFieldFocused = true
-        }
     }
-    
-    @FocusState private var nameFieldFocused: Bool
 }
 
 #Preview {

@@ -5,6 +5,9 @@ struct BaiBaiView: View {
     @State private var currentBlessing: String?
     @State private var showingBlessing = false
     @State private var rotation: Double = 0
+    @State private var lunarInfo: LunarInfo?
+    @State private var isLoading = false
+    @State private var error: String?
     
     // 祈福语录库
     private let blessings = [
@@ -30,24 +33,50 @@ struct BaiBaiView: View {
         "今天不会下雨"
     ]
     
-    var body: some View {
-        ZStack {
-            // 背景
-            Color(.systemGroupedBackground)
-                .ignoresSafeArea()
+    // 首先添加一个结构体来处理黄历数据
+    private struct LunarInfo: Decodable {
+        let code: Int
+        let msg: String
+        let data: LunarData?
+        let ip: String
+        let url: String
+        let weixin: String
+        let update: String
+        
+        struct LunarData: Decodable {
+            let Solar: String
+            let Week: String
+            let Constellation: String
+            let Festivals: String
+            let OtherFestivals: String
+            let LunarYear: String
+            let Lunar: String
+            let LunarMonthDayCount: Int
+            let IsLeapMonth: Bool
+            let ThisYear: String
+            let GanZhiYear: String
+            let Lunar_Festivals: String
+            let Lunar_OtherFestivals: String
+            let JieQi1: String
+            let ShuJiu: String
+            let SanFu: String
+            let YiDay: String
+            let JiDay: String
+            let WeiYu_s: String
+            let WeiYu_l: String
             
-            VStack(spacing: 40) {
-                // 祈福语显示区域
-                if showingBlessing, let blessing = currentBlessing {
-                    Text(blessing)
-                        .font(.title2)
-                        .fontWeight(.medium)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(projectColor)
-                        .padding(.horizontal, 40)
-                        .transition(.scale.combined(with: .opacity))
-                }
-                
+            // 不需要 Unicode 解码，因为 JSON 已经是解码后的中文
+            var decodedLunar: String { Lunar }
+            var decodedSolar: String { Solar }
+            var decodedWeek: String { Week }
+            var decodedYi: String { YiDay }
+            var decodedJi: String { JiDay }
+        }
+    }
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
                 // 拜拜按钮
                 Button {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
@@ -85,14 +114,160 @@ struct BaiBaiView: View {
                     .rotationEffect(.degrees(rotation))
                 }
                 
+                // 祈福语显示区域
+                if showingBlessing, let blessing = currentBlessing {
+                    Text(blessing)
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(projectColor)
+                        .padding(.horizontal, 40)
+                        .transition(.scale.combined(with: .opacity))
+                }
+                
                 // 提示文本
                 Text("点击按钮获取今日祈福")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                
+                // 显示黄历信息
+                if let info = lunarInfo?.data {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("今日黄历")
+                            .font(.title3)
+                            .fontWeight(.medium)
+                        
+                        // 日期信息
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(info.decodedLunar)
+                                .font(.headline)
+                            Text(info.decodedSolar)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Text(info.decodedWeek)
+                                .font(.subheadline)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        Divider()
+                        
+                        // 宜忌
+                        HStack(alignment: .top, spacing: 20) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("宜", systemImage: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text(info.decodedYi)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("忌", systemImage: "xmark.circle.fill")
+                                    .foregroundColor(.red)
+                                Text(info.decodedJi)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+                }
             }
+            .padding()
         }
         .navigationTitle("开机拜拜")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            fetchLunarData()
+        }
+        .overlay {
+            if isLoading {
+                ProgressView()
+            }
+        }
+    }
+    
+    private func fetchLunarData() {
+        isLoading = true
+        
+        let urlString = "https://api.shwgij.com/api/lunars/lunar"
+        guard let url = URL(string: urlString) else {
+            error = "无效的 URL"
+            isLoading = false
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"  // 改为 POST 请求
+        
+        // 设置请求体
+        let postData = "key=EXx6f9LLxgivqKCj4rwM8xUCUP"
+        request.httpBody = postData.data(using: .utf8)
+        
+        // 设置请求头
+        request.addValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                isLoading = false
+                
+                if let error = error {
+                    self.error = "网络请求错误: \(error.localizedDescription)"
+                    print("网络错误详情: \(error)")
+                    return
+                }
+
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("响应状态码: \(httpResponse.statusCode)")
+                    print("响应头: \(httpResponse.allHeaderFields)")
+                    
+                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
+                        print("API 返回的原始数据:")
+                        print(responseString)
+                        
+                        // 尝试解析并打印每个字段
+                        do {
+                            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                               let lunarData = json["data"] as? [String: Any] {
+                                print("\n解析后的数据:")
+                                print("lunar:", lunarData["lunar"] ?? "nil")
+                                print("solar:", lunarData["solar"] ?? "nil")
+                                print("week:", lunarData["week"] ?? "nil")
+                                print("yiDay:", lunarData["yiDay"] ?? "nil")
+                                print("jiDay:", lunarData["jiDay"] ?? "nil")
+                            }
+                        } catch {
+                            print("JSON 解析错误:", error)
+                        }
+                    }
+                    
+                    if httpResponse.statusCode == 200 {
+                        if let data = data {
+                            do {
+                                let lunarInfo = try JSONDecoder().decode(LunarInfo.self, from: data)
+                                self.lunarInfo = lunarInfo
+                                print("成功解析数据: \(lunarInfo)")
+                            } catch {
+                                self.error = "数据解析错误: \(error.localizedDescription)"
+                                print("解析错误详情: \(error)")
+                            }
+                        }
+                    } else {
+                        self.error = "API请求失败 (状态码: \(httpResponse.statusCode))"
+                    }
+                }
+            }
+        }
+
+        task.resume()
     }
 }
 

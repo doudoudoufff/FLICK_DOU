@@ -19,19 +19,19 @@ public class ProjectEntity: NSManagedObject {
               let producer = self.producer,
               let startDate = self.startDate,
               let status = self.status,
-              let statusEnum = FLICK.ProjectStatus(rawValue: status)
+              let statusEnum = Project.Status(rawValue: status)
         else { return nil }
         
-        // 转换 locations
-        let locationsArray = (locations?.allObjects as? [LocationEntity])?
-            .compactMap { $0.toModel() } ?? []
-            
         // 转换 tasks
         let tasksArray = (tasks?.allObjects as? [TaskEntity])?
             .compactMap { $0.toModel() } ?? []
             
         // 转换 invoices
         let invoicesArray = (invoices?.allObjects as? [InvoiceEntity])?
+            .compactMap { $0.toModel() } ?? []
+            
+        // 转换 locations
+        let locationsArray = (locations?.allObjects as? [LocationEntity])?
             .compactMap { $0.toModel() } ?? []
             
         // 转换 accounts
@@ -57,8 +57,9 @@ public class ProjectEntity: NSManagedObject {
             color: projectColor,
             tasks: tasksArray,
             invoices: invoicesArray,
+            locations: locationsArray,
             accounts: accountsArray,
-            locations: locationsArray
+            isLocationScoutingEnabled: isLocationScoutingEnabled
         )
     }
 }

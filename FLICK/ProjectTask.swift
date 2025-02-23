@@ -9,7 +9,7 @@ struct ProjectTask: Identifiable, Codable, Hashable {
     var isCompleted: Bool
     var reminder: TaskReminder?
     
-    enum TaskReminder: String, Codable, CaseIterable {
+    enum TaskReminder: String, Codable, CaseIterable, Identifiable {
         case daily = "每日提醒"
         case sevenDays = "提前7天"
         case threeDays = "提前3天"
@@ -23,6 +23,9 @@ struct ProjectTask: Identifiable, Codable, Hashable {
             case .oneDay: return 1
             }
         }
+        
+        // 添加 id 属性以符合 Identifiable 协议
+        var id: String { rawValue }
     }
     
     // 提醒时间（小时）

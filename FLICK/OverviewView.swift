@@ -4,6 +4,7 @@ struct OverviewView: View {
     @EnvironmentObject private var projectStore: ProjectStore
     @State private var selectedDate = Date()
     @State private var showingAddTask = false
+    @State private var selectedProject: Project?  // 添加选中的项目状态
     
     // 检查指定日期是否有任务
     private func hasTasksOnDate(_ date: Date) -> Bool {
@@ -127,7 +128,13 @@ struct OverviewView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("总览")
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(isPresented: $showingAddTask, selectedDate: selectedDate, projectStore: projectStore)
+            if let project = selectedProject {  // 确保有选中的项目
+                AddTaskView(
+                    isPresented: $showingAddTask,
+                    project: .constant(project)  // 使用 Binding
+                )
+                .environmentObject(projectStore)  // 通过环境传递 projectStore
+            }
         }
     }
 }

@@ -5,32 +5,25 @@ struct ProjectListView: View {
     @State private var showingAddProject = false
     
     var body: some View {
-        NavigationStack {
-            List {
-                ForEach(projectStore.projects) { project in
-                    NavigationLink {
-                        if let binding = projectStore.binding(for: project.id) {
-                            ProjectDetailView(project: binding)
-                        }
-                    } label: {
-                        ProjectRowView(project: project)
-                    }
-                }
-                .onDelete { indexSet in
-                    projectStore.projects.remove(atOffsets: indexSet)
-                }
+        List {
+            ForEach(projectStore.projects) { project in
+                ProjectRowView(project: project)
             }
-            .navigationTitle("项目")
-            .toolbar {
-                Button {
-                    showingAddProject = true
-                } label: {
-                    Image(systemName: "plus")
-                }
+            .onDelete { indexSet in
+                projectStore.projects.remove(atOffsets: indexSet)
             }
-            .sheet(isPresented: $showingAddProject) {
-                AddProjectView(isPresented: $showingAddProject, projectStore: projectStore)
+        }
+        .navigationTitle("项目")
+        .toolbar {
+            Button {
+                showingAddProject = true
+            } label: {
+                Image(systemName: "plus")
             }
+        }
+        .sheet(isPresented: $showingAddProject) {
+            AddProjectView(isPresented: $showingAddProject)
+                .environmentObject(projectStore)
         }
     }
 }

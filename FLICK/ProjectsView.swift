@@ -4,7 +4,8 @@ struct ProjectsView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
     @State private var searchText = ""
-    @State private var selectedStatus: ProjectStatus = .all
+    @State private var selectedStatus: Project.Status = .all
+    @State private var projectToDelete: Project? = nil
     
     var body: some View {
         NavigationStack {
@@ -43,6 +44,13 @@ struct ProjectsView: View {
                                     ProjectCard(project: project)
                                 }
                                 .buttonStyle(PlainButtonStyle())
+                                .contextMenu {  // 使用长按菜单替代滑动
+                                    Button(role: .destructive) {
+                                        projectToDelete = project
+                                    } label: {
+                                        Label("删除项目", systemImage: "trash")
+                                    }
+                                }
                             }
                         }
                     }
@@ -63,7 +71,28 @@ struct ProjectsView: View {
                 }
             }
             .sheet(isPresented: $showingAddProject) {
-                AddProjectView(isPresented: $showingAddProject, projectStore: projectStore)
+                AddProjectView(isPresented: $showingAddProject)
+                    .environmentObject(projectStore)
+            }
+            .alert("确认删除", isPresented: .init(
+                get: { projectToDelete != nil },
+                set: { if !$0 { projectToDelete = nil } }
+            )) {
+                Button("取消", role: .cancel) {
+                    projectToDelete = nil
+                }
+                Button("删除", role: .destructive) {
+                    if let project = projectToDelete {
+                        withAnimation {
+                            projectStore.deleteProject(project)
+                        }
+                    }
+                    projectToDelete = nil
+                }
+            } message: {
+                if let project = projectToDelete {
+                    Text("确定要删除项目「\(project.name)」吗？此操作不可撤销。")
+                }
             }
         }
     }
@@ -186,37 +215,6 @@ struct ProjectCard: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
-    }
-}
-
-// 状态标签组件
-struct StatusBadge: View {
-    let status: ProjectStatus
-    
-    var statusInfo: (text: String, color: Color) {
-        switch status {
-        case .preProduction:
-            return ("筹备中", .orange)
-        case .production:
-            return ("拍摄中", .blue)
-        case .postProduction:
-            return ("后期中", .purple)
-        case .completed:
-            return ("已完成", .green)
-        case .cancelled:
-            return ("已取消", .red)
-        }
-    }
-    
-    var body: some View {
-        Text(statusInfo.text)
-            .font(.caption)
-            .fontWeight(.medium)
-            .foregroundColor(statusInfo.color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(statusInfo.color.opacity(0.1))
-            .clipShape(Capsule())
     }
 }
 

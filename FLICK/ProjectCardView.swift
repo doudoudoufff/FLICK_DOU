@@ -1,94 +1,81 @@
 import SwiftUI
 
 struct ProjectCardView: View {
-    @Binding var project: Project
+    let project: Project
     
     var body: some View {
-        NavigationLink(destination: ProjectDetailView(project: $project)) {
-            VStack(alignment: .leading, spacing: 0) {
-                // 顶部状态条
-                Rectangle()
+        VStack(alignment: .leading, spacing: 12) {
+            // 项目名称和状态
+            HStack {
+                Circle()
                     .fill(project.color)
-                    .frame(height: 4)
+                    .frame(width: 12, height: 12)
+                Text(project.name)
+                    .font(.headline)
+                Spacer()
+                StatusBadge(status: project.status)
+            }
+            
+            // 项目信息
+            HStack {
+                // 导演信息
+                if !project.director.isEmpty {
+                    Label(project.director, systemImage: "megaphone")
+                }
                 
-                // 主要内容
-                VStack(alignment: .leading, spacing: 12) {
-                    // 项目名称和日期
-                    HStack {
-                        Text(project.name)
-                            .font(.system(size: 18, weight: .medium))
-                        
-                        Spacer()
-                        
-                        Text(project.startDate.formatted(date: .abbreviated, time: .omitted))
-                            .font(.caption)
+                // 制片信息
+                if !project.producer.isEmpty {
+                    if !project.director.isEmpty {
+                        Text("·")
                             .foregroundColor(.secondary)
                     }
-                    
-                    // 分割线
-                    Divider()
-                    
-                    // 导演和制片信息
-                    HStack {
-                        // 导演信息
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("导演")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(project.director)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // 制片信息
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("制片")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(project.producer)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                    Label(project.producer, systemImage: "person")
                 }
-                .padding(16)
+                
+                Spacer()
+                
+                // 时间始终靠右显示
+                Text(project.startDate.chineseStyleShortString())
             }
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .font(.subheadline)
+            .foregroundColor(.secondary)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
     }
+}
+
+// 状态标签组件
+struct StatusBadge: View {
+    let status: Project.Status  // 使用完整的类型名称
     
-    private var statusColor: Color {
-        switch project.status {
-        case .preProduction:
-            return .blue
-        case .production:
-            return .orange
-        case .postProduction:
-            return .purple
-        case .completed:
-            return .green
-        case .cancelled:
-            return .red
-        }
-    }
-    
-    private func statusText(_ status: ProjectStatus) -> String {
+    var statusInfo: (text: String, color: Color) {
         switch status {
         case .preProduction:
-            return "准备中"
+            return ("筹备中", .orange)
         case .production:
-            return "拍摄中"
+            return ("拍摄中", .blue)
         case .postProduction:
-            return "后期中"
+            return ("后期中", .purple)
         case .completed:
-            return "已完成"
+            return ("已完成", .green)
         case .cancelled:
-            return "已取消"
+            return ("已取消", .red)
         }
     }
-} 
+    
+    var body: some View {
+        Text(statusInfo.text)
+            .font(.caption)
+            .fontWeight(.medium)
+            .foregroundColor(statusInfo.color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(statusInfo.color.opacity(0.1))
+            .clipShape(Capsule())
+    }
+}
+
+

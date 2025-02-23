@@ -2,79 +2,37 @@ import SwiftUI
 
 struct AddTaskView: View {
     @Binding var isPresented: Bool
-    let selectedDate: Date
-    let projectStore: ProjectStore
+    @Binding var project: Project
+    @EnvironmentObject var projectStore: ProjectStore
     
     @State private var title = ""
     @State private var assignee = ""
     @State private var dueDate = Date()
-    @State private var selectedProject: Project?
     @State private var reminder: ProjectTask.TaskReminder?
-    @State private var reminderHour: Double = 9 // 默认9点
-    
-    init(isPresented: Binding<Bool>, project: Project) {
-        let today = Date()
-        self._isPresented = isPresented
-        self.selectedDate = today
-        let store = ProjectStore(context: PersistenceController.shared.container.viewContext)
-        store.projects = [project]
-        self.projectStore = store
-        self._selectedProject = State(initialValue: project)
-        self._dueDate = State(initialValue: today)
-    }
-    
-    init(isPresented: Binding<Bool>, selectedDate: Date, projectStore: ProjectStore) {
-        self._isPresented = isPresented
-        self.selectedDate = selectedDate
-        self.projectStore = projectStore
-        self._dueDate = State(initialValue: selectedDate)
-    }
+    @State private var reminderHour: Double = 9
     
     var body: some View {
         NavigationView {
             Form {
-                // 项目选择
-                Picker("选择项目", selection: $selectedProject) {
-                    ForEach(projectStore.projects) { project in
-                        Text(project.name).tag(project as Project?)
-                    }
-                }
-                
-                Section {
+                Section(content: {
                     TextField("任务内容", text: $title)
                         .focused($titleFieldFocused)
-                } header: {
+                }, header: {
                     Text("必填信息")
-                }
+                })
                 
-                Section {
+                Section(content: {
                     TextField("负责人员", text: $assignee)
                     DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
                         .environment(\.locale, Locale(identifier: "zh_CN"))
-                } header: {
+                }, header: {
                     Text("任务详情")
-                }
+                })
                 
-                Section("提醒设置") {
-                    Picker("提醒频率", selection: $reminder) {
-                        Text("不提醒").tag(nil as ProjectTask.TaskReminder?)
-                        ForEach(ProjectTask.TaskReminder.allCases, id: \.self) { reminder in
-                            Text(reminder.rawValue).tag(reminder as ProjectTask.TaskReminder?)
-                        }
-                    }
-                    
-                    if reminder != nil {
-                        VStack(alignment: .leading) {
-                            HStack {
-                                Text("提醒时间")
-                                Spacer()
-                                Text("\(Int(reminderHour)):00")
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Slider(value: $reminderHour, in: 0...23, step: 1)
-                        }
-                    }
+                Section {
+                    reminderSection
+                } header: {
+                    Text("提醒设置")
                 }
             }
             .navigationTitle("添加任务")
@@ -87,10 +45,18 @@ struct AddTaskView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("添加") {
-                        addTask()
+                    Button("保存") {
+                        let task = ProjectTask(
+                            title: title,
+                            assignee: assignee,
+                            dueDate: dueDate,
+                            reminder: reminder,
+                            reminderHour: Int(reminderHour)
+                        )
+                        projectStore.addTask(task, to: project)
+                        isPresented = false
                     }
-                    .disabled(selectedProject == nil || title.isEmpty || assignee.isEmpty)
+                    .disabled(title.isEmpty || assignee.isEmpty)
                 }
             }
         }
@@ -99,24 +65,30 @@ struct AddTaskView: View {
         }
     }
     
-    private func addTask() {
-        guard let project = selectedProject,
-              let projectIndex = projectStore.projects.firstIndex(where: { $0.id == project.id }) else { return }
+    @ViewBuilder
+    private var reminderSection: some View {
+        Picker("提醒频率", selection: $reminder) {
+            Text("不提醒").tag(ProjectTask.TaskReminder?.none)
+            ForEach(ProjectTask.TaskReminder.allCases, id: \.self) { reminder in
+                Text(reminder.rawValue).tag(ProjectTask.TaskReminder?.some(reminder))
+            }
+        }
         
-        let task = ProjectTask(
-            title: title,
-            assignee: assignee,
-            dueDate: dueDate,
-            isCompleted: false,
-            reminder: reminder,
-            reminderHour: Int(reminderHour)
-        )
-        
-        var updatedProject = project
-        updatedProject.tasks.append(task)
-        projectStore.projects[projectIndex] = updatedProject
-        
-        isPresented = false
+        if reminder != nil {
+            VStack(alignment: .leading) {
+                HStack {
+                    Text("提醒时间")
+                    Spacer()
+                    Text("\(Int(reminderHour)):00")
+                        .foregroundColor(.secondary)
+                }
+                Slider(
+                    value: $reminderHour,
+                    in: 0.0...23.0,
+                    step: 1.0
+                )
+            }
+        }
     }
     
     @FocusState private var titleFieldFocused: Bool
@@ -125,7 +97,7 @@ struct AddTaskView: View {
 #Preview {
     AddTaskView(
         isPresented: .constant(true),
-        selectedDate: Date(),
-        projectStore: ProjectStore(context: PersistenceController.preview.container.viewContext)
+        project: .constant(Project(name: "测试项目"))
     )
+    .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
 } 

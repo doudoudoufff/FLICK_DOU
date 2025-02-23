@@ -8,6 +8,7 @@ struct ProjectDetailView: View {
     @State private var showingAddTask = false
     @State private var showingLocationScoutingView = false
     @State private var showingBaiBai = false
+    @State private var editingTask: ProjectTask? = nil
     
     // 添加进度计算属性
     private var taskProgress: Double {
@@ -95,25 +96,31 @@ struct ProjectDetailView: View {
                             .padding(.vertical, 20)
                     } else {
                         List {
-                            ForEach($project.tasks) { $task in
-                                TaskRow(
-                                    task: $task,
-                                    project: project,
-                                    onDelete: {
-                                        withAnimation {
-                                            if let index = project.tasks.firstIndex(where: { $0.id == task.id }) {
-                                                project.tasks.remove(at: index)
+                            ForEach(project.tasks) { task in
+                                TaskRow(task: task, project: project)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            withAnimation {
+                                                projectStore.deleteTask(task, from: project)
                                             }
+                                        } label: {
+                                            Label("删除", systemImage: "trash")
                                         }
+                                        
+                                        Button {
+                                            editingTask = task
+                                        } label: {
+                                            Label("编辑", systemImage: "pencil")
+                                        }
+                                        .tint(.blue)
                                     }
-                                )
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
                             }
                         }
                         .listStyle(.plain)
-                        .frame(height: CGFloat(project.tasks.count) * 110)
+                        .frame(height: CGFloat(project.tasks.count) * 100) // 设置固定高度
                         .background(Color.clear)
                         .scrollContentBackground(.hidden)
                     }
@@ -199,7 +206,23 @@ struct ProjectDetailView: View {
         .sheet(isPresented: $showingAddTask) {
             AddTaskView(
                 isPresented: $showingAddTask,
-                project: project
+                project: $project
+            )
+        }
+        .sheet(item: $editingTask) { task in
+            EditTaskView(
+                task: Binding(
+                    get: { task },
+                    set: { newTask in
+                        projectStore.updateTask(newTask, in: project)
+                        editingTask = nil
+                    }
+                ),
+                project: project,
+                isPresented: Binding(
+                    get: { editingTask != nil },
+                    set: { if !$0 { editingTask = nil } }
+                )
             )
         }
         .navigationDestination(isPresented: $showingBaiBai) {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct EditProjectView: View {
+    @EnvironmentObject var projectStore: ProjectStore
     @Binding var project: Project
     @Binding var isPresented: Bool
     
@@ -8,7 +9,7 @@ struct EditProjectView: View {
     @State private var director: String
     @State private var producer: String
     @State private var startDate: Date
-    @State private var status: ProjectStatus
+    @State private var status: Project.Status
     @State private var selectedColor: Color
     
     init(project: Binding<Project>, isPresented: Binding<Bool>) {
@@ -26,23 +27,23 @@ struct EditProjectView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section("基本信息") {
+                Section(header: Text("基本信息")) {
                     TextField("项目名称", text: $name)
                     TextField("导演", text: $director)
                     TextField("制片", text: $producer)
                 }
                 
-                Section("项目状态") {
+                Section(header: Text("项目状态")) {
                     DatePicker("开始日期", selection: $startDate, displayedComponents: .date)
-                    Picker("项目状态", selection: $status) {
-                        ForEach(ProjectStatus.allCases, id: \.self) { status in
+                    Picker("状态", selection: $status) {
+                        ForEach(Project.Status.allCases, id: \.self) { status in
                             Text(status.rawValue).tag(status)
                         }
                     }
                 }
                 
-                Section("外观") {
-                    ColorPicker("项目颜色", selection: $selectedColor)
+                Section(header: Text("项目颜色")) {
+                    ColorPicker("选择颜色", selection: $selectedColor)
                 }
             }
             .navigationTitle("编辑项目")
@@ -56,12 +57,26 @@ struct EditProjectView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        project.name = name
-                        project.director = director
-                        project.producer = producer
-                        project.startDate = startDate
-                        project.status = status
-                        project.color = selectedColor
+                        let updatedProject = Project(
+                            id: project.id,  // 保持原有 ID
+                            name: name,
+                            director: director,
+                            producer: producer,
+                            startDate: startDate,
+                            status: status,
+                            color: selectedColor,
+                            tasks: project.tasks,  // 保持原有任务
+                            invoices: project.invoices,  // 保持原有发票
+                            locations: project.locations,  // 保持原有位置
+                            accounts: project.accounts,  // 保持原有账户
+                            isLocationScoutingEnabled: project.isLocationScoutingEnabled
+                        )
+                        
+                        // 更新项目
+                        projectStore.updateProject(updatedProject)
+                        
+                        // 更新绑定
+                        project = updatedProject
                         
                         isPresented = false
                     }

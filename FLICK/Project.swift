@@ -2,58 +2,56 @@ import Foundation
 import SwiftUI
 import CoreData
 
-// 保持在外部，但确保正确的访问级别
-public enum ProjectStatus: String, Codable, CaseIterable {
-    case preProduction = "筹备"
-    case production = "拍摄"
-    case postProduction = "后期"
-    case completed = "完成"
-    case cancelled = "取消"
-    
-    public static var all: Self { .preProduction }  // 用于过滤器
-}
-
 struct Project: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
     var director: String
     var producer: String
     var startDate: Date
-    var endDate: Date?
-    var status: ProjectStatus  // 直接使用 ProjectStatus，不需要 Project.ProjectStatus
+    var status: Status
     var color: Color
     var tasks: [ProjectTask]
     var invoices: [Invoice]
+    var locations: [Location]  // 确保 locations 在 accounts 之前
     var accounts: [Account]
     var isLocationScoutingEnabled: Bool
-    var locations: [Location] = []  // 只保留 locations
     
-    init(id: UUID = UUID(),
-         name: String,
-         director: String = "",
-         producer: String = "",
-         startDate: Date = Date(),
-         endDate: Date? = nil,
-         status: ProjectStatus = .preProduction,
-         color: Color = .blue,
-         tasks: [ProjectTask] = [],
-         invoices: [Invoice] = [],
-         accounts: [Account] = [],
-         isLocationScoutingEnabled: Bool = false,
-         locations: [Location] = []) {
+    public enum Status: String, Codable, CaseIterable {
+        case preProduction = "前期"
+        case production = "拍摄"
+        case postProduction = "后期"
+        case completed = "完成"
+        case cancelled = "取消"
+        
+        public static var all: Self { .preProduction }  // 用于过滤器
+    }
+    
+    init(
+        id: UUID = UUID(),
+        name: String,
+        director: String = "",
+        producer: String = "",
+        startDate: Date = Date(),
+        status: Status = .preProduction,
+        color: Color = .blue,
+        tasks: [ProjectTask] = [],
+        invoices: [Invoice] = [],
+        locations: [Location] = [],  // 确保 locations 在 accounts 之前
+        accounts: [Account] = [],
+        isLocationScoutingEnabled: Bool = false
+    ) {
         self.id = id
         self.name = name
         self.director = director
         self.producer = producer
         self.startDate = startDate
-        self.endDate = endDate
         self.status = status
         self.color = color
         self.tasks = tasks
         self.invoices = invoices
+        self.locations = locations  // 确保顺序一致
         self.accounts = accounts
         self.isLocationScoutingEnabled = isLocationScoutingEnabled
-        self.locations = locations
     }
     
     func hash(into hasher: inout Hasher) {
@@ -65,9 +63,9 @@ struct Project: Identifiable, Codable, Hashable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, director, producer, startDate, endDate, status, 
-             colorHex, tasks, invoices, accounts, isLocationScoutingEnabled, 
-             locations
+        case id, name, director, producer, startDate, status
+        case color, tasks, invoices, locations, accounts
+        case isLocationScoutingEnabled
     }
     
     init(from decoder: Decoder) throws {
@@ -77,17 +75,13 @@ struct Project: Identifiable, Codable, Hashable {
         director = try container.decode(String.self, forKey: .director)
         producer = try container.decode(String.self, forKey: .producer)
         startDate = try container.decode(Date.self, forKey: .startDate)
-        endDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
-        status = try container.decode(ProjectStatus.self, forKey: .status)
+        status = try container.decode(Status.self, forKey: .status)
+        color = try container.decode(Color.self, forKey: .color)
         tasks = try container.decode([ProjectTask].self, forKey: .tasks)
         invoices = try container.decode([Invoice].self, forKey: .invoices)
+        locations = try container.decode([Location].self, forKey: .locations)
         accounts = try container.decode([Account].self, forKey: .accounts)
         isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)
-        locations = try container.decode([Location].self, forKey: .locations)
-        
-        // 解码颜色
-        let colorHex = try container.decode(UInt.self, forKey: .colorHex)
-        color = Color(hex: colorHex) ?? .blue
     }
     
     func encode(to encoder: Encoder) throws {
@@ -97,17 +91,13 @@ struct Project: Identifiable, Codable, Hashable {
         try container.encode(director, forKey: .director)
         try container.encode(producer, forKey: .producer)
         try container.encode(startDate, forKey: .startDate)
-        try container.encodeIfPresent(endDate, forKey: .endDate)
         try container.encode(status, forKey: .status)
+        try container.encode(color, forKey: .color)
         try container.encode(tasks, forKey: .tasks)
         try container.encode(invoices, forKey: .invoices)
+        try container.encode(locations, forKey: .locations)
         try container.encode(accounts, forKey: .accounts)
         try container.encode(isLocationScoutingEnabled, forKey: .isLocationScoutingEnabled)
-        try container.encode(locations, forKey: .locations)
-        
-        // 编码颜色
-        let colorHex = color.toHex() ?? 0x0000FF // 默认蓝色
-        try container.encode(colorHex, forKey: .colorHex)
     }
     
     func toEntity(context: NSManagedObjectContext) -> ProjectEntity {
@@ -118,13 +108,8 @@ struct Project: Identifiable, Codable, Hashable {
         entity.producer = producer
         entity.startDate = startDate
         entity.status = status.rawValue
-        
-        // 转换 Color 为 Data
-        if let colorData = try? NSKeyedArchiver.archivedData(withRootObject: UIColor(color), requiringSecureCoding: false) {
-            entity.color = colorData
-        }
-        
-        // 关系会在 ProjectStore 中处理
+        entity.color = color.toData()
+        entity.isLocationScoutingEnabled = isLocationScoutingEnabled
         return entity
     }
 }

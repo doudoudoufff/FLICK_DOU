@@ -86,8 +86,10 @@ struct AddProjectView: View {
 }
 
 #Preview {
-    AddProjectView(
-        isPresented: .constant(true),
-        projectStore: ProjectStore()
-    )
+    NavigationStack {
+        AddProjectView(
+            isPresented: .constant(true),
+            projectStore: ProjectStore(context: PersistenceController.preview.container.viewContext)
+        )
+    }
 } 

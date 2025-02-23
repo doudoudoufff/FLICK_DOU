@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ProjectDetailView: View {
     @Binding var project: Project
+    @EnvironmentObject var projectStore: ProjectStore
+    @Environment(\.managedObjectContext) private var context
     @State private var showingEditProject = false
     @State private var showingAddTask = false
     @State private var showingLocationScoutingView = false
@@ -141,6 +143,7 @@ struct ProjectDetailView: View {
                         if project.isLocationScoutingEnabled {
                             NavigationLink {
                                 LocationScoutingView(project: $project)
+                                    .environmentObject(projectStore)
                             } label: {
                                 Label("堪景", systemImage: "camera.viewfinder")
                             }
@@ -191,7 +194,10 @@ struct ProjectDetailView: View {
             EditProjectView(isPresented: $showingEditProject, project: $project)
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(isPresented: $showingAddTask, selectedDate: Date(), projectStore: ProjectStore(projects: [project]))
+           AddTaskView(
+                isPresented: $showingAddTask,
+                project: project
+            )
         }
         .navigationDestination(isPresented: $showingBaiBai) {
             BaiBaiView(projectColor: project.color)
@@ -212,6 +218,14 @@ struct DetailRow: View {
             Text(content)
         }
         .font(.subheadline)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        ProjectDetailView(project: .constant(Project(name: "测试项目")))
+            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }
 }
 

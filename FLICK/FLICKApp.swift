@@ -9,12 +9,13 @@ import SwiftUI
 
 @main
 struct FLICKApp: App {
-    @StateObject private var projectStore = ProjectStore()
+    let persistenceController = PersistenceController.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(projectStore)
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environmentObject(ProjectStore(context: persistenceController.container.viewContext))
                 .onAppear {
                     NotificationManager.shared.requestAuthorization()
                 }

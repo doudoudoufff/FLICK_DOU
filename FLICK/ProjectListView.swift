@@ -63,5 +63,5 @@ struct ProjectRowView: View {
 
 #Preview {
     ProjectListView()
-        .environmentObject(ProjectStore())
+        .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
 } 

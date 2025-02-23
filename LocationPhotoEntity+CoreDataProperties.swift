@@ -23,6 +23,20 @@ extension LocationPhotoEntity {
     @NSManaged public var note: String?
     @NSManaged public var location: LocationEntity?
 
+     func toModel() -> LocationPhoto? {
+        guard let imageData = self.imageData,
+              let date = self.date else { return nil }
+        
+        return LocationPhoto(
+            id: id ?? UUID(),
+            imageData: imageData,
+            date: date,
+            tags: [],  // 如果需要处理 tags，可以在这里添加
+            weather: weather,
+            note: note
+        )
+    }
+
 }
 
 extension LocationPhotoEntity : Identifiable {

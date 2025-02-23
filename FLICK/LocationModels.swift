@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 // 堪景场地类型
 enum LocationType: String, Codable, CaseIterable {
@@ -36,7 +37,8 @@ struct Location: Identifiable, Codable {
          contactName: String? = nil,
          contactPhone: String? = nil,
          photos: [LocationPhoto] = [],
-         notes: String? = nil) {
+         notes: String? = nil,
+         date: Date = Date()) {
         self.id = id
         self.name = name
         self.type = type
@@ -46,7 +48,26 @@ struct Location: Identifiable, Codable {
         self.contactPhone = contactPhone
         self.photos = photos
         self.notes = notes
-        self.date = Date()
+        self.date = date
+    }
+    
+    func toEntity(context: NSManagedObjectContext) -> LocationEntity {
+        let entity = LocationEntity(context: context)
+        entity.id = id
+        entity.name = name
+        entity.type = type.rawValue
+        entity.status = status.rawValue
+        entity.address = address
+        entity.contactName = contactName
+        entity.contactPhone = contactPhone
+        entity.notes = notes
+        entity.date = date
+        
+        // 转换照片
+        let photoEntities = photos.map { $0.toEntity(context: context) }
+        entity.photos = NSSet(array: photoEntities)
+        
+        return entity
     }
 }
 
@@ -73,5 +94,30 @@ struct LocationPhoto: Identifiable, Codable {
         self.note = note
     }
     
+    // 添加新的初始化方法，用于从 CoreData 实体转换
+    init(id: UUID = UUID(),
+         imageData: Data,
+         date: Date,
+         tags: Set<String> = [],
+         weather: String? = nil,
+         note: String? = nil) {
+        self.id = id
+        self.imageData = imageData
+        self.date = date
+        self.tags = tags
+        self.weather = weather
+        self.note = note
+    }
+    
     static let placeholder = UIImage(systemName: "photo.fill")!
+    
+    func toEntity(context: NSManagedObjectContext) -> LocationPhotoEntity {
+        let entity = LocationPhotoEntity(context: context)
+        entity.id = id
+        entity.imageData = imageData
+        entity.date = date
+        entity.weather = weather
+        entity.note = note
+        return entity
+    }
 } 

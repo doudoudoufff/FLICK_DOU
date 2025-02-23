@@ -4,6 +4,7 @@ import FLICK
 
 struct LocationScoutingView: View {
     @Binding var project: Project
+    @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddLocation = false
     @State private var selectedFilter: LocationType?
     @State private var searchText = ""
@@ -113,11 +114,17 @@ struct LocationScoutingView: View {
             AddLocationView(project: $project)
         }
     }
+    
+    func addLocation(_ location: Location) {
+        project.locations.append(location)
+        projectStore.saveProjects()
+    }
 }
 
 #Preview {
     NavigationStack {
         LocationScoutingView(project: .constant(Project(name: "测试项目")))
+            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
     }
 }
 

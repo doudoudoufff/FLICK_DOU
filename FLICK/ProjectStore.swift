@@ -1,26 +1,54 @@
 import SwiftUI
+import CoreData
 
 class ProjectStore: ObservableObject {
     static var shared: ProjectStore!
     @Published var projects: [Project] = []
     @AppStorage("enableNotifications") private var enableNotifications: Bool = true
+    private let context: NSManagedObjectContext
     
-    init(projects: [Project] = []) {
-        self.projects = projects
+    init(context: NSManagedObjectContext) {
+        self.context = context
         ProjectStore.shared = self
-        loadProjects()  // 改为加载本地数据
+        loadProjects()
     }
     
-    // 从本地加载项目
-    func loadProjects() {
+    private func loadProjects() {
+        // 先尝试从 CoreData 加载
+        let fetchRequest: NSFetchRequest<LocationEntity> = LocationEntity.fetchRequest()
+        if let locations = try? context.fetch(fetchRequest) {
+            print("从 CoreData 加载到 \(locations.count) 个位置")
+            // TODO: 转换为 Project 模型
+        }
+        
+        // 临时：如果 CoreData 没有数据，从 UserDefaults 加载
         if let data = UserDefaults.standard.data(forKey: "savedProjects"),
            let decoded = try? JSONDecoder().decode([Project].self, from: data) {
             self.projects = decoded
         }
     }
     
-    // 保存到本地
-    private func saveProjects() {
+    func saveProjects() {
+        // 保存到 CoreData
+        for project in projects {
+            for location in project.locations {
+                let locationEntity = location.toEntity(context: context)
+                // 保存照片
+                for photo in location.photos {
+                    let photoEntity = photo.toEntity(context: context)
+                    photoEntity.location = locationEntity
+                }
+            }
+        }
+        
+        do {
+            try context.save()
+            print("成功保存到 CoreData")
+        } catch {
+            print("保存到 CoreData 失败: \(error)")
+        }
+        
+        // 临时：同时保存到 UserDefaults
         if let encoded = try? JSONEncoder().encode(projects) {
             UserDefaults.standard.set(encoded, forKey: "savedProjects")
         }
@@ -83,8 +111,21 @@ class ProjectStore: ObservableObject {
         }
     }
     
-    static func withTestData() -> ProjectStore {
-        let store = ProjectStore()
+    // 添加 CoreData 相关方法
+    func saveLocation(_ location: Location, for project: Project) {
+        let locationEntity = location.toEntity(context: context)
+        // 保存到 CoreData
+        try? context.save()
+        // 更新项目
+        if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[index].locations.append(location)
+        }
+    }
+    
+    // 其他 CoreData 相关方法...
+    
+    static func withTestData(context: NSManagedObjectContext) -> ProjectStore {
+        let store = ProjectStore(context: context)
         
         // 测试项目1：网剧
         let webSeries = Project(

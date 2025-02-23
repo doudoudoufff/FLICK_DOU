@@ -27,6 +27,23 @@ extension LocationEntity {
     @NSManaged public var date: Date?
     @NSManaged public var photos: NSSet?
 
+    func toModel() -> Location {
+        let photosArray = (photos?.allObjects as? [LocationPhotoEntity])?.compactMap { $0.toModel() } ?? []
+        
+        return Location(
+            id: id ?? UUID(),
+            name: name ?? "",
+            type: LocationType(rawValue: type ?? "") ?? .exterior,
+            status: LocationStatus(rawValue: status ?? "") ?? .pending,
+            address: address ?? "",
+            contactName: contactName,
+            contactPhone: contactPhone,
+            photos: photosArray,
+            notes: notes,
+            date: date ?? Date()
+        )
+    }
+
 }
 
 // MARK: Generated accessors for photos

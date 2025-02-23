@@ -16,7 +16,7 @@ struct AddTaskView: View {
         let today = Date()
         self._isPresented = isPresented
         self.selectedDate = today
-        var store = ProjectStore()
+        let store = ProjectStore(context: PersistenceController.shared.container.viewContext)
         store.projects = [project]
         self.projectStore = store
         self._selectedProject = State(initialValue: project)
@@ -120,4 +120,12 @@ struct AddTaskView: View {
     }
     
     @FocusState private var titleFieldFocused: Bool
+}
+
+#Preview {
+    AddTaskView(
+        isPresented: .constant(true),
+        selectedDate: Date(),
+        projectStore: ProjectStore(context: PersistenceController.preview.container.viewContext)
+    )
 } 

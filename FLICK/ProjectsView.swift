@@ -238,5 +238,5 @@ struct InfoRow: View {
 
 #Preview {
     ProjectsView()
-        .environmentObject(ProjectStore())
+        .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
 } 

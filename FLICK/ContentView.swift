@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var projectStore = ProjectStore.withTestData()
+    @StateObject private var projectStore = ProjectStore.withTestData(context: PersistenceController.shared.container.viewContext)
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     
     var body: some View {
@@ -25,4 +25,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }

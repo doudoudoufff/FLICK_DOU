@@ -224,7 +224,7 @@ struct DailyTaskRow: View {
 #Preview {
     NavigationStack {
         OverviewView()
-            .environmentObject(ProjectStore())
+            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
     }
 } 
 

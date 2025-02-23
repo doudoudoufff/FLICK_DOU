@@ -8,6 +8,8 @@ struct BaiBaiView: View {
     @State private var lunarInfo: LunarInfo?
     @State private var isLoading = false
     @State private var error: String?
+    @State private var bowAngle: Double = 0  // 鞠躬角度
+    @State private var isAnimating = false   // 动画状态
     
     // 祈福语录库
     private let blessings = [
@@ -79,13 +81,21 @@ struct BaiBaiView: View {
             VStack(spacing: 20) {
                 // 拜拜按钮
                 Button {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
-                        rotation += 360
+                    // 执行鞠躬动画
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        bowAngle = 30  // 向前倾斜30度
                         showingBlessing = false
                     }
                     
-                    // 短暂延迟后显示新的祈福语
+                    // 回弹动画
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            bowAngle = 0  // 回到原位
+                        }
+                    }
+                    
+                    // 显示祈福语
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         currentBlessing = blessings.randomElement()
                         withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
                             showingBlessing = true
@@ -111,7 +121,13 @@ struct BaiBaiView: View {
                             .fontWeight(.bold)
                             .foregroundStyle(.white)
                     }
-                    .rotationEffect(.degrees(rotation))
+                    .rotation3DEffect(
+                        .degrees(bowAngle),
+                        axis: (x: 1, y: 0, z: 0),  // 沿X轴旋转，实现前倾效果
+                        anchor: .center,
+                        anchorZ: 0,
+                        perspective: 1
+                    )
                 }
                 
                 // 祈福语显示区域

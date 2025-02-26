@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct EditAccountView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var projectStore: ProjectStore
     @Binding var isPresented: Bool
     @Binding var project: Project
     let account: Account
@@ -14,6 +16,7 @@ struct EditAccountView: View {
     @State private var contactName: String
     @State private var contactPhone: String
     @State private var notes: String
+    @State private var showingDeleteAlert = false
     
     init(isPresented: Binding<Bool>, project: Binding<Project>, account: Account) {
         self._isPresented = isPresented
@@ -56,7 +59,7 @@ struct EditAccountView: View {
                 Section("联系方式") {
                     TextField("联系人", text: $contactName)
                     TextField("联系电话", text: $contactPhone)
-                        .keyboardType(.numberPad)
+                        .keyboardType(.phonePad)
                 }
                 
                 Section("备注") {
@@ -66,7 +69,7 @@ struct EditAccountView: View {
                 
                 Section {
                     Button(role: .destructive) {
-                        deleteAccount()
+                        showingDeleteAlert = true
                     } label: {
                         Text("删除账户")
                             .frame(maxWidth: .infinity)
@@ -81,9 +84,32 @@ struct EditAccountView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") { updateAccount() }
-                        .disabled(isFormInvalid)
+                    Button("保存") {
+                        let updatedAccount = Account(
+                            id: account.id,
+                            name: name,
+                            type: type,
+                            bankName: bankName,
+                            bankBranch: bankBranch,
+                            bankAccount: bankAccount,
+                            contactName: contactName,
+                            contactPhone: contactPhone,
+                            notes: notes.isEmpty ? nil : notes
+                        )
+                        projectStore.updateAccount(updatedAccount, in: project)
+                        isPresented = false
+                    }
+                    .disabled(isFormInvalid)
                 }
+            }
+            .alert("确认删除", isPresented: $showingDeleteAlert) {
+                Button("取消", role: .cancel) {}
+                Button("删除", role: .destructive) {
+                    projectStore.deleteAccount(account, from: project)
+                    isPresented = false
+                }
+            } message: {
+                Text("确定要删除这个账户吗？此操作不可撤销。")
             }
         }
     }
@@ -95,33 +121,5 @@ struct EditAccountView: View {
         bankAccount.isEmpty ||
         contactName.isEmpty ||
         contactPhone.isEmpty
-    }
-    
-    private func updateAccount() {
-        let updatedAccount = Account(
-            id: account.id,
-            name: name,
-            type: type,
-            bankName: bankName,
-            bankBranch: bankBranch,
-            bankAccount: bankAccount,
-            idNumber: idNumber.isEmpty ? nil : idNumber,
-            contactName: contactName,
-            contactPhone: contactPhone,
-            notes: notes.isEmpty ? nil : notes
-        )
-        
-        if let index = project.accounts.firstIndex(where: { $0.id == account.id }) {
-            project.accounts[index] = updatedAccount
-        }
-        
-        isPresented = false
-    }
-    
-    private func deleteAccount() {
-        if let index = project.accounts.firstIndex(where: { $0.id == account.id }) {
-            project.accounts.remove(at: index)
-        }
-        isPresented = false
     }
 } 

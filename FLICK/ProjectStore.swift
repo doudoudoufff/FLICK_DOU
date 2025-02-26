@@ -19,18 +19,17 @@ class ProjectStore: ObservableObject {
         
         do {
             let projectEntities = try context.fetch(request)
-            var uniqueProjects: [UUID: Project] = [:]
-            
-            projectEntities.forEach { entity in
-                // 使用可选绑定
-                if let project = Project.fromEntity(entity) {
-                    uniqueProjects[project.id] = project
-                }
+            projects = projectEntities.compactMap { entity -> Project? in
+                guard let project = Project.fromEntity(entity) else { return nil }
+                
+                // 加载账户
+                let accounts = (entity.accounts?.allObjects as? [AccountEntity] ?? [])
+                    .compactMap { Account.fromEntity($0) }
+                var updatedProject = project
+                updatedProject.accounts = accounts
+                
+                return updatedProject
             }
-            
-            // 转换为数组并排序
-            projects = Array(uniqueProjects.values)
-                .sorted { $0.startDate > $1.startDate }
         } catch {
             print("加载项目失败: \(error)")
         }
@@ -494,6 +493,185 @@ class ProjectStore: ObservableObject {
         } catch {
             print("发票删除失败：\(error)")
         }
+    }
+    
+    // 删除账户
+    func deleteAccount(_ account: Account, from project: Project) {
+        print("========== 开始删除账户 ==========")
+        print("账户名称: \(account.name)")
+        print("账户ID: \(account.id)")
+        print("项目名称: \(project.name)")
+        print("项目ID: \(project.id)")
+        
+        // 1. 首先获取所有 AccountEntity
+        let fetchRequest: NSFetchRequest<AccountEntity> = AccountEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@ AND project.id == %@", account.id as CVarArg, project.id as CVarArg)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            if let accountEntity = results.first {
+                // 2. 删除找到的实体
+                context.delete(accountEntity)
+                try context.save()
+                print("✓ CoreData 删除成功")
+                
+                // 3. 更新内存中的项目数据
+                if let index = projects.firstIndex(where: { $0.id == project.id }) {
+                    let oldCount = projects[index].accounts.count
+                    projects[index].accounts.removeAll { $0.id == account.id }
+                    let newCount = projects[index].accounts.count
+                    print("账户数量变化: \(oldCount) -> \(newCount)")
+                    
+                    // 4. 确保项目数据也被更新
+                    let updatedProject = projects[index]
+                    DispatchQueue.main.async {
+                        self.projects[index] = updatedProject
+                        self.objectWillChange.send()
+                        print("✓ 内存数据更新完成")
+                    }
+                } else {
+                    print("❌ 找不到对应的项目")
+                }
+            } else {
+                print("❌ 错误：找不到账户实体")
+            }
+        } catch {
+            print("❌ 删除失败：\(error)")
+        }
+        print("================================")
+    }
+    
+    // 添加账户
+    func addAccount(_ account: Account, to project: Project) {
+        print("========== 开始添加账户 ==========")
+        print("账户信息:")
+        print("- ID: \(account.id)")
+        print("- 名称: \(account.name)")
+        print("- 类型: \(account.type.rawValue)")
+        print("- 开户行: \(account.bankName)")
+        print("- 支行: \(account.bankBranch)")
+        print("- 账号: \(account.bankAccount)")
+        print("- 联系人: \(account.contactName)")
+        print("- 联系电话: \(account.contactPhone)")
+        if let notes = account.notes {
+            print("- 备注: \(notes)")
+        }
+        
+        print("\n所属项目:")
+        print("- 名称: \(project.name)")
+        print("- ID: \(project.id)")
+        
+        guard let projectEntity = project.fetchEntity(in: context) else {
+            print("❌ 错误：找不到项目实体")
+            return
+        }
+        
+        print("\n开始保存到 CoreData...")
+        
+        // 1. 创建 AccountEntity
+        let accountEntity = account.toEntity(context: context)
+        accountEntity.project = projectEntity  // 设置必需的关系
+        print("✓ 账户实体创建成功")
+        
+        do {
+            // 2. 保存到 CoreData
+            try context.save()
+            print("✓ CoreData 保存成功")
+            
+            // 3. 更新内存中的项目数据
+            if let index = projects.firstIndex(where: { $0.id == project.id }) {
+                let oldCount = projects[index].accounts.count
+                projects[index].accounts.append(account)
+                let newCount = projects[index].accounts.count
+                print("✓ 内存数据更新成功")
+                print("- 账户数量: \(oldCount) -> \(newCount)")
+                
+                // 4. 确保项目数据也被更新
+                let updatedProject = projects[index]
+                DispatchQueue.main.async {
+                    self.projects[index] = updatedProject
+                    self.objectWillChange.send()
+                    print("✓ 视图更新通知已发送")
+                }
+            } else {
+                print("❌ 错误：找不到对应的项目")
+            }
+        } catch {
+            print("❌ 保存账户失败:")
+            print("- 错误信息: \(error)")
+        }
+        print("================================")
+    }
+    
+    // 更新账户
+    func updateAccount(_ account: Account, in project: Project) {
+        print("========== 开始更新账户 ==========")
+        print("账户信息:")
+        print("- ID: \(account.id)")
+        print("- 名称: \(account.name)")
+        print("- 类型: \(account.type.rawValue)")
+        print("- 开户行: \(account.bankName)")
+        print("- 支行: \(account.bankBranch)")
+        print("- 账号: \(account.bankAccount)")
+        print("- 联系人: \(account.contactName)")
+        print("- 联系电话: \(account.contactPhone)")
+        if let notes = account.notes {
+            print("- 备注: \(notes)")
+        }
+        
+        print("\n所属项目:")
+        print("- 名称: \(project.name)")
+        print("- ID: \(project.id)")
+        
+        // 1. 更新 CoreData
+        guard let projectEntity = project.fetchEntity(in: context),
+              let accountEntity = projectEntity.accounts?
+                .first(where: { ($0 as? AccountEntity)?.id == account.id }) as? AccountEntity
+        else {
+            print("❌ 错误：找不到账户实体")
+            return
+        }
+        
+        print("\n开始更新 CoreData...")
+        
+        // 更新账户实体
+        accountEntity.name = account.name
+        accountEntity.type = account.type.rawValue
+        accountEntity.bankName = account.bankName
+        accountEntity.bankBranch = account.bankBranch
+        accountEntity.bankAccount = account.bankAccount
+        accountEntity.contactName = account.contactName
+        accountEntity.contactPhone = account.contactPhone
+        accountEntity.notes = account.notes
+        print("✓ 账户实体更新成功")
+        
+        do {
+            try context.save()
+            print("✓ CoreData 保存成功")
+            
+            // 2. 更新内存中的数据
+            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+                // 更新内存中的账户数组
+                if let accountIndex = projects[projectIndex].accounts.firstIndex(where: { $0.id == account.id }) {
+                    projects[projectIndex].accounts[accountIndex] = account
+                    print("✓ 内存数据更新成功")
+                    
+                    // 3. 确保项目数据也被更新
+                    let updatedProject = projects[projectIndex]
+                    DispatchQueue.main.async {
+                        self.projects[projectIndex] = updatedProject
+                        self.objectWillChange.send()
+                        print("✓ 视图更新通知已发送")
+                    }
+                }
+            } else {
+                print("❌ 错误：找不到对应的项目")
+            }
+        } catch {
+            print("❌ 更新失败:")
+            print("- 错误信息: \(error)")
+        }
+        print("================================")
     }
     
     static func withTestData(context: NSManagedObjectContext) -> ProjectStore {

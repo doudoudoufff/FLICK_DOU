@@ -59,10 +59,35 @@ extension Account {
         entity.bankName = bankName
         entity.bankBranch = bankBranch
         entity.bankAccount = bankAccount
-        entity.idNumber = idNumber
         entity.contactName = contactName
         entity.contactPhone = contactPhone
         entity.notes = notes
         return entity
+    }
+    
+    static func fromEntity(_ entity: AccountEntity) -> Account? {
+        guard let id = entity.id,
+              let name = entity.name,
+              let typeString = entity.type,
+              let type = AccountType(rawValue: typeString),
+              let bankName = entity.bankName,
+              let bankBranch = entity.bankBranch,
+              let bankAccount = entity.bankAccount,
+              let contactName = entity.contactName,
+              let contactPhone = entity.contactPhone else {
+            return nil
+        }
+        
+        return Account(
+            id: id,
+            name: name,
+            type: type,
+            bankName: bankName,
+            bankBranch: bankBranch,
+            bankAccount: bankAccount,
+            contactName: contactName,
+            contactPhone: contactPhone,
+            notes: entity.notes
+        )
     }
 } 

@@ -112,6 +112,48 @@ struct Project: Identifiable, Codable, Hashable {
         entity.isLocationScoutingEnabled = isLocationScoutingEnabled
         return entity
     }
+    
+    // 从 CoreData 实体转换为模型
+    static func fromEntity(_ entity: ProjectEntity) -> Project? {
+        // 确保必需的属性都存在
+        guard let id = entity.id,
+              let name = entity.name,
+              let status = entity.status,
+              let startDate = entity.startDate
+        else {
+            return nil
+        }
+        
+        let tasks: [ProjectTask] = (entity.tasks?.allObjects as? [TaskEntity])?.compactMap { taskEntity in
+            guard let task = taskEntity as? TaskEntity else { return nil }
+            return ProjectTask.fromEntity(task)
+        } ?? []
+        
+        let invoices = (entity.invoices?.allObjects as? [InvoiceEntity])?.map(Invoice.fromEntity) ?? []
+        
+        return Project(
+            id: id,
+            name: name,
+            director: entity.director ?? "",
+            producer: entity.producer ?? "",
+            startDate: startDate,
+            status: Status(rawValue: status) ?? .preProduction,
+            color: entity.color.flatMap(Color.init(data:)) ?? .blue,
+            tasks: tasks,
+            invoices: invoices,
+            locations: [],
+            accounts: [],
+            isLocationScoutingEnabled: entity.isLocationScoutingEnabled
+        )
+    }
+    
+    // 在 CoreData 中查找对应的实体
+    func fetchEntity(in context: NSManagedObjectContext) -> ProjectEntity? {
+        let request = ProjectEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        request.fetchLimit = 1
+        return try? context.fetch(request).first
+    }
 }
 
 // 添加 Color 扩展来支持十六进制转换

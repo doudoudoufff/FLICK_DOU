@@ -14,80 +14,26 @@ class ProjectStore: ObservableObject {
     }
     
     private func loadProjects() {
-        print("========== 开始加载项目 ==========")
-        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        let request = ProjectEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \ProjectEntity.startDate, ascending: false)]
         
         do {
-            let projectEntities = try context.fetch(fetchRequest)
-            print("从 CoreData 加载到 \(projectEntities.count) 个项目")
+            let projectEntities = try context.fetch(request)
+            var uniqueProjects: [UUID: Project] = [:]
             
-            // 按照创建时间排序
-            self.projects = projectEntities.compactMap { projectEntity -> Project? in
-                guard let id = projectEntity.id,
-                      let name = projectEntity.name,
-                      let startDate = projectEntity.startDate else {
-                    print("❌ 项目实体缺少必要属性")
-                    return nil
+            projectEntities.forEach { entity in
+                // 使用可选绑定
+                if let project = Project.fromEntity(entity) {
+                    uniqueProjects[project.id] = project
                 }
-                
-                // 获取项目的所有任务
-                let tasks = (projectEntity.tasks?.allObjects as? [TaskEntity])?.compactMap { taskEntity -> ProjectTask? in
-                    guard let taskId = taskEntity.id,
-                          let title = taskEntity.title,
-                          let assignee = taskEntity.assignee,
-                          let dueDate = taskEntity.dueDate else {
-                        print("❌ 任务实体缺少必要属性")
-                        return nil
-                    }
-                    
-                    let reminder = taskEntity.reminder.flatMap { ProjectTask.TaskReminder(rawValue: $0) }
-                    
-                    return ProjectTask(
-                        id: taskId,
-                        title: title,
-                        assignee: assignee,
-                        dueDate: dueDate,
-                        isCompleted: taskEntity.isCompleted,
-                        reminder: reminder,
-                        reminderHour: Int(taskEntity.reminderHour)
-                    )
-                } ?? []
-                
-                let project = Project(
-                    id: id,
-                    name: name,
-                    director: projectEntity.director ?? "",
-                    producer: projectEntity.producer ?? "",
-                    startDate: startDate,
-                    status: Project.Status(rawValue: projectEntity.status ?? "") ?? .preProduction,
-                    color: projectEntity.color.flatMap { Color(data: $0) } ?? .blue,
-                    tasks: tasks,
-                    invoices: [],
-                    locations: [],
-                    accounts: [],
-                    isLocationScoutingEnabled: projectEntity.isLocationScoutingEnabled
-                )
-                
-                print("✓ 成功加载项目: \(name)")
-                print("  - ID: \(id)")
-                print("  - 任务数量: \(tasks.count)")
-                
-                return project
             }
             
-            print("✓ 成功加载 \(projects.count) 个项目")
+            // 转换为数组并排序
+            projects = Array(uniqueProjects.values)
+                .sorted { $0.startDate > $1.startDate }
         } catch {
-            print("❌ 从 CoreData 加载项目失败: \(error)")
-            print("错误描述: \(error.localizedDescription)")
-            
-            // 出错时尝试从 UserDefaults 加载
-            if let data = UserDefaults.standard.data(forKey: "savedProjects"),
-               let decoded = try? JSONDecoder().decode([Project].self, from: data) {
-                self.projects = decoded
-                print("✓ 从 UserDefaults 加载了 \(projects.count) 个项目")
-            }
+            print("加载项目失败: \(error)")
         }
-        print("================================")
     }
     
     func saveProjects() {
@@ -452,7 +398,103 @@ class ProjectStore: ObservableObject {
         }
     }
     
-    // 其他 CoreData 相关方法...
+    // 添加发票
+    func addInvoice(_ invoice: Invoice, to project: Project) {
+        guard let projectEntity = project.fetchEntity(in: context) else {
+            print("找不到项目实体")
+            return
+        }
+        
+        let invoiceEntity = invoice.toEntity(context: context)
+        invoiceEntity.project = projectEntity
+        
+        do {
+            try context.save()
+            print("发票保存成功")
+            
+            // 更新内存中的项目数据
+            if let index = projects.firstIndex(where: { $0.id == project.id }) {
+                projects[index].invoices.append(invoice)  // 添加到内存中的发票数组
+                objectWillChange.send()  // 通知视图更新
+            }
+        } catch {
+            print("保存发票失败: \(error)")
+        }
+    }
+    
+    // 更新发票
+    func updateInvoice(_ invoice: Invoice, in project: Project) {
+        print("开始更新发票...")
+        
+        // 1. 更新 CoreData
+        guard let projectEntity = project.fetchEntity(in: context),
+              let invoiceEntity = projectEntity.invoices?
+                .first(where: { ($0 as? InvoiceEntity)?.id == invoice.id }) as? InvoiceEntity
+        else {
+            print("错误：找不到发票实体")
+            return
+        }
+        
+        // 更新发票实体
+        invoiceEntity.name = invoice.name
+        invoiceEntity.phone = invoice.phone
+        invoiceEntity.idNumber = invoice.idNumber
+        invoiceEntity.bankAccount = invoice.bankAccount
+        invoiceEntity.bankName = invoice.bankName
+        invoiceEntity.date = invoice.date
+        
+        do {
+            try context.save()
+            print("发票更新成功：\(invoice.name)")
+            
+            // 2. 更新内存中的数据
+            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+                // 更新内存中的发票数组
+                if let invoiceIndex = projects[projectIndex].invoices.firstIndex(where: { $0.id == invoice.id }) {
+                    projects[projectIndex].invoices[invoiceIndex] = invoice
+                    
+                    // 3. 发送更新通知
+                    objectWillChange.send()
+                    
+                    // 4. 重要：确保项目数据也被更新
+                    let updatedProject = projects[projectIndex]
+                    DispatchQueue.main.async {
+                        self.projects[projectIndex] = updatedProject
+                    }
+                }
+            }
+        } catch {
+            print("发票更新失败：\(error)")
+        }
+    }
+    
+    // 删除发票
+    func deleteInvoice(_ invoice: Invoice, from project: Project) {
+        print("开始删除发票...")
+        guard let projectEntity = project.fetchEntity(in: context),
+              let invoiceEntity = projectEntity.invoices?
+                .first(where: { ($0 as? InvoiceEntity)?.id == invoice.id }) as? InvoiceEntity
+        else {
+            print("错误：找不到发票实体")
+            return
+        }
+        
+        context.delete(invoiceEntity)
+        
+        do {
+            try context.save()
+            print("发票删除成功：\(invoice.name)")
+            
+            // 更新内存中的项目数据
+            if let index = projects.firstIndex(where: { $0.id == project.id }) {
+                // 从内存中移除已删除的发票
+                projects[index].invoices.removeAll { $0.id == invoice.id }
+                objectWillChange.send()  // 通知视图更新
+            }
+        } catch {
+            print("发票删除失败：\(error)")
+        }
+    }
     
     static func withTestData(context: NSManagedObjectContext) -> ProjectStore {
         let store = ProjectStore(context: context)

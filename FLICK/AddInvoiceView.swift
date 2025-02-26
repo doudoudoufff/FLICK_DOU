@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct AddInvoiceView: View {
-    @Binding var isPresented: Bool
-    @Binding var project: Project
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var projectStore: ProjectStore
+    let project: Project
     
     @State private var name = ""
     @State private var phone = ""
@@ -36,12 +37,25 @@ struct AddInvoiceView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { isPresented = false }
+                    Button("取消") { dismiss() }
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("添加") { addInvoice() }
-                        .disabled(isFormInvalid)
+                    Button("添加") {
+                        let invoice = Invoice(
+                            name: name,
+                            phone: phone,
+                            idNumber: idNumber,
+                            bankAccount: bankAccount,
+                            bankName: bankName,
+                            date: date
+                        )
+                        
+                        // 使用 ProjectStore 添加发票
+                        projectStore.addInvoice(invoice, to: project)
+                        dismiss()
+                    }
+                    .disabled(isFormInvalid)
                 }
             }
         }
@@ -53,19 +67,5 @@ struct AddInvoiceView: View {
         idNumber.isEmpty || 
         bankAccount.isEmpty || 
         bankName.isEmpty
-    }
-    
-    private func addInvoice() {
-        let invoice = Invoice(
-            name: name,
-            phone: phone,
-            idNumber: idNumber,
-            bankAccount: bankAccount,
-            bankName: bankName,
-            date: date
-        )
-        
-        project.invoices.append(invoice)
-        isPresented = false
     }
 } 

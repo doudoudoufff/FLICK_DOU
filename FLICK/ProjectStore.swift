@@ -824,14 +824,28 @@ class ProjectStore: ObservableObject {
         print("================================")
     }
     
-    // 添加照片保存方法
+    // 添加照片
     func addPhotos(_ photos: [LocationPhoto], to location: Location, in project: Project) async {
+        print("========== 开始添加照片 ==========")
+        print("项目: \(project.name)")
+        print("场地: \(location.name)")
+        print("照片数量: \(photos.count)")
+        
         guard let projectEntity = project.fetchEntity(in: context),
               let locationEntity = location.fetchEntity(in: context) else {
+            print("❌ 错误：找不到项目或场地实体")
             return
         }
+        print("✓ 已找到项目和场地实体")
         
         for photo in photos {
+            print("\n处理照片:")
+            print("- ID: \(photo.id)")
+            print("- 日期: \(photo.date)")
+            if let note = photo.note {
+                print("- 备注: \(note)")
+            }
+            
             let photoEntity = LocationPhotoEntity(context: context)
             photoEntity.id = photo.id
             photoEntity.imageData = photo.imageData
@@ -839,18 +853,69 @@ class ProjectStore: ObservableObject {
             photoEntity.weather = photo.weather
             photoEntity.note = photo.note
             photoEntity.location = locationEntity
+            print("✓ 已创建照片实体")
         }
         
         do {
             try context.save()
+            print("✓ CoreData 保存成功")
+            
             if let index = projects.firstIndex(where: { $0.id == project.id }),
                let locationIndex = projects[index].locations.firstIndex(where: { $0.id == location.id }) {
                 projects[index].locations[locationIndex].photos.append(contentsOf: photos)
                 objectWillChange.send()
+                print("✓ 内存数据更新成功")
+                print("当前场地照片总数: \(projects[index].locations[locationIndex].photos.count)")
             }
         } catch {
-            print("保存照片失败: \(error)")
+            print("❌ 保存照片失败:")
+            print("错误类型: \(type(of: error))")
+            print("错误描述: \(error.localizedDescription)")
         }
+        print("================================")
+    }
+    
+    // 更新照片
+    func updatePhoto(_ photo: LocationPhoto, in location: Location, project: Project) async {
+        print("========== 开始更新照片 ==========")
+        print("项目: \(project.name)")
+        print("场地: \(location.name)")
+        print("照片ID: \(photo.id)")
+        if let note = photo.note {
+            print("新备注: \(note)")
+        }
+        
+        guard let projectEntity = project.fetchEntity(in: context),
+              let locationEntity = location.fetchEntity(in: context),
+              let photoEntity = (locationEntity.photos?.allObjects as? [LocationPhotoEntity])?
+                .first(where: { $0.id == photo.id }) else {
+            print("❌ 错误：找不到照片实体")
+            return
+        }
+        print("✓ 已找到照片实体")
+        
+        // 更新照片实体
+        photoEntity.note = photo.note
+        print("✓ 已更新照片备注")
+        
+        do {
+            try context.save()
+            print("✓ CoreData 保存成功")
+            
+            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+               let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }),
+               let photoIndex = projects[projectIndex].locations[locationIndex].photos.firstIndex(where: { $0.id == photo.id }) {
+                // 更新内存中的数据
+                projects[projectIndex].locations[locationIndex].photos[photoIndex] = photo
+                objectWillChange.send()
+                print("✓ 内存数据更新成功")
+            }
+        } catch {
+            print("❌ 更新照片失败:")
+            print("错误类型: \(type(of: error))")
+            print("错误描述: \(error.localizedDescription)")
+        }
+        print("================================")
     }
     
     static func withTestData(context: NSManagedObjectContext) -> ProjectStore {

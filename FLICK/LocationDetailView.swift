@@ -22,6 +22,15 @@ struct LocationDetailView: View {
                     LocationInfoCard(location: location)
                         .equatable()
                 }
+                
+                // 照片区域
+                Section {
+                    LocationPhotoList(
+                        project: project,
+                        location: $location,
+                        projectColor: projectColor
+                    )
+                }
             }
             .navigationTitle(location.name)
             .navigationBarTitleDisplayMode(.inline)

@@ -42,7 +42,13 @@ struct ProjectDetailView: View {
             EditProjectView(project: $project, isPresented: $showingEditProject)
         }
         .sheet(isPresented: $showingAddTask) {
-            AddTaskView(isPresented: $showingAddTask, project: $project)
+            NavigationView {
+                AddTaskView(
+                    isPresented: $showingAddTask,
+                    project: $project
+                )
+                .environmentObject(projectStore)
+            }
         }
         .sheet(item: $editingTask) { task in
             EditTaskView(

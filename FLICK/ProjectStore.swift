@@ -156,8 +156,8 @@ class ProjectStore: ObservableObject {
             try context.save()
             print("✓ 成功保存到 CoreData")
             
-            // 4. 添加到内存中的数组
-            projects.append(project)
+            // 4. 添加到内存中的数组（插入到最前面）
+            projects.insert(project, at: 0)
             print("✓ 已添加到内存数组，当前共有 \(projects.count) 个项目")
             
             // 5. 验证数据
@@ -167,12 +167,12 @@ class ProjectStore: ObservableObject {
             print("验证查询结果: \(verifyResult.count) 个匹配项目")
             if let verified = verifyResult.first {
                 print("✓ 验证成功")
-                print("验证 ID: \(verified.id?.uuidString ?? "nil")")
-                print("验证名称: \(verified.name ?? "nil")")
+                print("验证项目名称: \(verified.name ?? "nil")")
             }
         } catch {
-            print("❌ 保存项目失败: \(error)")
-            print("错误详情: \(error)")
+            print("❌ 保存失败:")
+            print("错误类型: \(type(of: error))")
+            print("错误描述: \(error.localizedDescription)")
         }
         print("================================")
     }
@@ -317,11 +317,8 @@ class ProjectStore: ObservableObject {
         print("========== 开始添加任务 ==========")
         print("任务信息:")
         print("- 标题: \(task.title)")
-        print("- 负责人: \(task.assignee)")
+        print("- 负责人: \(task.assignee ?? "")")
         print("- 截止时间: \(task.dueDate)")
-        if let reminder = task.reminder {
-            print("- 提醒设置: \(reminder.rawValue) \(task.reminderHour):00")
-        }
         
         guard let projectEntity = project.fetchEntity(in: context) else {
             print("❌ 错误：找不到项目实体")
@@ -329,7 +326,12 @@ class ProjectStore: ObservableObject {
         }
         
         // 创建任务实体
-        let taskEntity = task.toEntity(context: context)
+        let taskEntity = TaskEntity(context: context)
+        taskEntity.id = task.id
+        taskEntity.title = task.title
+        taskEntity.assignee = task.assignee
+        taskEntity.dueDate = task.dueDate
+        taskEntity.isCompleted = task.isCompleted
         taskEntity.project = projectEntity
         
         do {

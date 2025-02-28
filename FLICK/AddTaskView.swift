@@ -1,107 +1,116 @@
 import SwiftUI
 
 struct AddTaskView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var projectStore: ProjectStore
     @Binding var isPresented: Bool
     @Binding var project: Project
-    @EnvironmentObject var projectStore: ProjectStore
     
     @State private var title = ""
     @State private var assignee = ""
     @State private var dueDate = Date()
-    @State private var reminder: ProjectTask.TaskReminder?
-    @State private var reminderHour: Double = 9
+    @State private var showDatePicker = false
+    @State private var showProjectPicker = false
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section(content: {
-                    TextField("任务内容", text: $title)
-                        .focused($titleFieldFocused)
-                }, header: {
-                    Text("必填信息")
-                })
-                
-                Section(content: {
-                    TextField("负责人员", text: $assignee)
-                    DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
-                        .environment(\.locale, Locale(identifier: "zh_CN"))
-                }, header: {
-                    Text("任务详情")
-                })
-                
-                Section {
-                    reminderSection
-                } header: {
-                    Text("提醒设置")
-                }
+        Form {
+            Section("必填信息") {
+                TextField("任务内容", text: $title)
             }
-            .navigationTitle("添加任务")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        isPresented = false
+            
+            Section("任务详情") {
+                // 项目选择
+                Button(action: { showProjectPicker = true }) {
+                    HStack {
+                        Text("所属项目")
+                        Spacer()
+                        Text(project.name)
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(.secondary)
+                            .imageScale(.small)
                     }
                 }
                 
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") {
-                        let task = ProjectTask(
-                            title: title,
-                            assignee: assignee,
-                            dueDate: dueDate,
-                            reminder: reminder,
-                            reminderHour: Int(reminderHour)
-                        )
-                        projectStore.addTask(task, to: project)
-                        isPresented = false
+                TextField("负责人员", text: $assignee)
+                
+                Button(action: { showDatePicker = true }) {
+                    HStack {
+                        Text("截止时间")
+                        Spacer()
+                        Text(dueDate.formatted(date: .numeric, time: .omitted))
+                            .foregroundStyle(.secondary)
                     }
-                    .disabled(!isValid)
                 }
             }
         }
-        .onAppear {
-            titleFieldFocused = true
-        }
-    }
-    
-    @ViewBuilder
-    private var reminderSection: some View {
-        Picker("提醒频率", selection: $reminder) {
-            Text("不提醒").tag(ProjectTask.TaskReminder?.none)
-            ForEach(ProjectTask.TaskReminder.allCases, id: \.self) { reminder in
-                Text(reminder.rawValue).tag(ProjectTask.TaskReminder?.some(reminder))
+        .navigationTitle("添加任务")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("取消") { isPresented = false }
             }
-        }
-        
-        if reminder != nil {
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("提醒时间")
-                    Spacer()
-                    Text("\(Int(reminderHour)):00")
-                        .foregroundColor(.secondary)
+            ToolbarItem(placement: .confirmationAction) {
+                Button("添加") {
+                    let task = ProjectTask(
+                        title: title,
+                        assignee: assignee.isEmpty ? "" : assignee,
+                        dueDate: dueDate
+                    )
+                    projectStore.addTask(task, to: project)
+                    isPresented = false
                 }
-                Slider(
-                    value: $reminderHour,
-                    in: 0.0...23.0,
-                    step: 1.0
-                )
+                .disabled(title.isEmpty)
             }
         }
-    }
-    
-    @FocusState private var titleFieldFocused: Bool
-    
-    private var isValid: Bool {
-        !title.isEmpty && !assignee.isEmpty
+        .sheet(isPresented: $showProjectPicker) {
+            NavigationView {
+                List(projectStore.projects) { proj in
+                    Button(action: {
+                        project = proj
+                        showProjectPicker = false
+                    }) {
+                        HStack {
+                            Text(proj.name)
+                            Spacer()
+                            if proj.id == project.id {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("选择项目")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("取消") { showProjectPicker = false }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showDatePicker) {
+            NavigationView {
+                DatePicker("选择日期", selection: $dueDate, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .navigationTitle("截止日期")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("确定") { showDatePicker = false }
+                        }
+                    }
+            }
+        }
     }
 }
 
 #Preview {
-    AddTaskView(
-        isPresented: .constant(true),
-        project: .constant(Project(name: "测试项目"))
-    )
+    NavigationView {
+        AddTaskView(
+            isPresented: .constant(true),
+            project: .constant(Project(name: "测试项目"))
+        )
+    }
     .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
 } 

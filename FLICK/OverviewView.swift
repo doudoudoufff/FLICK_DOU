@@ -38,11 +38,9 @@ struct OverviewView: View {
     
     // 修改任务状态切换方法
     private func toggleTaskCompletion(_ taskWithProject: TaskWithProject) {
-        withAnimation {  // 添加动画包装
-            if let projectIndex = projectStore.projects.firstIndex(where: { $0.id == taskWithProject.project.id }),
-               let taskIndex = projectStore.projects[projectIndex].tasks.firstIndex(where: { $0.id == taskWithProject.task.id }) {
-                projectStore.projects[projectIndex].tasks[taskIndex].isCompleted.toggle()
-            }
+        withAnimation {
+            // 使用 ProjectStore 的方法来切换任务状态
+            projectStore.toggleTaskCompletion(taskWithProject.task, in: taskWithProject.project)
         }
     }
     
@@ -86,7 +84,13 @@ struct OverviewView: View {
                             
                             Spacer()
                             
-                            Button(action: { showingAddTask = true }) {
+                            Button(action: {
+                                // 如果没有选中项目，默认选择第一个项目
+                                if selectedProject == nil && !projectStore.projects.isEmpty {
+                                    selectedProject = projectStore.projects[0]
+                                }
+                                showingAddTask = true
+                            }) {
                                 Image(systemName: "plus.circle.fill")
                                     .foregroundColor(.accentColor)
                             }
@@ -113,7 +117,13 @@ struct OverviewView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Button(action: { showingAddTask = true }) {
+                        Button(action: {
+                            // 如果没有选中项目，默认选择第一个项目
+                            if selectedProject == nil && !projectStore.projects.isEmpty {
+                                selectedProject = projectStore.projects[0]
+                            }
+                            showingAddTask = true
+                        }) {
                             Text("添加任务")
                                 .foregroundColor(.accentColor)
                         }
@@ -128,12 +138,12 @@ struct OverviewView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("总览")
         .sheet(isPresented: $showingAddTask) {
-            if let project = selectedProject {  // 确保有选中的项目
+            NavigationView {
                 AddTaskView(
                     isPresented: $showingAddTask,
-                    project: .constant(project)  // 使用 Binding
+                    project: projectStore.binding(for: selectedProject?.id ?? projectStore.projects[0].id) ?? .constant(projectStore.projects[0])
                 )
-                .environmentObject(projectStore)  // 通过环境传递 projectStore
+                .environmentObject(projectStore)
             }
         }
     }

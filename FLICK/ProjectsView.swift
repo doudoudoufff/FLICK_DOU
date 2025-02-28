@@ -6,6 +6,7 @@ struct ProjectsView: View {
     @State private var searchText = ""
     @State private var selectedStatus: Project.Status = .all
     @State private var projectToDelete: Project? = nil
+    @State private var isRefreshing = false
     
     var body: some View {
         NavigationStack {
@@ -93,6 +94,17 @@ struct ProjectsView: View {
                 if let project = projectToDelete {
                     Text("确定要删除项目「\(project.name)」吗？此操作不可撤销。")
                 }
+            }
+            .refreshable {
+                // 模拟加载效果
+                isRefreshing = true
+                
+                // 重新从 CoreData 加载项目
+                projectStore.loadProjects()
+                
+                // 延迟一下以展示加载动画
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                isRefreshing = false
             }
         }
     }

@@ -17,7 +17,7 @@ class ProjectStore: ObservableObject {
         print("=====================================")
     }
     
-    private func loadProjects() {
+    func loadProjects() {
         print("========== 开始加载项目 ==========")
         let request = ProjectEntity.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ProjectEntity.startDate, ascending: false)]
@@ -923,122 +923,181 @@ class ProjectStore: ObservableObject {
     static func withTestData(context: NSManagedObjectContext) -> ProjectStore {
         let store = ProjectStore(context: context)
         
-        // 测试项目1：网剧
-        let webSeries = Project(
-            id: UUID(),
-            name: "迷失东京",
-            director: "张导演",
-            producer: "李制片",
-            startDate: Date().addingTimeInterval(-86400 * 15),
-            status: .preProduction,
-            color: .blue,
-            tasks: [
-                ProjectTask(title: "选景完成", assignee: "场务组", dueDate: Date(), isCompleted: true),
-                ProjectTask(title: "演员试镜", assignee: "选角导演", dueDate: Date().addingTimeInterval(86400 * 3)),
-                ProjectTask(title: "剧本终稿", assignee: "编剧组", dueDate: Date().addingTimeInterval(86400 * 7))
-            ],
-            invoices: [
-                Invoice(
-                    name: "场地公司",
-                    phone: "131001000",
-                    idNumber: "110101199001011234",
-                    bankAccount: "62220212347890",
-                    bankName: "工商银行",
-                    date: Date()
-                )
-            ],
-            locations: [],  // 确保 invoices 在 locations 之前
-            accounts: [
-                Account(
-                    name: "场地公司",
-                    type: .location,
-                    bankName: "工商银行",
-                    bankBranch: "北京分行",
-                    bankAccount: "6222021234567890",
-                    contactName: "王场地",
-                    contactPhone: "13100131000"
-                )
-            ]
-        )
+        // 先清除现有数据
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = ProjectEntity.fetchRequest()
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
         
-        // 测试项目2：电影
-        let movie = Project(
+        do {
+            try context.execute(deleteRequest)
+            try context.save()
+            print("✓ 已清除现有数据")
+        } catch {
+            print("❌ 清除数据失败: \(error)")
+        }
+        
+        // 短片项目
+        let shortFilm = Project(
             id: UUID(),
             name: "春天的声音",
             director: "王导演",
             producer: "赵制片",
-            startDate: Date(),
-            status: .production,
-            color: .green,
+            startDate: Date().addingTimeInterval(86400 * 7), // 一周后开机
+            status: .preProduction,
+            color: .blue,
             tasks: [
-                ProjectTask(title: "拍摄第一场", assignee: "摄影组", dueDate: Date().addingTimeInterval(86400)),
-                ProjectTask(title: "道具采购", assignee: "美术组", dueDate: Date().addingTimeInterval(86400 * 2)),
-                ProjectTask(title: "服装定做", assignee: "服装组", dueDate: Date().addingTimeInterval(86400 * 4))
+                ProjectTask(
+                    title: "完成最终分镜",
+                    assignee: "导演组",
+                    dueDate: Date().addingTimeInterval(86400 * 2)
+                ),
+                ProjectTask(
+                    title: "确定主要演员",
+                    assignee: "选角导演",
+                    dueDate: Date().addingTimeInterval(86400 * 4)
+                ),
+                ProjectTask(
+                    title: "场地合同签订",
+                    assignee: "制片组",
+                    dueDate: Date().addingTimeInterval(86400 * 5)
+                )
             ],
             invoices: [
                 Invoice(
-                    name: "道具公司",
-                    phone: "13200132000",
-                    idNumber: "110101199001012345",
-                    bankAccount: "6225881234567890",
-                    bankName: "建设银行",
+                    name: "星光场地公司",
+                    phone: "13800138000",
+                    idNumber: "110101199001011234",
+                    bankAccount: "6222021234567890",
+                    bankName: "中国建设银行",
                     date: Date()
                 )
             ],
-            locations: [],  // 确保 invoices 在 locations 之前
+            locations: [
+                Location(
+                    name: "老街区",
+                    address: "北京市东城区东四胡同",
+                    photos: [],
+                    notes: "需要注意早晚高峰时段的环境音"
+                ),
+                Location(
+                    name: "音乐教室",
+                    address: "北京市海淀区中关村音乐学院",
+                    photos: [],
+                    notes: "已获得场地使用许可"
+                )
+            ],
             accounts: [
                 Account(
-                    name: "道具工作室",
-                    type: .prop,
-                    bankName: "浦发银行",
-                    bankBranch: "北京分行",
-                    bankAccount: "6225882345678901",
-                    contactName: "刘道具",
-                    contactPhone: "13400134000"
+                    name: "星光场地公司",
+                    type: .location,
+                    bankName: "中国建设银行",
+                    bankBranch: "北京东城支行",
+                    bankAccount: "6222021234567890",
+                    contactName: "李经理",
+                    contactPhone: "13800138000"
                 )
             ]
         )
         
-        // 测试项目3：广告
+        // 广告项目
         let commercial = Project(
             id: UUID(),
-            name: "小米品牌广告",
-            director: "张小导",
-            producer: "刘制片",
-            startDate: Date().addingTimeInterval(-86400 * 30),
-            status: .postProduction,
-            color: .purple,
+            name: "新春饮料广告",
+            director: "张导演",
+            producer: "李制片",
+            startDate: Date().addingTimeInterval(86400 * 3), // 三天后开机
+            status: .preProduction,
+            color: .orange,
             tasks: [
-                ProjectTask(title: "剪辑初稿", assignee: "剪辑师", dueDate: Date(), isCompleted: true),
-                ProjectTask(title: "音效制作", assignee: "声音设计", dueDate: Date().addingTimeInterval(86400 * 2)),
-                ProjectTask(title: "客户审核", assignee: "项目经理", dueDate: Date().addingTimeInterval(86400 * 5))
+                ProjectTask(
+                    title: "确认产品展示要求",
+                    assignee: "制片组",
+                    dueDate: Date().addingTimeInterval(86400)
+                ),
+                ProjectTask(
+                    title: "道具采购清单",
+                    assignee: "美术组",
+                    dueDate: Date().addingTimeInterval(86400 * 2)
+                ),
+                ProjectTask(
+                    title: "完成灯光设计",
+                    assignee: "灯光组",
+                    dueDate: Date().addingTimeInterval(86400 * 2)
+                )
             ],
             invoices: [
                 Invoice(
-                    name: "后期特效工作室",
-                    phone: "13200132000",
-                    idNumber: "110101199501012345",
-                    bankAccount: "6228480123456789",
-                    bankName: "中信银行",
+                    name: "城市影棚",
+                    phone: "13900139000",
+                    idNumber: "110101199001011235",
+                    bankAccount: "6222021234567891",
+                    bankName: "中国工商银行",
                     date: Date()
                 )
             ],
-            locations: [],  // 确保 invoices 在 locations 之前
+            locations: [
+                Location(
+                    name: "影棚A",
+                    address: "北京市朝阳区影视基地A区",
+                    photos: [],
+                    notes: "需要提前一天进场搭建"
+                )
+            ],
             accounts: [
                 Account(
-                    name: "声音后期工作室",
-                    type: .other,
-                    bankName: "民生银行",
-                    bankBranch: "北京分行",
-                    bankAccount: "6226220123456789",
-                    contactName: "王声音",
-                    contactPhone: "13300133000",
-                    notes: "专业音效制作团队"
+                    name: "城市影棚",
+                    type: .location,
+                    bankName: "中国工商银行",
+                    bankBranch: "北京朝阳支行",
+                    bankAccount: "6222021234567891",
+                    contactName: "王经理",
+                    contactPhone: "13900139000"
                 )
             ]
         )
         
-        store.projects = [webSeries, movie, commercial]
+        // 添加项目到 store
+        store.projects = [shortFilm, commercial]
+        
+        // 保存到 CoreData
+        do {
+            // 为每个项目创建实体
+            for project in [shortFilm, commercial] {
+                let projectEntity = project.toEntity(context: context)
+                
+                // 保存任务
+                for task in project.tasks {
+                    let taskEntity = task.toEntity(context: context)
+                    taskEntity.project = projectEntity
+                }
+                
+                // 保存场地
+                for location in project.locations {
+                    let locationEntity = location.toEntity(context: context)
+                    locationEntity.project = projectEntity
+                }
+                
+                // 保存发票
+                for invoice in project.invoices {
+                    let invoiceEntity = invoice.toEntity(context: context)
+                    invoiceEntity.project = projectEntity
+                }
+                
+                // 保存账户
+                for account in project.accounts {
+                    let accountEntity = account.toEntity(context: context)
+                    accountEntity.project = projectEntity
+                }
+            }
+            
+            try context.save()
+            print("✓ 测试数据已成功保存到 CoreData")
+            
+            // 重新加载数据以确保数据被正确保存
+            store.loadProjects()
+        } catch {
+            print("❌ 保存测试数据失败: \(error)")
+        }
+        
         return store
     }
     

@@ -41,31 +41,35 @@ struct AddInvoiceView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("添加") {
-                        let invoice = Invoice(
-                            name: name,
-                            phone: phone,
-                            idNumber: idNumber,
-                            bankAccount: bankAccount,
-                            bankName: bankName,
-                            date: date
-                        )
-                        
-                        // 使用 ProjectStore 添加发票
-                        projectStore.addInvoice(invoice, to: project)
-                        dismiss()
+                    Button("保存") {
+                        saveInvoice()
                     }
-                    .disabled(isFormInvalid)
+                    .disabled(!isValid)
                 }
             }
         }
     }
     
-    private var isFormInvalid: Bool {
-        name.isEmpty || 
-        phone.isEmpty || 
-        idNumber.isEmpty || 
-        bankAccount.isEmpty || 
-        bankName.isEmpty
+    private var isValid: Bool {
+        !name.isEmpty && 
+        !phone.isEmpty && 
+        !idNumber.isEmpty && 
+        !bankAccount.isEmpty && 
+        !bankName.isEmpty
+    }
+    
+    private func saveInvoice() {
+        let invoice = Invoice(
+            name: name,
+            phone: phone,
+            idNumber: idNumber,
+            bankAccount: bankAccount,
+            bankName: bankName,
+            date: date
+        )
+        
+        // 使用 ProjectStore 添加发票
+        projectStore.addInvoice(invoice, to: project)
+        dismiss()
     }
 } 

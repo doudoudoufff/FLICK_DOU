@@ -1,114 +1,57 @@
 import SwiftUI
 import PhotosUI
 
+// MARK: - 视图模式
+enum ViewMode {
+    case grid
+    case timeline
+}
+
 struct LocationDetailView: View {
+    @EnvironmentObject var projectStore: ProjectStore
+    let project: Project
     @Binding var location: Location
     let projectColor: Color
-    
-    @State private var showingCamera = false
-    @State private var showingPhotosPicker = false
-    @State private var selectedPhotos: [PhotosPickerItem] = []
-    @State private var showingEditSheet = false
-    @State private var viewMode: ViewMode = .grid
-    
-    enum ViewMode {
-        case grid
-        case timeline
-    }
-    
-    private var photosByDate: [(Date, [LocationPhoto])] {
-        let grouped = Dictionary(grouping: location.photos) { photo in
-            Calendar.current.startOfDay(for: photo.date)
-        }
-        return grouped.sorted { $0.key > $1.key }  // 按日期降序排序
-    }
+    @State private var showingEditView = false
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // 场地信息卡片
-                LocationInfoCard(location: location)
-                    .padding(.horizontal)
-                
-                // 拍照和相册按钮
-                PhotoActionButtons(
-                    showingCamera: $showingCamera,
-                    showingPhotosPicker: $showingPhotosPicker,
-                    projectColor: projectColor
-                )
-                .padding(.horizontal)
-                
-                // 视图模式切换
-                Picker("显示模式", selection: $viewMode) {
-                    Image(systemName: "square.grid.2x2")
-                        .tag(ViewMode.grid)
-                    Image(systemName: "clock")
-                        .tag(ViewMode.timeline)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                
-                // 照片展示
-                if location.photos.isEmpty {
-                    EmptyPhotoView()
-                } else {
-                    switch viewMode {
-                    case .grid:
-                        PhotoGrid(photos: $location.photos)
-                            .padding(.horizontal)
-                    case .timeline:
-                        PhotoTimeline(photos: photosByDate, color: projectColor)
-                    }
+        NavigationStack {
+            List {
+                // 基本信息
+                Section {
+                    LocationInfoCard(location: location)
+                        .equatable()
                 }
             }
-            .padding(.vertical)
-        }
-        .navigationTitle(location.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+            .navigationTitle(location.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(trailing: 
                 Button {
-                    showingEditSheet = true
+                    showingEditView = true
                 } label: {
                     Image(systemName: "pencil")
                 }
+            )
+            .sheet(isPresented: $showingEditView) {
+                NavigationStack {
+                    EditLocationView(
+                        location: location,
+                        projectStore: projectStore,
+                        project: project
+                    )
+                }
             }
         }
-        .fullScreenCover(isPresented: $showingCamera) {
-            CameraView(location: $location)
-        }
-        .photosPicker(isPresented: $showingPhotosPicker,
-                     selection: $selectedPhotos,
-                     matching: .images)
-        .onChange(of: selectedPhotos) { _, newItems in
-            Task {
-                await handleSelectedPhotos(newItems)
-            }
-        }
-        .sheet(isPresented: $showingEditSheet) {
-            EditLocationView(location: $location)
-        }
-    }
-    
-    private func handleSelectedPhotos(_ items: [PhotosPickerItem]) async {
-        for item in items {
-            if let data = try? await item.loadTransferable(type: Data.self),
-               let image = UIImage(data: data),
-               let photo = LocationPhoto(image: image) {
-                location.photos.insert(photo, at: 0)
-            }
-        }
-        selectedPhotos.removeAll()
     }
 }
 
-// MARK: - 子视图组件
+// MARK: - 基本信息卡片
 private struct LocationInfoCard: View {
     let location: Location
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 基本信息
+            // 类型和状态
             HStack {
                 Text(location.type.rawValue)
                     .font(.subheadline)
@@ -157,225 +100,11 @@ private struct LocationInfoCard: View {
     }
 }
 
-private struct PhotoActionButtons: View {
-    @Binding var showingCamera: Bool
-    @Binding var showingPhotosPicker: Bool
-    let projectColor: Color
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Button {
-                showingCamera = true
-            } label: {
-                Label("拍摄", systemImage: "camera.fill")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(height: 44)
-                    .frame(maxWidth: .infinity)
-                    .background(projectColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            
-            Button {
-                showingPhotosPicker = true
-            } label: {
-                Label("相册", systemImage: "photo.fill")
-                    .font(.headline)
-                    .foregroundColor(projectColor)
-                    .frame(height: 44)
-                    .frame(maxWidth: .infinity)
-                    .background(projectColor.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-        }
+// MARK: - Equatable 实现
+extension LocationInfoCard: Equatable {
+    static func == (lhs: LocationInfoCard, rhs: LocationInfoCard) -> Bool {
+        lhs.location.id == rhs.location.id &&
+        lhs.location.name == rhs.location.name &&
+        lhs.location.photos.count == rhs.location.photos.count
     }
 }
-
-private struct EmptyPhotoView: View {
-    var body: some View {
-        ContentUnavailableView(
-            "暂无照片",
-            systemImage: "photo.fill",
-            description: Text("点击上方按钮添加照片")
-        )
-        .padding(.top, 40)
-    }
-}
-
-private struct PhotoGrid: View {
-    @Binding var photos: [LocationPhoto]
-    @State private var selectedPhoto: LocationPhoto?
-    
-    let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
-    
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(photos) { photo in
-                if let image = photo.image {
-                    Button {
-                        selectedPhoto = photo
-                    } label: {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                }
-            }
-        }
-        .sheet(item: $selectedPhoto) { photo in
-            NavigationStack {
-                LocationPhotoDetailView(photo: photo)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("完成") {
-                                selectedPhoto = nil
-                            }
-                        }
-                    }
-            }
-        }
-    }
-}
-
-private struct CameraView: View {
-    @Binding var location: Location
-    
-    var body: some View {
-        ImagePicker(image: Binding(
-            get: { nil },
-            set: { newImage in
-                if let image = newImage,
-                   let photo = LocationPhoto(image: image) {
-                    location.photos.insert(photo, at: 0)
-                }
-            }
-        ), sourceType: .camera)
-        .ignoresSafeArea()
-    }
-}
-
-// 新增时间线视图组件
-private struct PhotoTimeline: View {
-    let photos: [(Date, [LocationPhoto])]  // 改为接收已分组的照片
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            ForEach(photos, id: \.0) { date, dayPhotos in
-                DayPhotoSection(date: date, photos: dayPhotos, color: color)
-            }
-        }
-    }
-}
-
-// 新增日期分组组件
-private struct DayPhotoSection: View {
-    let date: Date
-    let photos: [LocationPhoto]
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // 日期标题
-            Text(date.formatted(date: .complete, time: .omitted))
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-            
-            // 当天的照片时间线
-            ForEach(photos.sorted { $0.date > $1.date }) { photo in
-                PhotoTimelineItem(
-                    photo: .constant(photo),  // 这里需要修改为 Binding
-                    color: color,
-                    showTime: true  // 显示具体时间
-                )
-            }
-        }
-        .padding(.top, 8)
-    }
-}
-
-// 修改 PhotoTimelineItem 添加时间显示选项
-private struct PhotoTimelineItem: View {
-    @Binding var photo: LocationPhoto
-    let color: Color
-    let showTime: Bool  // 新增参数控制是否显示时间
-    @State private var showingDetail = false
-    @State private var note: String
-    @FocusState private var isFocused: Bool
-    
-    init(photo: Binding<LocationPhoto>, color: Color, showTime: Bool = false) {
-        self._photo = photo
-        self.color = color
-        self.showTime = showTime
-        self._note = State(initialValue: photo.wrappedValue.note ?? "")
-    }
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // 时间线指示器
-            VStack(spacing: 0) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 12, height: 12)
-                Rectangle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 2)
-                    .frame(maxHeight: .infinity)
-            }
-            .padding(.top, 8)
-            
-            VStack(alignment: .leading, spacing: 12) {
-                // 时间
-                if showTime {
-                    Text(photo.date.formatted(date: .omitted, time: .shortened))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                // 照片
-                Button {
-                    showingDetail = true
-                } label: {
-                    if let image = photo.image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 200)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-                
-                // 备注输入框
-                TextField("添加备注...", text: $note, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($isFocused)
-                    .onChange(of: note) { _, newValue in
-                        photo.note = newValue.isEmpty ? nil : newValue
-                    }
-            }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 12)
-        .sheet(isPresented: $showingDetail) {
-            NavigationStack {
-                LocationPhotoDetailView(photo: photo)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("完成") {
-                                showingDetail = false
-                            }
-                        }
-                    }
-            }
-        }
-    }
-} 

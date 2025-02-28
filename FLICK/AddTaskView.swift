@@ -56,7 +56,7 @@ struct AddTaskView: View {
                         projectStore.addTask(task, to: project)
                         isPresented = false
                     }
-                    .disabled(title.isEmpty || assignee.isEmpty)
+                    .disabled(!isValid)
                 }
             }
         }
@@ -92,6 +92,10 @@ struct AddTaskView: View {
     }
     
     @FocusState private var titleFieldFocused: Bool
+    
+    private var isValid: Bool {
+        !title.isEmpty && !assignee.isEmpty
+    }
 }
 
 #Preview {

@@ -21,27 +21,39 @@ struct FilterChip: View {
     }
 }
 
-// 场地分组组件
-struct LocationSection: View {
+// MARK: - 场地分组视图
+private struct LocationSection: View {
     let type: LocationType
-    let locations: [Location]
-    let projectColor: Color
     @Binding var project: Project
+    let locations: [Location]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 分组标题
             Text(type.rawValue)
                 .font(.headline)
                 .foregroundStyle(.secondary)
+                .padding(.horizontal)
             
-            // 场地列表
-            ForEach($project.locations.filter { $0.type.wrappedValue == type }) { $location in
+            ForEach(locations) { location in
+                let locationBinding = Binding<Location>(
+                    get: { location },
+                    set: { newLocation in
+                        if let index = project.locations.firstIndex(where: { $0.id == location.id }) {
+                            project.locations[index] = newLocation
+                        }
+                    }
+                )
+                
                 NavigationLink {
-                    LocationDetailView(location: $location, projectColor: projectColor)
+                    LocationDetailView(
+                        project: project,
+                        location: locationBinding,
+                        projectColor: project.color
+                    )
                 } label: {
                     LocationRow(location: location)
                 }
+                .padding(.horizontal)
             }
         }
     }

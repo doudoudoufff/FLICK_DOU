@@ -6,10 +6,15 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct ContentView: View {
-    @StateObject private var projectStore = ProjectStore.withTestData(context: PersistenceController.shared.container.viewContext)
+    @StateObject private var projectStore: ProjectStore
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    
+    init(context: NSManagedObjectContext) {
+        _projectStore = StateObject(wrappedValue: ProjectStore(context: context))
+    }
     
     var body: some View {
         Group {
@@ -24,6 +29,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
-        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    ContentView(context: PersistenceController.preview.container.viewContext)
 }

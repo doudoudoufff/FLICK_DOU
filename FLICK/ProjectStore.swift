@@ -5,57 +5,93 @@ class ProjectStore: ObservableObject {
     static var shared: ProjectStore!
     @Published var projects: [Project] = []
     @AppStorage("enableNotifications") private var enableNotifications: Bool = true
-    private let context: NSManagedObjectContext
+    let context: NSManagedObjectContext
     
     init(context: NSManagedObjectContext) {
+        print("========== ProjectStore 初始化 ==========")
         self.context = context
         ProjectStore.shared = self
         loadProjects()
+        print("- Context: \(context)")
+        print("- 已加载项目数量: \(projects.count)")
+        print("=====================================")
     }
     
     private func loadProjects() {
+        print("========== 开始加载项目 ==========")
         let request = ProjectEntity.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(keyPath: \ProjectEntity.startDate, ascending: false)]
         
         do {
             let projectEntities = try context.fetch(request)
+            print("从 CoreData 获取到 \(projectEntities.count) 个项目")
+            
             projects = projectEntities.compactMap { entity -> Project? in
-                guard let project = Project.fromEntity(entity) else { return nil }
+                guard let project = Project.fromEntity(entity) else {
+                    print("❌ 项目实体转换失败")
+                    return nil
+                }
                 
-                // 加载账户
-                let accounts = (entity.accounts?.allObjects as? [AccountEntity] ?? [])
-                    .compactMap { Account.fromEntity($0) }
-                var updatedProject = project
-                updatedProject.accounts = accounts
+                print("""
+                ✓ 成功加载项目:
+                - ID: \(project.id)
+                - 名称: \(project.name)
+                - 场地数量: \(project.locations.count)
+                - 任务数量: \(project.tasks.count)
+                """)
                 
-                return updatedProject
+                return project
             }
+            print("✓ 成功加载 \(projects.count) 个项目")
         } catch {
-            print("加载项目失败: \(error)")
+            print("""
+            ❌ 加载项目失败:
+            错误类型: \(type(of: error))
+            错误描述: \(error.localizedDescription)
+            """)
         }
+        print("================================")
     }
     
     func saveProjects() {
+        print("========== 开始保存项目 ==========")
+        print("待保存项目数量: \(projects.count)")
+        
         // 保存到 CoreData
         for project in projects {
+            print("""
+            处理项目:
+            - ID: \(project.id)
+            - 名称: \(project.name)
+            - 场地数量: \(project.locations.count)
+            """)
+            
             let projectEntity = project.toEntity(context: context)
             
-            // 保存任务
-            for task in project.tasks {
-                let taskEntity = task.toEntity(context: context)
-                taskEntity.project = projectEntity
-            }
-            
-            // 保存位置和照片
+            // 保存场地和照片
             for location in project.locations {
+                print("""
+                处理场地:
+                - ID: \(location.id)
+                - 名称: \(location.name)
+                - 照片数量: \(location.photos.count)
+                """)
+                
                 let locationEntity = location.toEntity(context: context)
                 locationEntity.project = projectEntity
                 
                 // 保存照片
                 for photo in location.photos {
+                    print("创建照片实体: \(photo.id)")
                     let photoEntity = photo.toEntity(context: context)
                     photoEntity.location = locationEntity
                 }
+            }
+            
+            // 保存任务
+            for task in project.tasks {
+                let taskEntity = task.toEntity(context: context)
+                taskEntity.project = projectEntity
             }
             
             // 保存发票
@@ -73,15 +109,21 @@ class ProjectStore: ObservableObject {
         
         do {
             try context.save()
-            print("成功保存到 CoreData")
+            print("✓ CoreData 保存成功")
         } catch {
-            print("保存到 CoreData 失败: \(error)")
+            print("""
+            ❌ 保存失败:
+            错误类型: \(type(of: error))
+            错误描述: \(error.localizedDescription)
+            堆栈跟踪: \(error)
+            """)
         }
         
         // 临时：同时保存到 UserDefaults（作为备份）
         if let encoded = try? JSONEncoder().encode(projects) {
             UserDefaults.standard.set(encoded, forKey: "savedProjects")
         }
+        print("================================")
     }
     
     // 添加项目
@@ -270,60 +312,42 @@ class ProjectStore: ObservableObject {
         print("================================")
     }
     
+    // 添加任务
     func addTask(_ task: ProjectTask, to project: Project) {
         print("========== 开始添加任务 ==========")
-        print("任务信息: \(task.title), ID: \(task.id)")
-        print("目标项目: \(project.name), ID: \(project.id)")
-        
-        if let index = projects.firstIndex(where: { $0.id == project.id }) {
-            // 1. 更新内存中的数据
-            projects[index].tasks.append(task)
-            print("✓ 已添加到内存数组")
-            print("当前内存中任务数量: \(projects[index].tasks.count)")
-            
-            // 2. 保存到 CoreData
-            let taskEntity = task.toEntity(context: context)
-            print("✓ TaskEntity 创建成功")
-            print("TaskEntity ID: \(taskEntity.id?.uuidString ?? "nil")")
-            print("TaskEntity 标题: \(taskEntity.title ?? "nil")")
-            
-            // 3. 设置与 Project 的关系
-            let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "id == %@", project.id as CVarArg)
-            fetchRequest.fetchLimit = 1  // 限制只获取一个结果
-            
-            do {
-                let projectEntities = try context.fetch(fetchRequest)
-                print("查询结果数量: \(projectEntities.count)")
-                
-                if let projectEntity = projectEntities.first {
-                    print("✓ 找到项目实体")
-                    print("项目实体 ID: \(projectEntity.id?.uuidString ?? "nil")")
-                    print("项目实体名称: \(projectEntity.name ?? "nil")")
-                    
-                    taskEntity.project = projectEntity
-                    print("✓ 已建立任务与项目的关系")
-                    
-                    try context.save()
-                    print("✓ 成功保存到 CoreData")
-                } else {
-                    print("❌ 错误：未找到项目实体，尝试重新创建")
-                    // 如果找不到项目实体，重新创建一个
-                    let newProjectEntity = project.toEntity(context: context)
-                    taskEntity.project = newProjectEntity
-                    try context.save()
-                    print("✓ 已创建新的项目实体并保存")
-                }
-            } catch {
-                print("❌ 错误：保存任务失败")
-                print("错误详情: \(error)")
-                print("错误描述: \(error.localizedDescription)")
-            }
-        } else {
-            print("❌ 错误：未找到对应的项目")
-            print("当前项目数量: \(projects.count)")
-            print("查找的项目 ID: \(project.id)")
+        print("任务信息:")
+        print("- 标题: \(task.title)")
+        print("- 负责人: \(task.assignee)")
+        print("- 截止时间: \(task.dueDate)")
+        if let reminder = task.reminder {
+            print("- 提醒设置: \(reminder.rawValue) \(task.reminderHour):00")
         }
+        
+        guard let projectEntity = project.fetchEntity(in: context) else {
+            print("❌ 错误：找不到项目实体")
+            return
+        }
+        
+        // 创建任务实体
+        let taskEntity = task.toEntity(context: context)
+        taskEntity.project = projectEntity
+        
+        do {
+            try context.save()
+            print("✓ CoreData 保存成功")
+            
+            // 更新内存中的数据
+            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+                projects[projectIndex].tasks.append(task)
+                objectWillChange.send()
+                print("✓ 内存数据更新成功")
+            }
+        } catch {
+            print("❌ 保存失败:")
+            print("错误类型: \(type(of: error))")
+            print("错误描述: \(error.localizedDescription)")
+        }
+        
         print("================================")
     }
     
@@ -365,36 +389,162 @@ class ProjectStore: ObservableObject {
         print("================================")
     }
     
-    // 添加 CoreData 相关方法
-    func saveLocation(_ location: Location, for project: Project) {
-        // 1. 先获取或创建 ProjectEntity
-        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", project.id as CVarArg)
-        
-        let projectEntity: ProjectEntity
-        if let existingProject = try? context.fetch(fetchRequest).first {
-            projectEntity = existingProject
-        } else {
-            // 如果项目不存在，创建新的
-            projectEntity = project.toEntity(context: context)
+    // 添加场地
+    func addLocation(_ location: Location, to project: Project) {
+        print("========== 开始添加场地 ==========")
+        print("场地信息:")
+        print("- ID: \(location.id)")
+        print("- 名称: \(location.name)")
+        print("- 类型: \(location.type.rawValue)")
+        print("- 状态: \(location.status.rawValue)")
+        print("- 地址: \(location.address)")
+        if let contactName = location.contactName {
+            print("- 联系人: \(contactName)")
         }
+        if let contactPhone = location.contactPhone {
+            print("- 电话: \(contactPhone)")
+        }
+        if let notes = location.notes {
+            print("- 备注: \(notes)")
+        }
+        print("- 照片数量: \(location.photos.count)")
+        print("- 创建日期: \(location.date)")
         
-        // 2. 创建 LocationEntity 并设置关系
+        print("\n所属项目:")
+        print("- 名称: \(project.name)")
+        print("- ID: \(project.id)")
+        
+        // 1. 获取或创建 ProjectEntity
+        guard let projectEntity = project.fetchEntity(in: context) else {
+            print("❌ 错误：找不到项目实体")
+            return
+        }
+        print("✓ 找到项目实体")
+        
+        // 2. 创建 LocationEntity
         let locationEntity = location.toEntity(context: context)
-        locationEntity.project = projectEntity  // 设置必需的关系
+        locationEntity.project = projectEntity
+        print("✓ 创建场地实体并设置关系")
         
-        // 3. 保存到 CoreData
         do {
+            // 3. 保存到 CoreData
             try context.save()
-            print("位置保存到 CoreData 成功")
+            print("✓ CoreData 保存成功")
             
             // 4. 更新内存中的数据
             if let index = projects.firstIndex(where: { $0.id == project.id }) {
                 projects[index].locations.append(location)
+                objectWillChange.send()
+                print("✓ 内存数据更新成功")
+                print("当前场地数量: \(projects[index].locations.count)")
+            }
+            
+            // 5. 验证数据
+            let verifyRequest = LocationEntity.fetchRequest()
+            verifyRequest.predicate = NSPredicate(format: "id == %@", location.id as CVarArg)
+            if let verifiedLocation = try context.fetch(verifyRequest).first {
+                print("\n✓ 数据验证成功:")
+                print("- 实体ID: \(verifiedLocation.id?.uuidString ?? "nil")")
+                print("- 实体名称: \(verifiedLocation.name ?? "nil")")
+                print("- 实体地址: \(verifiedLocation.address ?? "nil")")
+                print("- 实体照片数: \(verifiedLocation.photos?.count ?? 0)")
             }
         } catch {
-            print("保存位置失败: \(error)")
+            print("❌ 保存失败:")
+            print("错误类型: \(type(of: error))")
+            print("错误描述: \(error.localizedDescription)")
         }
+        
+        print("================================")
+    }
+    
+    // 更新位置
+    func updateLocation(_ location: Location, in project: Project) {
+        print("========== 开始更新场地 ==========")
+        print("场地信息:")
+        print("- ID: \(location.id)")
+        print("- 名称: \(location.name)")
+        print("- 类型: \(location.type.rawValue)")
+        print("- 状态: \(location.status.rawValue)")
+        print("- 地址: \(location.address)")
+        
+        // 1. 查找要更新的 LocationEntity
+        let request = LocationEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", 
+            location.id as CVarArg, project.id as CVarArg)
+        
+        if let entity = try? context.fetch(request).first {
+            print("✓ 找到场地实体")
+            
+            // 2. 更新实体
+            entity.name = location.name
+            entity.type = location.type.rawValue
+            entity.status = location.status.rawValue
+            entity.address = location.address
+            entity.contactName = location.contactName
+            entity.contactPhone = location.contactPhone
+            entity.notes = location.notes
+            print("✓ 实体数据更新完成")
+            
+            do {
+                // 3. 保存更改
+                try context.save()
+                print("✓ CoreData 保存成功")
+                
+                // 4. 更新内存中的数据
+                if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+                   let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }) {
+                    projects[projectIndex].locations[locationIndex] = location
+                    print("✓ 内存数据更新成功")
+                    objectWillChange.send()
+                    print("✓ 发送视图更新通知")
+                }
+            } catch {
+                print("❌ 保存失败:")
+                print("- 错误信息: \(error)")
+            }
+        } else {
+            print("❌ 错误：找不到场地实体")
+        }
+        print("================================")
+    }
+    
+    // 删除位置
+    func deleteLocation(_ location: Location, from project: Project) {
+        print("========== 开始删除场地 ==========")
+        print("场地信息:")
+        print("- ID: \(location.id)")
+        print("- 名称: \(location.name)")
+        
+        // 1. 查找要删除的 LocationEntity
+        let request = LocationEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", 
+            location.id as CVarArg, project.id as CVarArg)
+        
+        do {
+            if let entity = try context.fetch(request).first {
+                print("✓ 找到场地实体")
+                
+                // 2. 删除实体
+                context.delete(entity)
+                try context.save()
+                print("✓ CoreData 删除成功")
+                
+                // 3. 更新内存中的数据
+                if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+                    projects[projectIndex].locations.removeAll { $0.id == location.id }
+                    print("✓ 内存数据更新成功")
+                    objectWillChange.send()
+                    print("✓ 发送视图更新通知")
+                }
+            } else {
+                print("❌ 错误：找不到场地实体")
+            }
+        } catch {
+            print("❌ 删除失败:")
+            print("- 错误信息: \(error)")
+        }
+        print("================================")
     }
     
     // 添加发票
@@ -672,6 +822,35 @@ class ProjectStore: ObservableObject {
             print("- 错误信息: \(error)")
         }
         print("================================")
+    }
+    
+    // 添加照片保存方法
+    func addPhotos(_ photos: [LocationPhoto], to location: Location, in project: Project) async {
+        guard let projectEntity = project.fetchEntity(in: context),
+              let locationEntity = location.fetchEntity(in: context) else {
+            return
+        }
+        
+        for photo in photos {
+            let photoEntity = LocationPhotoEntity(context: context)
+            photoEntity.id = photo.id
+            photoEntity.imageData = photo.imageData
+            photoEntity.date = photo.date
+            photoEntity.weather = photo.weather
+            photoEntity.note = photo.note
+            photoEntity.location = locationEntity
+        }
+        
+        do {
+            try context.save()
+            if let index = projects.firstIndex(where: { $0.id == project.id }),
+               let locationIndex = projects[index].locations.firstIndex(where: { $0.id == location.id }) {
+                projects[index].locations[locationIndex].photos.append(contentsOf: photos)
+                objectWillChange.send()
+            }
+        } catch {
+            print("保存照片失败: \(error)")
+        }
     }
     
     static func withTestData(context: NSManagedObjectContext) -> ProjectStore {

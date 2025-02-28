@@ -2,44 +2,43 @@ import SwiftUI
 
 struct EditLocationView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var location: Location
+    let location: Location
+    let projectStore: ProjectStore
+    let project: Project
     
-    @State private var name: String
-    @State private var type: LocationType
-    @State private var status: LocationStatus
-    @State private var address: String
-    @State private var contactName: String
-    @State private var contactPhone: String
-    @State private var notes: String
+    @State private var editedLocation: Location
     
-    init(location: Binding<Location>) {
-        self._location = location
-        
-        // 初始化状态变量
-        _name = State(initialValue: location.wrappedValue.name)
-        _type = State(initialValue: location.wrappedValue.type)
-        _status = State(initialValue: location.wrappedValue.status)
-        _address = State(initialValue: location.wrappedValue.address)
-        _contactName = State(initialValue: location.wrappedValue.contactName ?? "")
-        _contactPhone = State(initialValue: location.wrappedValue.contactPhone ?? "")
-        _notes = State(initialValue: location.wrappedValue.notes ?? "")
+    init(location: Location, projectStore: ProjectStore, project: Project) {
+        self.location = location
+        self.projectStore = projectStore
+        self.project = project
+        self._editedLocation = State(initialValue: location)
     }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section("基本信息") {
-                    TextField("场地名称", text: $name)
-                    Picker("场地类型", selection: $type) {
+                    TextField("场地名称", text: Binding(
+                        get: { editedLocation.name },
+                        set: { editedLocation.name = $0 }
+                    ))
+                    Picker("场地类型", selection: Binding(
+                        get: { editedLocation.type },
+                        set: { editedLocation.type = $0 }
+                    )) {
                         ForEach(LocationType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
-                    TextField("详细地址", text: $address)
+                    TextField("详细地址", text: Binding(
+                        get: { editedLocation.address },
+                        set: { editedLocation.address = $0 }
+                    ))
                 }
                 
                 Section("状态") {
-                    Picker("场地状态", selection: $status) {
+                    Picker("场地状态", selection: $editedLocation.status) {
                         ForEach(LocationStatus.allCases, id: \.self) { status in
                             Text(status.rawValue).tag(status)
                         }
@@ -47,14 +46,23 @@ struct EditLocationView: View {
                 }
                 
                 Section("联系方式") {
-                    TextField("联系人", text: $contactName)
-                    TextField("联系电话", text: $contactPhone)
-                        .keyboardType(.phonePad)
+                    TextField("联系人", text: Binding(
+                        get: { editedLocation.contactName ?? "" },
+                        set: { editedLocation.contactName = $0.isEmpty ? nil : $0 }
+                    ))
+                    TextField("联系电话", text: Binding(
+                        get: { editedLocation.contactPhone ?? "" },
+                        set: { editedLocation.contactPhone = $0.isEmpty ? nil : $0 }
+                    ))
+                    .keyboardType(.phonePad)
                 }
                 
                 Section("备注") {
-                    TextEditor(text: $notes)
-                        .frame(height: 100)
+                    TextEditor(text: Binding(
+                        get: { editedLocation.notes ?? "" },
+                        set: { editedLocation.notes = $0.isEmpty ? nil : $0 }
+                    ))
+                    .frame(height: 100)
                 }
             }
             .navigationTitle("编辑场地")
@@ -66,18 +74,12 @@ struct EditLocationView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        // 更新场地信息
-                        location.name = name
-                        location.type = type
-                        location.status = status
-                        location.address = address
-                        location.contactName = contactName.isEmpty ? nil : contactName
-                        location.contactPhone = contactPhone.isEmpty ? nil : contactPhone
-                        location.notes = notes.isEmpty ? nil : notes
-                        
-                        dismiss()
+                        Task {
+                            await projectStore.updateLocation(editedLocation, in: project)
+                            dismiss()
+                        }
                     }
-                    .disabled(name.isEmpty || address.isEmpty)
+                    .disabled(editedLocation.name.isEmpty || editedLocation.address.isEmpty)
                 }
             }
         }

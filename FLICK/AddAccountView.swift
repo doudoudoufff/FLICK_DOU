@@ -53,32 +53,36 @@ struct AddAccountView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        let newAccount = Account(
-                            name: name,
-                            type: type,
-                            bankName: bankName,
-                            bankBranch: bankBranch,
-                            bankAccount: bankAccount,
-                            contactName: contactName,
-                            contactPhone: contactPhone,
-                            notes: notes.isEmpty ? nil : notes
-                        )
-                        
-                        projectStore.addAccount(newAccount, to: project)
-                        isPresented = false
+                        saveAccount()
                     }
-                    .disabled(isFormInvalid)
+                    .disabled(!isValid)
                 }
             }
         }
     }
     
-    private var isFormInvalid: Bool {
-        name.isEmpty ||
-        bankName.isEmpty ||
-        bankBranch.isEmpty ||
-        bankAccount.isEmpty ||
-        contactName.isEmpty ||
-        contactPhone.isEmpty
+    private var isValid: Bool {
+        !name.isEmpty &&
+        !bankName.isEmpty &&
+        !bankBranch.isEmpty &&
+        !bankAccount.isEmpty &&
+        !contactName.isEmpty &&
+        !contactPhone.isEmpty
+    }
+    
+    private func saveAccount() {
+        let newAccount = Account(
+            name: name,
+            type: type,
+            bankName: bankName,
+            bankBranch: bankBranch,
+            bankAccount: bankAccount,
+            contactName: contactName,
+            contactPhone: contactPhone,
+            notes: notes.isEmpty ? nil : notes
+        )
+        
+        projectStore.addAccount(newAccount, to: project)
+        isPresented = false
     }
 } 

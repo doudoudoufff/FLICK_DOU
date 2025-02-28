@@ -2,17 +2,19 @@ import SwiftUI
 
 struct AddLocationView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var project: Project
+    @EnvironmentObject var projectStore: ProjectStore
+    let project: Project
     
     @State private var name = ""
     @State private var type = LocationType.exterior
+    @State private var status = LocationStatus.pending
     @State private var address = ""
     @State private var contactName = ""
     @State private var contactPhone = ""
     @State private var notes = ""
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 Section("基本信息") {
                     TextField("场地名称", text: $name)
@@ -43,21 +45,27 @@ struct AddLocationView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("添加") {
+                    Button("保存") {
                         let location = Location(
                             name: name,
                             type: type,
+                            status: status,
                             address: address,
                             contactName: contactName.isEmpty ? nil : contactName,
                             contactPhone: contactPhone.isEmpty ? nil : contactPhone,
                             notes: notes.isEmpty ? nil : notes
                         )
-                        project.locations.append(location)
+                        
+                        projectStore.addLocation(location, to: project)
                         dismiss()
                     }
-                    .disabled(name.isEmpty || address.isEmpty)
+                    .disabled(!isValid)
                 }
             }
         }
+    }
+    
+    private var isValid: Bool {
+        !name.isEmpty && !address.isEmpty
     }
 } 

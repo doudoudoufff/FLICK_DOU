@@ -3,90 +3,29 @@ import PhotosUI
 import FLICK
 
 struct LocationScoutingView: View {
-    @Binding var project: Project
     @EnvironmentObject var projectStore: ProjectStore
-    @State private var showingAddLocation = false
+    @Binding var project: Project
+    @State private var showingAddSheet = false
     @State private var selectedFilter: LocationType?
     @State private var searchText = ""
     @State private var showingDailyPhotos = false
     
-    // 按类型分组的场地
-    var locationsByType: [LocationType: [Location]] {
-        Dictionary(grouping: filteredLocations) { $0.type }
-    }
-    
-    // 过滤后的场地列表
-    var filteredLocations: [Location] {
-        project.locations.filter { location in
-            let matchesSearch = searchText.isEmpty || 
-                location.name.localizedCaseInsensitiveContains(searchText) ||
-                location.address.localizedCaseInsensitiveContains(searchText)
-            
-            let matchesFilter = selectedFilter == nil || location.type == selectedFilter
-            
-            return matchesSearch && matchesFilter
-        }
-    }
-    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // 类型筛选器
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        FilterChip(
-                            title: "全部",
-                            isSelected: selectedFilter == nil,
-                            color: project.color
-                        ) {
-                            selectedFilter = nil
-                        }
-                        
-                        ForEach(LocationType.allCases, id: \.self) { type in
-                            FilterChip(
-                                title: type.rawValue,
-                                isSelected: selectedFilter == type,
-                                color: project.color
-                            ) {
-                                selectedFilter = type
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
+                FilterSection(
+                    selectedFilter: $selectedFilter,
+                    projectColor: project.color
+                )
                 
-                // 场地列表
                 if project.locations.isEmpty {
-                    ContentUnavailableView(
-                        "暂无场地",
-                        systemImage: "building.2.fill",
-                        description: Text("点击右上角添加场地")
-                    )
-                    .padding(.top, 40)
+                    EmptyLocationView()
                 } else {
-                    LazyVStack(spacing: 16) {
-                        ForEach(LocationType.allCases, id: \.self) { type in
-                            if let locations = locationsByType[type], !locations.isEmpty {
-                                VStack(alignment: .leading, spacing: 12) {
-                                    // 分组标题
-                                    Text(type.rawValue)
-                                        .font(.headline)
-                                        .foregroundStyle(.secondary)
-                                        .padding(.horizontal)
-                                    
-                                    // 场地列表
-                                    ForEach($project.locations.filter { $0.type.wrappedValue == type }) { $location in
-                                        NavigationLink {
-                                            LocationDetailView(location: $location, projectColor: project.color)
-                                        } label: {
-                                            LocationRow(location: location)
-                                        }
-                                        .padding(.horizontal)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    LocationListContent(
+                        project: $project,
+                        selectedFilter: selectedFilter,
+                        searchText: searchText
+                    )
                 }
             }
             .padding(.vertical)
@@ -95,27 +34,18 @@ struct LocationScoutingView: View {
         .searchable(text: $searchText, prompt: "搜索场地")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                HStack {
-                    NavigationLink {
-                        DailyPhotosView(project: $project)
-                    } label: {
-                        Image(systemName: "clock.fill")
-                    }
-                    
-                    Button {
-                        showingAddLocation = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                }
+                LocationToolbarContent(
+                    showingAddSheet: $showingAddSheet,
+                    project: $project
+                )
             }
         }
-        .sheet(isPresented: $showingAddLocation) {
-            AddLocationView(project: $project)
+        .sheet(isPresented: $showingAddSheet) {
+            AddLocationView(project: project)
         }
     }
     
-    func addLocation(_ location: Location) {
+    private func addLocation(_ location: Location) {
         project.locations.append(location)
         projectStore.saveProjects()
     }
@@ -159,5 +89,145 @@ struct LocationPhotoDetailView: View {
             .padding()
         }
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - 筛选器部分
+private struct FilterSection: View {
+    @Binding var selectedFilter: LocationType?
+    let projectColor: Color
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                FilterChip(
+                    title: "全部",
+                    isSelected: selectedFilter == nil,
+                    color: projectColor
+                ) {
+                    selectedFilter = nil
+                }
+                
+                ForEach(LocationType.allCases, id: \.self) { type in
+                    FilterChip(
+                        title: type.rawValue,
+                        isSelected: selectedFilter == type,
+                        color: projectColor
+                    ) {
+                        selectedFilter = type
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+}
+
+// MARK: - 空状态视图
+private struct EmptyLocationView: View {
+    var body: some View {
+        ContentUnavailableView(
+            "暂无场地",
+            systemImage: "building.2.fill",
+            description: Text("点击右上角添加场地")
+        )
+        .padding(.top, 40)
+    }
+}
+
+// MARK: - 场地列表内容
+private struct LocationListContent: View {
+    @Binding var project: Project
+    let selectedFilter: LocationType?
+    let searchText: String
+    
+    private var filteredLocations: [Location] {
+        project.locations.filter { location in
+            let matchesSearch = searchText.isEmpty || 
+                location.name.localizedCaseInsensitiveContains(searchText) ||
+                location.address.localizedCaseInsensitiveContains(searchText)
+            
+            let matchesFilter = selectedFilter == nil || location.type == selectedFilter
+            
+            return matchesSearch && matchesFilter
+        }
+    }
+    
+    private var locationsByType: [LocationType: [Location]] {
+        Dictionary(grouping: filteredLocations) { $0.type }
+    }
+    
+    var body: some View {
+        LazyVStack(spacing: 16) {
+            ForEach(LocationType.allCases, id: \.self) { type in
+                if let locations = locationsByType[type], !locations.isEmpty {
+                    LocationTypeSection(
+                        type: type,
+                        project: $project,
+                        locations: locations
+                    )
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 场地类型分组
+private struct LocationTypeSection: View {
+    let type: LocationType
+    @Binding var project: Project
+    let locations: [Location]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(type.rawValue)
+                .font(.headline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal)
+            
+            ForEach(locations) { location in
+                let locationBinding = Binding(
+                    get: { location },
+                    set: { newLocation in
+                        if let index = project.locations.firstIndex(where: { $0.id == location.id }) {
+                            project.locations[index] = newLocation
+                        }
+                    }
+                )
+                
+                NavigationLink {
+                    LocationDetailView(
+                        project: project,  // 传递值而不是绑定
+                        location: locationBinding,
+                        projectColor: project.color
+                    )
+                } label: {
+                    LocationRow(location: location)
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+}
+
+// MARK: - 工具栏内容
+struct LocationToolbarContent: View {
+    @Binding var showingAddSheet: Bool
+    @Binding var project: Project
+    
+    var body: some View {
+        HStack {
+            NavigationLink {
+                DailyPhotosView(project: $project)
+            } label: {
+                Image(systemName: "clock.fill")
+            }
+            
+            Button {
+                showingAddSheet = true
+            } label: {
+                Image(systemName: "plus.circle.fill")
+            }
+        }
     }
 } 

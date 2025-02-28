@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 @main
 struct FLICKApp: App {
@@ -13,8 +14,7 @@ struct FLICKApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            ContentView(context: persistenceController.container.viewContext)
                 .environmentObject(ProjectStore(context: persistenceController.container.viewContext))
                 .onAppear {
                     NotificationManager.shared.requestAuthorization()

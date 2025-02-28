@@ -17,7 +17,7 @@ enum LocationStatus: String, Codable, CaseIterable {
 }
 
 // 堪景场地
-struct Location: Identifiable, Codable {
+struct Location: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var type: LocationType
@@ -64,56 +64,89 @@ struct Location: Identifiable, Codable {
         entity.date = date
         
         // 转换照片
-        let photoEntities = photos.map { photo -> LocationPhotoEntity in
-            let photoEntity = photo.toEntity(context: context)
-            photoEntity.location = entity
-            return photoEntity
-        }
-        entity.photos = NSSet(array: photoEntities)
+        entity.photos = NSSet(array: photos.map { $0.toEntity(context: context) })
         
         return entity
+    }
+    
+    static func fromEntity(_ entity: LocationEntity) -> Location? {
+        guard let id = entity.id,
+              let name = entity.name,
+              let type = LocationType(rawValue: entity.type ?? ""),
+              let status = LocationStatus(rawValue: entity.status ?? ""),
+              let address = entity.address,
+              let date = entity.date else {
+            return nil
+        }
+        
+        let photos = (entity.photos?.allObjects as? [LocationPhotoEntity])?.compactMap(LocationPhoto.fromEntity) ?? []
+        
+        return Location(
+            id: id,
+            name: name,
+            type: type,
+            status: status,
+            address: address,
+            contactName: entity.contactName,
+            contactPhone: entity.contactPhone,
+            photos: photos,
+            notes: entity.notes,
+            date: date
+        )
+    }
+    
+    // 添加 Equatable 的实现
+    static func == (lhs: Location, rhs: Location) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.name == rhs.name &&
+        lhs.type == rhs.type &&
+        lhs.status == rhs.status &&
+        lhs.address == rhs.address &&
+        lhs.contactName == rhs.contactName &&
+        lhs.contactPhone == rhs.contactPhone &&
+        lhs.photos == rhs.photos &&
+        lhs.notes == rhs.notes &&
+        lhs.date == rhs.date
+    }
+    
+    // 添加 Hashable 的实现
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    func fetchEntity(in context: NSManagedObjectContext) -> LocationEntity? {
+        let request: NSFetchRequest<LocationEntity> = LocationEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        do {
+            let results = try context.fetch(request)
+            return results.first
+        } catch {
+            print("获取场地实体失败: \(error)")
+            return nil
+        }
     }
 }
 
 // 照片模型
-struct LocationPhoto: Identifiable, Codable {
+struct LocationPhoto: Identifiable, Codable, Hashable {
     let id: UUID
     let imageData: Data
     let date: Date
-    var tags: Set<String>
-    var weather: String?
-    var note: String?
+    let weather: String?
+    let note: String?
     
     var image: UIImage? {
         UIImage(data: imageData)
     }
     
-    init?(image: UIImage, tags: Set<String> = [], weather: String? = nil, note: String? = nil) {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return nil }
-        self.id = UUID()
-        self.imageData = imageData
-        self.date = Date()
-        self.tags = tags
-        self.weather = weather
-        self.note = note
-    }
-    
-    // 添加新的初始化方法，用于从 CoreData 实体转换
-    init(id: UUID = UUID(),
-         imageData: Data,
-         date: Date,
-         tags: Set<String> = [],
-         weather: String? = nil,
-         note: String? = nil) {
+    init(id: UUID = UUID(), image: UIImage, date: Date = Date(), weather: String? = nil, note: String? = nil) {
         self.id = id
-        self.imageData = imageData
+        self.imageData = image.jpegData(compressionQuality: 0.8) ?? Data()
         self.date = date
-        self.tags = tags
         self.weather = weather
         self.note = note
     }
-    
-    static let placeholder = UIImage(systemName: "photo.fill")!
     
     func toEntity(context: NSManagedObjectContext) -> LocationPhotoEntity {
         let entity = LocationPhotoEntity(context: context)
@@ -123,5 +156,23 @@ struct LocationPhoto: Identifiable, Codable {
         entity.weather = weather
         entity.note = note
         return entity
+    }
+    
+    static func fromEntity(_ entity: LocationPhotoEntity) -> LocationPhoto? {
+        guard let id = entity.id,
+              let imageData = entity.imageData,
+              let date = entity.date,
+              let image = UIImage(data: imageData)
+        else {
+            return nil
+        }
+        
+        return LocationPhoto(
+            id: id,
+            image: image,
+            date: date,
+            weather: entity.weather,
+            note: entity.note
+        )
     }
 } 

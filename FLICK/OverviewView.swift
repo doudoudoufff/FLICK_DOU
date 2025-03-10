@@ -4,7 +4,8 @@ struct OverviewView: View {
     @EnvironmentObject private var projectStore: ProjectStore
     @State private var selectedDate = Date()
     @State private var showingAddTask = false
-    @State private var selectedProject: Project?  // 添加选中的项目状态
+    @State private var selectedProject: Project?
+    @State private var showingBaiBai = false
     
     // 检查指定日期是否有任务
     private func hasTasksOnDate(_ date: Date) -> Bool {
@@ -45,44 +46,118 @@ struct OverviewView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // 日历卡片
-                VStack(spacing: 0) {
-                    ChineseCalendarView(selectedDate: $selectedDate, hasTasksOnDate: hasTasksOnDate)
-                        .padding(.horizontal)
-                }
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
-                .padding(.horizontal)
-                
-                // 任务统计
-                HStack(spacing: 16) {
-                    StatisticCard(
-                        title: "今日任务",
-                        value: "\(tasksForSelectedDate.count)",
-                        icon: "calendar",
-                        color: .blue
-                    )
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // 日历卡片
+                    VStack(spacing: 0) {
+                        ChineseCalendarView(selectedDate: $selectedDate, hasTasksOnDate: hasTasksOnDate)
+                            .padding(.horizontal)
+                    }
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
+                    .padding(.horizontal)
                     
-                    StatisticCard(
-                        title: "待完成",
-                        value: "\(tasksForSelectedDate.filter { !$0.task.isCompleted }.count)",
-                        icon: "clock",
-                        color: .orange
-                    )
-                }
-                .padding(.horizontal)
-                
-                // 任务列表
-                if !tasksForSelectedDate.isEmpty {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("任务列表")
-                                .font(.headline)
+                    // 拜拜卡片 - 确保与日历组件等宽
+                    NavigationLink(destination: BaiBaiView(projectColor: .orange)) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "hands.sparkles.fill")
+                                .font(.title2)
+                                .foregroundColor(.orange)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("开机拜拜")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Text("祈求今日拍摄顺利")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
                             
                             Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.secondary)
+                                .font(.system(.subheadline, weight: .medium))
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)  // 确保占满全宽
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    }
+                    .padding(.horizontal)  // 与日历组件使用相同的水平内边距
+                    
+                    // 功能卡片网格
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: 16) {
+                        // 可以在这里添加其他功能卡片...
+                    }
+                    .padding(.horizontal)
+                    
+                    // 任务统计
+                    HStack(spacing: 16) {
+                        StatisticCard(
+                            title: "今日任务",
+                            value: "\(tasksForSelectedDate.count)",
+                            icon: "calendar",
+                            color: .blue
+                        )
+                        
+                        StatisticCard(
+                            title: "待完成",
+                            value: "\(tasksForSelectedDate.filter { !$0.task.isCompleted }.count)",
+                            icon: "clock",
+                            color: .orange
+                        )
+                    }
+                    .padding(.horizontal)
+                    
+                    // 任务列表
+                    if !tasksForSelectedDate.isEmpty {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("任务列表")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    // 如果没有选中项目，默认选择第一个项目
+                                    if selectedProject == nil && !projectStore.projects.isEmpty {
+                                        selectedProject = projectStore.projects[0]
+                                    }
+                                    showingAddTask = true
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            // 修改任务列表的显示方式
+                            LazyVStack(spacing: 16) {  // 使用 LazyVStack 替代 ForEach
+                                ForEach(tasksForSelectedDate) { taskWithProject in
+                                    DailyTaskRow(taskWithProject: taskWithProject) {
+                                        toggleTaskCompletion(taskWithProject)
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                    } else {
+                        VStack(spacing: 12) {
+                            Image(systemName: "checkmark.circle")
+                                .font(.system(size: 48))
+                                .foregroundColor(.secondary)
+                            
+                            Text("今天没有待办任务")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
                             
                             Button(action: {
                                 // 如果没有选中项目，默认选择第一个项目
@@ -91,52 +166,19 @@ struct OverviewView: View {
                                 }
                                 showingAddTask = true
                             }) {
-                                Image(systemName: "plus.circle.fill")
+                                Text("添加任务")
                                     .foregroundColor(.accentColor)
                             }
                         }
-                        .padding(.horizontal)
-                        
-                        // 修改任务列表的显示方式
-                        LazyVStack(spacing: 16) {  // 使用 LazyVStack 替代 ForEach
-                            ForEach(tasksForSelectedDate) { taskWithProject in
-                                DailyTaskRow(taskWithProject: taskWithProject) {
-                                    toggleTaskCompletion(taskWithProject)
-                                }
-                                .padding(.horizontal)
-                            }
-                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
                     }
-                } else {
-                    VStack(spacing: 12) {
-                        Image(systemName: "checkmark.circle")
-                            .font(.system(size: 48))
-                            .foregroundColor(.secondary)
-                        
-                        Text("今天没有待办任务")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        
-                        Button(action: {
-                            // 如果没有选中项目，默认选择第一个项目
-                            if selectedProject == nil && !projectStore.projects.isEmpty {
-                                selectedProject = projectStore.projects[0]
-                            }
-                            showingAddTask = true
-                        }) {
-                            Text("添加任务")
-                                .foregroundColor(.accentColor)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
                 }
+                .padding(.vertical)
             }
-            .animation(.easeInOut, value: tasksForSelectedDate.map { $0.task.isCompleted })
-            .padding(.vertical)
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("总览")
         }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle("总览")
         .sheet(isPresented: $showingAddTask) {
             NavigationView {
                 AddTaskView(
@@ -144,6 +186,11 @@ struct OverviewView: View {
                     project: projectStore.binding(for: selectedProject?.id ?? projectStore.projects[0].id) ?? .constant(projectStore.projects[0])
                 )
                 .environmentObject(projectStore)
+            }
+        }
+        .sheet(isPresented: $showingBaiBai) {
+            NavigationView {
+                BaiBaiView(projectColor: .orange)
             }
         }
     }

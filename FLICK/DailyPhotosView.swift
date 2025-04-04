@@ -13,6 +13,9 @@ struct DailyPhotosView: View {
     @State private var showingExportProgress = false
     @State private var exportProgress: Float = 0
     @State private var exportStatus = "准备导出..."
+    @State private var showingPDFReport = false
+    @State private var reportDate: Date?
+    @State private var reportPhotos: [(Location, LocationPhoto)] = []
     
     // 获取所有场地的照片并按日期分组
     private var photosByDate: [(Date, [(Location, LocationPhoto)])] {
@@ -111,11 +114,11 @@ struct DailyPhotosView: View {
         }
         .confirmationDialog("导出选项", isPresented: $showingExportOptions) {
             if let date = selectedDate {
-                Button("导出堪景报告") {
-                    exportReport(for: date)
+                Button("导出堪景PDF报告") {
+                    prepareAndShowPDFReport(for: date)
                 }
                 
-                Button("导出照片") {
+                Button("导出照片压缩包") {
                     exportPhotos(for: date)
                 }
             }
@@ -132,6 +135,15 @@ struct DailyPhotosView: View {
         .sheet(isPresented: $showingExportProgress) {
             ExportProgressView(progress: exportProgress, status: exportStatus)
         }
+        .sheet(isPresented: $showingPDFReport) {
+            if let date = reportDate {
+                PDFReportView(
+                    project: project,
+                    date: date,
+                    photos: reportPhotos
+                )
+            }
+        }
         .overlay {
             if showingExportProgress {
                 Color.black.opacity(0.3)
@@ -145,75 +157,94 @@ struct DailyPhotosView: View {
         }
     }
     
-    private func exportReport(for date: Date) {
+    private func prepareAndShowPDFReport(for date: Date) {
+        // 获取当天的照片和场地信息
+        reportDate = date
+        reportPhotos = photosByDate.first { Calendar.current.isDate($0.0, inSameDayAs: date) }?.1 ?? []
+        
+        // 显示PDF报告视图
+        showingPDFReport = true
+    }
+    
+    private func exportPhotos(for date: Date) {
         // 获取当天的照片和场地信息
         let dayPhotos = photosByDate.first { Calendar.current.isDate($0.0, inSameDayAs: date) }?.1 ?? []
         
         // 创建临时文件夹
         let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("堪景报告_\(date.formatted(date: .abbreviated, time: .omitted))")
+            .appendingPathComponent("堪景照片_\(date.formatted(date: .abbreviated, time: .omitted))")
         try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         
-        // 创建照片文件夹
-        let photosDir = tempDir.appendingPathComponent("photos")
-        try? FileManager.default.createDirectory(at: photosDir, withIntermediateDirectories: true)
+        // 显示进度视图
+        exportProgress = 0
+        exportStatus = "准备导出..."
+        showingExportProgress = true
         
-        // 准备 Excel 数据
-        var rows: [[String]] = [
-            ["时间", "场地", "类型", "地址", "照片", "备注"]  // 表头
-        ]
-        
-        // 保存照片并生成数据行
-        for (index, (location, photo)) in dayPhotos.enumerated() {
-            // 保存照片
-            let photoName = "photo_\(index + 1).jpg"
-            let photoPath = photosDir.appendingPathComponent(photoName)
-            if let imageData = photo.image?.jpegData(compressionQuality: 0.8) {
-                try? imageData.write(to: photoPath)
+        // 在后台线程处理
+        DispatchQueue.global(qos: .userInitiated).async {
+            var currentProgress: Float = 0
+            let totalPhotos = Float(dayPhotos.count)
+            
+            // 保存每张照片
+            for (index, (location, photo)) in dayPhotos.enumerated() {
+                // 更新进度
+                currentProgress = Float(index) / totalPhotos
+                DispatchQueue.main.async {
+                    exportProgress = currentProgress
+                    exportStatus = "正在处理第 \(index + 1) 张照片..."
+                }
+                
+                // 创建场地文件夹
+                let locationDir = tempDir.appendingPathComponent(location.name)
+                try? FileManager.default.createDirectory(at: locationDir, withIntermediateDirectories: true)
+                
+                // 生成文件名
+                let hourMinute = Calendar.current.component(.hour, from: photo.date) * 100 + 
+                                Calendar.current.component(.minute, from: photo.date)
+                let fileName = String(format: "%04d", hourMinute) + "_" + 
+                              (photo.note?.prefix(10).replacingOccurrences(of: " ", with: "_") ?? "无备注")
+                
+                // 保存照片
+                let photoPath = locationDir.appendingPathComponent("\(fileName).jpg")
+                if let imageData = photo.image?.jpegData(compressionQuality: 0.8) {
+                    try? imageData.write(to: photoPath)
+                }
+                
+                // 如果有备注，创建文本文件
+                if let note = photo.note, !note.isEmpty {
+                    let notePath = locationDir.appendingPathComponent("\(fileName).txt")
+                    try? note.write(to: notePath, atomically: true, encoding: .utf8)
+                }
             }
             
-            // 添加数据行
-            let row = [
-                photo.date.formatted(date: .omitted, time: .shortened),
-                location.name,
-                location.type.rawValue,
-                location.address,
-                "=HYPERLINK(\"./photos/\(photoName)\", \"查看照片\")",  // Excel 中的图片链接
-                photo.note ?? ""
-            ]
-            rows.append(row)
-        }
-        
-        // 生成 Excel 文件
-        let excelPath = tempDir.appendingPathComponent("堪景报告_\(date.formatted(date: .abbreviated, time: .omitted)).xlsx")
-        createExcelFile(at: excelPath, rows: rows)
-        
-        // 压缩文件夹
-        let zipPath = tempDir.deletingLastPathComponent()
-            .appendingPathComponent("堪景报告_\(date.formatted(date: .abbreviated, time: .omitted)).zip")
-        
-        if createZipFile(at: zipPath, containing: tempDir) {
-            // 分享文件
-            shareReport(at: zipPath)
-        }
-        
-        // 清理临时文件
-        try? FileManager.default.removeItem(at: tempDir)
-    }
-    
-    private func createExcelFile(at path: URL, rows: [[String]]) {
-        // 使用 CSV 格式作为替代方案
-        let csvString = rows.map { row in
-            row.map { cell in
-                // 处理包含逗号的单元格
-                if cell.contains(",") {
-                    return "\"\(cell)\""
+            // 完成导出
+            DispatchQueue.main.async {
+                exportProgress = 1.0
+                exportStatus = "正在压缩文件..."
+            }
+            
+            // 创建压缩文件
+            let zipPath = tempDir.deletingLastPathComponent()
+                .appendingPathComponent("堪景照片_\(date.formatted(date: .abbreviated, time: .omitted)).zip")
+            
+            if createZipFile(at: zipPath, containing: tempDir) {
+                DispatchQueue.main.async {
+                    exportStatus = "导出完成!"
+                    showingExportProgress = false
+                    
+                    // 分享压缩文件
+                    shareReport(at: zipPath)
                 }
-                return cell
-            }.joined(separator: ",")
-        }.joined(separator: "\n")
-        
-        try? csvString.write(to: path, atomically: true, encoding: .utf8)
+            } else {
+                DispatchQueue.main.async {
+                    exportStatus = "导出失败"
+                    showingExportProgress = false
+                }
+            }
+            
+            // 清理临时文件
+            try? FileManager.default.removeItem(at: tempDir)
+        }
     }
     
     private func createZipFile(at path: URL, containing directory: URL) -> Bool {
@@ -269,12 +300,6 @@ struct DailyPhotosView: View {
            let rootViewController = window.rootViewController {
             rootViewController.present(activityVC, animated: true)
         }
-    }
-    
-    private func exportPhotos(for date: Date) {
-        // TODO: 导出照片
-        // 1. 收集当天的所有照片
-        // 2. 分享照片
     }
 }
 

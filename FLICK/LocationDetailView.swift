@@ -13,6 +13,15 @@ struct LocationDetailView: View {
     @Binding var location: Location
     let projectColor: Color
     @State private var showingEditView = false
+    @State private var showingExportOptions = false
+    @State private var showingPDFReport = false
+    @State private var showDeleteConfirmation = false
+    @Environment(\.dismiss) private var dismiss
+    
+    // 获取当前场地的所有照片
+    private var locationPhotos: [(Location, LocationPhoto)] {
+        return location.photos.map { (location, $0) }
+    }
     
     var body: some View {
         NavigationStack {
@@ -34,13 +43,35 @@ struct LocationDetailView: View {
             }
             .navigationTitle(location.name)
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: 
-                Button {
-                    showingEditView = true
-                } label: {
-                    Image(systemName: "pencil")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack {
+                        if !location.photos.isEmpty {
+                            Button {
+                                showingExportOptions = true
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                        }
+                        
+                        Menu {
+                            Button {
+                                showingEditView = true
+                            } label: {
+                                Label("编辑场地", systemImage: "pencil")
+                            }
+                            
+                            Button(role: .destructive) {
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("删除场地", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
                 }
-            )
+            }
             .sheet(isPresented: $showingEditView) {
                 NavigationStack {
                     EditLocationView(
@@ -50,7 +81,36 @@ struct LocationDetailView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showingPDFReport) {
+                PDFReportView(
+                    project: project,
+                    date: Date(),
+                    photos: locationPhotos
+                )
+            }
+            .confirmationDialog("导出选项", isPresented: $showingExportOptions) {
+                Button("导出场地PDF报告") {
+                    showingPDFReport = true
+                }
+                
+                Button("取消", role: .cancel) {}
+            }
+            .alert("确认删除场地", isPresented: $showDeleteConfirmation) {
+                Button("取消", role: .cancel) {}
+                Button("删除", role: .destructive) {
+                    deleteLocation()
+                }
+            } message: {
+                Text("确定要删除\"\(location.name)\"场地吗？此操作将删除所有相关照片，且无法撤销。")
+            }
         }
+    }
+    
+    private func deleteLocation() {
+        // 删除场地
+        projectStore.deleteLocation(location, from: project)
+        // 返回上一级
+        dismiss()
     }
 }
 

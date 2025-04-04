@@ -213,6 +213,7 @@ private struct PhotoTimelineCell: View {
     let location: Location
     @EnvironmentObject var projectStore: ProjectStore
     @State private var note: String
+    @State private var showDeleteConfirmation = false
     
     init(image: UIImage, photo: LocationPhoto, color: Color, project: Project, location: Location) {
         self.image = image
@@ -247,12 +248,25 @@ private struct PhotoTimelineCell: View {
             // 右侧内容
             VStack(alignment: .leading, spacing: 12) {
                 // 照片
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(radius: 2)
+                ZStack(alignment: .topTrailing) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(radius: 2)
+                    
+                    // 删除按钮
+                    Button(action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        Image(systemName: "trash.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.red)
+                            .background(Color.white.clipShape(Circle()))
+                    }
+                    .padding(8)
+                }
                 
                 // 备注输入区域
                 HStack(alignment: .center, spacing: 8) {
@@ -282,6 +296,16 @@ private struct PhotoTimelineCell: View {
             }
         }
         .padding(.vertical, 8)
+        .alert("确认删除", isPresented: $showDeleteConfirmation) {
+            Button("取消", role: .cancel) { }
+            Button("删除", role: .destructive) {
+                Task {
+                    await deletePhoto()
+                }
+            }
+        } message: {
+            Text("确定要删除这张照片吗？此操作无法撤销。")
+        }
     }
     
     private func formatTime(_ date: Date) -> String {
@@ -300,6 +324,11 @@ private struct PhotoTimelineCell: View {
         
         // 更新 CoreData
         await projectStore.updatePhoto(updatedPhoto, in: location, project: project)
+    }
+    
+    private func deletePhoto() async {
+        // 调用 ProjectStore 的删除照片方法
+        await projectStore.deletePhoto(photo, from: location, in: project)
     }
 }
 

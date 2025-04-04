@@ -9,6 +9,21 @@ struct LocationScoutingView: View {
     @State private var selectedFilter: LocationType?
     @State private var searchText = ""
     @State private var showingDailyPhotos = false
+    @State private var showingExportOptions = false
+    @State private var showingPDFReport = false
+    @State private var reportPhotos: [(Location, LocationPhoto)] = []
+    @State private var reportDate: Date?
+    
+    // 获取所有堪景照片
+    private var allLocationPhotos: [(Location, LocationPhoto)] {
+        var photos: [(Location, LocationPhoto)] = []
+        for location in project.locations {
+            for photo in location.photos {
+                photos.append((location, photo))
+            }
+        }
+        return photos.sorted { $0.1.date < $1.1.date }
+    }
     
     var body: some View {
         ScrollView {
@@ -36,6 +51,7 @@ struct LocationScoutingView: View {
             ToolbarItem(placement: .primaryAction) {
                 LocationToolbarContent(
                     showingAddSheet: $showingAddSheet,
+                    showingExportOptions: $showingExportOptions,
                     project: $project
                 )
             }
@@ -43,6 +59,39 @@ struct LocationScoutingView: View {
         .sheet(isPresented: $showingAddSheet) {
             AddLocationView(project: project)
         }
+        .sheet(isPresented: $showingPDFReport) {
+            if let date = reportDate {
+                PDFReportView(
+                    project: project,
+                    date: date,
+                    photos: reportPhotos
+                )
+            }
+        }
+        .confirmationDialog("导出选项", isPresented: $showingExportOptions) {
+            Button("导出所有堪景PDF报告") {
+                prepareAndShowAllPhotosPDFReport()
+            }
+            
+            Button("查看每日照片时间线") {
+                showingDailyPhotos = true
+            }
+            
+            Button("取消", role: .cancel) {}
+        }
+        .navigationDestination(isPresented: $showingDailyPhotos) {
+            DailyPhotosView(project: $project)
+        }
+    }
+    
+    // 准备所有照片的PDF报告
+    private func prepareAndShowAllPhotosPDFReport() {
+        // 获取所有照片和场地信息
+        reportDate = Date()
+        reportPhotos = allLocationPhotos
+        
+        // 显示PDF报告视图
+        showingPDFReport = true
     }
     
     private func addLocation(_ location: Location) {
@@ -213,10 +262,17 @@ private struct LocationTypeSection: View {
 // MARK: - 工具栏内容
 struct LocationToolbarContent: View {
     @Binding var showingAddSheet: Bool
+    @Binding var showingExportOptions: Bool
     @Binding var project: Project
     
     var body: some View {
         HStack {
+            Button {
+                showingExportOptions = true
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+            }
+            
             NavigationLink {
                 DailyPhotosView(project: $project)
             } label: {

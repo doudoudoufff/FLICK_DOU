@@ -1071,6 +1071,46 @@ class ProjectStore: ObservableObject {
         print("================================")
     }
     
+    // 删除照片
+    func deletePhoto(_ photo: LocationPhoto, from location: Location, in project: Project) async {
+        print("========== 开始删除照片 ==========")
+        print("项目: \(project.name)")
+        print("场地: \(location.name)")
+        print("照片ID: \(photo.id)")
+        
+        guard let projectEntity = project.fetchEntity(in: context),
+              let locationEntity = location.fetchEntity(in: context),
+              let photoEntity = (locationEntity.photos?.allObjects as? [LocationPhotoEntity])?
+                .first(where: { $0.id == photo.id }) else {
+            print("❌ 错误：找不到照片实体")
+            return
+        }
+        print("✓ 已找到照片实体")
+        
+        // 从CoreData中删除照片实体
+        context.delete(photoEntity)
+        print("✓ 已从CoreData中删除照片实体")
+        
+        do {
+            try context.save()
+            print("✓ CoreData 保存成功")
+            
+            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+               let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }) {
+                // 更新内存中的数据
+                projects[projectIndex].locations[locationIndex].photos.removeAll { $0.id == photo.id }
+                objectWillChange.send()
+                print("✓ 内存数据更新成功")
+                print("当前场地照片总数: \(projects[projectIndex].locations[locationIndex].photos.count)")
+            }
+        } catch {
+            print("❌ 删除照片失败:")
+            print("错误类型: \(type(of: error))")
+            print("错误描述: \(error.localizedDescription)")
+        }
+        print("================================")
+    }
+    
     static func withTestData(context: NSManagedObjectContext) -> ProjectStore {
         let store = ProjectStore(context: context)
         

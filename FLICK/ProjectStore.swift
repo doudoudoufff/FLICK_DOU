@@ -4,53 +4,149 @@ import CoreData
 class ProjectStore: ObservableObject {
     static var shared: ProjectStore!
     @Published var projects: [Project] = []
+    @Published var syncStatus: CloudKitSyncStatus = .unknown  // 添加同步状态
     @AppStorage("enableNotifications") private var enableNotifications: Bool = true
+    @AppStorage("enableCloudSync") private var enableCloudSync = false
     let context: NSManagedObjectContext
+    private var syncObserver: Any?  // 添加同步观察器
+    
+    // 修改同步状态枚举
+    enum CloudKitSyncStatus: Equatable {
+        case unknown
+        case syncing
+        case synced
+        case error(Error)
+        
+        var description: String {
+            switch self {
+            case .unknown: return "等待同步"
+            case .syncing: return "正在同步..."
+            case .synced: return "已同步"
+            case .error(let error): return "同步错误: \(error.localizedDescription)"
+            }
+        }
+        
+        // 添加 Equatable 实现
+        static func == (lhs: CloudKitSyncStatus, rhs: CloudKitSyncStatus) -> Bool {
+            switch (lhs, rhs) {
+            case (.unknown, .unknown),
+                 (.syncing, .syncing),
+                 (.synced, .synced):
+                return true
+            case (.error(let lhsError), .error(let rhsError)):
+                return lhsError.localizedDescription == rhsError.localizedDescription
+            default:
+                return false
+            }
+        }
+    }
     
     init(context: NSManagedObjectContext) {
         print("========== ProjectStore 初始化 ==========")
         self.context = context
         ProjectStore.shared = self
         loadProjects()
+        setupSyncMonitoring()  // 添加同步监控
         print("- Context: \(context)")
         print("- 已加载项目数量: \(projects.count)")
         print("=====================================")
     }
     
-    func loadProjects() {
-        print("========== 开始加载项目 ==========")
-        let request = ProjectEntity.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(keyPath: \ProjectEntity.startDate, ascending: false)]
-        
-        do {
-            let projectEntities = try context.fetch(request)
-            print("从 CoreData 获取到 \(projectEntities.count) 个项目")
+    // 添加同步监控设置
+    private func setupSyncMonitoring() {
+        syncObserver = NotificationCenter.default.addObserver(
+            forName: NSPersistentCloudKitContainer.eventChangedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let cloudEvent = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
+                    as? NSPersistentCloudKitContainer.Event else { return }
             
-            projects = projectEntities.compactMap { entity -> Project? in
-                guard let project = Project.fromEntity(entity) else {
-                    print("❌ 项目实体转换失败")
-                    return nil
+            switch cloudEvent.type {
+            case .setup, .import, .export:
+                self.syncStatus = .syncing
+            @unknown default:
+                break
+            }
+            
+            if cloudEvent.endDate != nil {
+                self.syncStatus = .synced
+                // 同步完成后重新加载数据
+                self.loadProjects()
+            }
+            
+            if let error = cloudEvent.error {
+                self.syncStatus = .error(error)
+            }
+        }
+    }
+    
+    // 修改 ProjectStore 类中的 sync 方法
+    func sync() {
+        syncStatus = .syncing
+        
+        // 使用 PersistenceController 的同步方法
+        PersistenceController.shared.syncWithCloud { success, error in
+            DispatchQueue.main.async {
+                if success {
+                    self.syncStatus = .synced
+                    print("✓ 同步成功")
+                    
+                    // 更新上次同步时间
+                    UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastSyncTime")
+                    
+                    // 同步成功后重新加载项目
+                    self.loadProjects()
+                } else if let error = error {
+                    self.syncStatus = .error(error)
+                    print("❌ 同步失败: \(error.localizedDescription)")
                 }
                 
-                print("""
-                ✓ 成功加载项目:
-                - ID: \(project.id)
-                - 名称: \(project.name)
-                - 场地数量: \(project.locations.count)
-                - 任务数量: \(project.tasks.count)
-                """)
-                
-                return project
+                // 通知 UI 刷新
+                NotificationCenter.default.post(name: .CoreDataDidSync, object: nil)
             }
+        }
+    }
+    
+    deinit {
+        if let observer = syncObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+    
+    func loadProjects() {
+        print("========== 开始加载项目 ==========")
+        
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        
+        do {
+            let projectEntities = try context.fetch(fetchRequest)
+            print("从 CoreData 获取到 \(projectEntities.count) 个项目")
+            
+            var loadedProjects: [Project] = []
+            
+            for entity in projectEntities {
+                let project = mapProjectEntityToProject(entity)
+                loadedProjects.append(project)
+                
+                // 添加更多日志
+                print("项目: \(project.name), 账户数量: \(project.accounts.count)")
+                for account in project.accounts {
+                    print("  - 账户: \(account.name), ID: \(account.id)")
+                }
+            }
+            
+            projects = loadedProjects
             print("✓ 成功加载 \(projects.count) 个项目")
         } catch {
-            print("""
-            ❌ 加载项目失败:
-            错误类型: \(type(of: error))
-            错误描述: \(error.localizedDescription)
-            """)
+            print("❌ 加载项目失败: \(error)")
         }
+        
         print("================================")
+        print("- Context: \(context)")
+        print("- 已加载项目数量: \(projects.count)")
+        print("=====================================")
     }
     
     func saveProjects() {
@@ -123,6 +219,15 @@ class ProjectStore: ObservableObject {
         if let encoded = try? JSONEncoder().encode(projects) {
             UserDefaults.standard.set(encoded, forKey: "savedProjects")
         }
+        
+        // 如果启用了 iCloud 同步，则触发同步
+        if enableCloudSync {
+            print("iCloud 同步已启用，触发自动同步")
+            sync()
+        } else {
+            print("iCloud 同步未启用，跳过自动同步")
+        }
+        
         print("================================")
     }
     
@@ -343,6 +448,21 @@ class ProjectStore: ObservableObject {
                 projects[projectIndex].tasks.append(task)
                 objectWillChange.send()
                 print("✓ 内存数据更新成功")
+            }
+            
+            // 触发 CoreData 同步
+            PersistenceController.shared.save()
+            
+            // 手动触发 CloudKit 同步
+            PersistenceController.shared.syncWithCloud { success, error in
+                if success {
+                    print("✓ 任务信息同步到 iCloud 成功")
+                    
+                    // 同步成功后重新加载项目
+                    self.loadProjects()
+                } else if let error = error {
+                    print("❌ 任务信息同步到 iCloud 失败: \(error)")
+                }
             }
         } catch {
             print("❌ 保存失败:")
@@ -568,6 +688,21 @@ class ProjectStore: ObservableObject {
                 projects[index].invoices.append(invoice)  // 添加到内存中的发票数组
                 objectWillChange.send()  // 通知视图更新
             }
+            
+            // 触发 CoreData 同步
+            PersistenceController.shared.save()
+            
+            // 手动触发 CloudKit 同步
+            PersistenceController.shared.syncWithCloud { success, error in
+                if success {
+                    print("✓ 发票信息同步到 iCloud 成功")
+                    
+                    // 同步成功后重新加载项目
+                    self.loadProjects()
+                } else if let error = error {
+                    print("❌ 发票信息同步到 iCloud 失败: \(error)")
+                }
+            }
         } catch {
             print("保存发票失败: \(error)")
         }
@@ -694,64 +829,80 @@ class ProjectStore: ObservableObject {
     }
     
     // 添加账户
-    func addAccount(_ account: Account, to project: Project) {
-        print("========== 开始添加账户 ==========")
-        print("账户信息:")
-        print("- ID: \(account.id)")
-        print("- 名称: \(account.name)")
-        print("- 类型: \(account.type.rawValue)")
-        print("- 开户行: \(account.bankName)")
-        print("- 支行: \(account.bankBranch)")
-        print("- 账号: \(account.bankAccount)")
-        print("- 联系人: \(account.contactName)")
-        print("- 联系电话: \(account.contactPhone)")
-        if let notes = account.notes {
-            print("- 备注: \(notes)")
-        }
+    func addAccount(to project: Project, account: Account) {
+        print("========== 添加账户信息 ==========")
+        print("项目: \(project.name)")
+        print("账户: \(account.name)")
         
-        print("\n所属项目:")
-        print("- 名称: \(project.name)")
-        print("- ID: \(project.id)")
-        
-        guard let projectEntity = project.fetchEntity(in: context) else {
-            print("❌ 错误：找不到项目实体")
+        // 获取项目实体
+        guard let projectEntity = fetchProjectEntity(id: project.id) else {
+            print("❌ 找不到项目实体")
             return
         }
         
-        print("\n开始保存到 CoreData...")
+        // 创建账户实体
+        let accountEntity = AccountEntity(context: context)
+        accountEntity.id = account.id
+        accountEntity.name = account.name
+        accountEntity.type = account.type.rawValue  // 使用 rawValue 转换为字符串
+        accountEntity.bankName = account.bankName
+        accountEntity.bankBranch = account.bankBranch
+        accountEntity.bankAccount = account.bankAccount
+        accountEntity.contactName = account.contactName
+        accountEntity.contactPhone = account.contactPhone
+        accountEntity.idNumber = account.idNumber
+        accountEntity.notes = account.notes
         
-        // 1. 创建 AccountEntity
-        let accountEntity = account.toEntity(context: context)
-        accountEntity.project = projectEntity  // 设置必需的关系
-        print("✓ 账户实体创建成功")
+        // 关联到项目
+        accountEntity.project = projectEntity
         
+        // 保存上下文
         do {
-            // 2. 保存到 CoreData
             try context.save()
-            print("✓ CoreData 保存成功")
+            print("✓ 账户信息保存成功")
             
-            // 3. 更新内存中的项目数据
+            // 更新内存中的项目对象
             if let index = projects.firstIndex(where: { $0.id == project.id }) {
-                let oldCount = projects[index].accounts.count
-                projects[index].accounts.append(account)
-                let newCount = projects[index].accounts.count
-                print("✓ 内存数据更新成功")
-                print("- 账户数量: \(oldCount) -> \(newCount)")
+                // 创建新的账户对象
+                let newAccount = Account(
+                    id: account.id,
+                    name: account.name,
+                    type: account.type,
+                    bankName: account.bankName,
+                    bankBranch: account.bankBranch,
+                    bankAccount: account.bankAccount,
+                    idNumber: account.idNumber,
+                    contactName: account.contactName,
+                    contactPhone: account.contactPhone,
+                    notes: account.notes
+                )
                 
-                // 4. 确保项目数据也被更新
-                let updatedProject = projects[index]
-                DispatchQueue.main.async {
-                    self.projects[index] = updatedProject
-                    self.objectWillChange.send()
-                    print("✓ 视图更新通知已发送")
+                // 添加到项目的账户列表中
+                projects[index].accounts.append(newAccount)
+                print("✓ 账户已添加到内存中的项目")
+                
+                // 通知视图更新
+                objectWillChange.send()
+            }
+            
+            // 触发 CoreData 同步
+            PersistenceController.shared.save()
+            
+            // 手动触发 CloudKit 同步
+            PersistenceController.shared.syncWithCloud { success, error in
+                if success {
+                    print("✓ 账户信息同步到 iCloud 成功")
+                    
+                    // 同步成功后重新加载项目
+                    self.loadProjects()
+                } else if let error = error {
+                    print("❌ 账户信息同步到 iCloud 失败: \(error)")
                 }
-            } else {
-                print("❌ 错误：找不到对应的项目")
             }
         } catch {
-            print("❌ 保存账户失败:")
-            print("- 错误信息: \(error)")
+            print("❌ 账户信息保存失败: \(error)")
         }
+        
         print("================================")
     }
     
@@ -1123,6 +1274,195 @@ class ProjectStore: ObservableObject {
             print("✓ 已重新设置任务提醒")
         }
         print("================================")
+    }
+    
+    // 添加一个属性来跟踪最后的同步错误
+    private var lastSyncError: Error? = nil
+    
+    // 确保 mapProjectEntityToProject 方法正确加载账户信息
+    private func mapProjectEntityToProject(_ entity: ProjectEntity) -> Project {
+        // 初始化项目，使用正确的颜色处理方法
+        var project = Project(
+            id: entity.id ?? UUID(),
+            name: entity.name ?? "",
+            director: entity.director ?? "",
+            producer: entity.producer ?? "",
+            startDate: entity.startDate ?? Date(),
+            status: Project.Status(rawValue: entity.status ?? "") ?? .preProduction,
+            color: entity.color != nil ? (Color(data: entity.color!) ?? .blue) : .blue,
+            isLocationScoutingEnabled: entity.isLocationScoutingEnabled
+        )
+        
+        // 确保打印出状态，以便调试
+        print("加载项目 \(project.name) 的堪景状态: \(project.isLocationScoutingEnabled)")
+        
+        // 加载任务信息
+        if let taskEntities = entity.tasks?.allObjects as? [TaskEntity], !taskEntities.isEmpty {
+            print("找到 \(taskEntities.count) 个任务实体")
+            
+            var validTasks: [ProjectTask] = []
+            for taskEntity in taskEntities {
+                guard let id = taskEntity.id,
+                      let title = taskEntity.title,
+                      let dueDate = taskEntity.dueDate else { 
+                    print("⚠️ 跳过无效任务实体")
+                    continue
+                }
+                
+                let task = ProjectTask(
+                    id: id,
+                    title: title,
+                    assignee: taskEntity.assignee ?? "",
+                    dueDate: dueDate,
+                    isCompleted: taskEntity.isCompleted,
+                    reminder: taskEntity.reminder != nil ? ProjectTask.TaskReminder(rawValue: taskEntity.reminder!) : nil,
+                    reminderHour: Int(taskEntity.reminderHour)
+                )
+                print("  - 加载任务: \(task.title), ID: \(task.id)")
+                validTasks.append(task)
+            }
+            project.tasks = validTasks
+            print("✓ 加载了 \(project.tasks.count) 个任务信息")
+        } else {
+            print("⚠️ 项目 \(project.name) 没有关联的任务实体")
+        }
+        
+        // 加载发票信息
+        if let invoiceEntities = entity.invoices?.allObjects as? [InvoiceEntity], !invoiceEntities.isEmpty {
+            print("找到 \(invoiceEntities.count) 个发票实体")
+            
+            var validInvoices: [Invoice] = []
+            for invoiceEntity in invoiceEntities {
+                guard let id = invoiceEntity.id,
+                      let name = invoiceEntity.name,
+                      let date = invoiceEntity.date else { 
+                    print("⚠️ 跳过无效发票实体")
+                    continue
+                }
+                
+                let invoice = Invoice(
+                    id: id,
+                    name: name,
+                    phone: invoiceEntity.phone ?? "",
+                    idNumber: invoiceEntity.idNumber ?? "",
+                    bankAccount: invoiceEntity.bankAccount ?? "",
+                    bankName: invoiceEntity.bankName ?? "",
+                    date: date
+                )
+                print("  - 加载发票: \(invoice.name), ID: \(invoice.id)")
+                validInvoices.append(invoice)
+            }
+            project.invoices = validInvoices
+            print("✓ 加载了 \(project.invoices.count) 个发票信息")
+        } else {
+            print("⚠️ 项目 \(project.name) 没有关联的发票实体")
+        }
+        
+        // 加载账户信息
+        if let accountEntities = entity.accounts?.allObjects as? [AccountEntity], !accountEntities.isEmpty {
+            print("找到 \(accountEntities.count) 个账户实体")
+            
+            project.accounts = accountEntities.map { entity in
+                let account = Account(
+                    id: entity.id ?? UUID(),
+                    name: entity.name ?? "",
+                    type: AccountType(rawValue: entity.type ?? "") ?? .other,
+                    bankName: entity.bankName ?? "",
+                    bankBranch: entity.bankBranch ?? "",
+                    bankAccount: entity.bankAccount ?? "",
+                    idNumber: entity.idNumber ?? "",
+                    contactName: entity.contactName ?? "",
+                    contactPhone: entity.contactPhone ?? "",
+                    notes: entity.notes ?? ""
+                )
+                print("  - 加载账户: \(account.name), ID: \(account.id)")
+                return account
+            }
+            print("✓ 加载了 \(project.accounts.count) 个账户信息")
+        } else {
+            print("⚠️ 项目 \(project.name) 没有关联的账户实体")
+        }
+        
+        // 加载位置信息
+        if let locationEntities = entity.locations?.allObjects as? [LocationEntity], !locationEntities.isEmpty {
+            print("找到 \(locationEntities.count) 个位置实体")
+            
+            var validLocations: [Location] = []
+            for locationEntity in locationEntities {
+                guard let id = locationEntity.id,
+                      let name = locationEntity.name,
+                      let typeStr = locationEntity.type,
+                      let statusStr = locationEntity.status,
+                      let address = locationEntity.address,
+                      let date = locationEntity.date else { 
+                    print("⚠️ 跳过无效位置实体")
+                    continue
+                }
+                
+                // 使用正确的枚举类型
+                let locationType = LocationType(rawValue: typeStr) ?? .other
+                let locationStatus = LocationStatus(rawValue: statusStr) ?? .pending
+                
+                var location = Location(
+                    id: id,
+                    name: name,
+                    type: locationType,
+                    status: locationStatus,
+                    address: address,
+                    contactName: locationEntity.contactName,
+                    contactPhone: locationEntity.contactPhone,
+                    photos: [],  // 先创建空照片数组，稍后填充
+                    notes: locationEntity.notes,
+                    date: date
+                )
+                
+                // 加载位置照片
+                if let photoEntities = locationEntity.photos?.allObjects as? [LocationPhotoEntity], !photoEntities.isEmpty {
+                    var validPhotos: [LocationPhoto] = []
+                    for photoEntity in photoEntities {
+                        guard let photoId = photoEntity.id,
+                              let photoDate = photoEntity.date,
+                              let imageData = photoEntity.imageData,
+                              let image = UIImage(data: imageData) else {
+                            continue
+                        }
+                        
+                        let photo = LocationPhoto(
+                            id: photoId,
+                            image: image,
+                            date: photoDate,
+                            weather: photoEntity.weather,
+                            note: photoEntity.note
+                        )
+                        validPhotos.append(photo)
+                    }
+                    location.photos = validPhotos
+                }
+                
+                print("  - 加载位置: \(location.name), ID: \(location.id), 照片数: \(location.photos.count)")
+                validLocations.append(location)
+            }
+            project.locations = validLocations
+            print("✓ 加载了 \(project.locations.count) 个位置信息")
+        } else {
+            print("⚠️ 项目 \(project.name) 没有关联的位置实体")
+        }
+        
+        return project
+    }
+    
+    // 添加 fetchProjectEntity 方法
+    private func fetchProjectEntity(id: UUID) -> ProjectEntity? {
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", id as CVarArg)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            return results.first
+        } catch {
+            print("❌ 获取项目实体失败: \(error)")
+            return nil
+        }
     }
 }
 

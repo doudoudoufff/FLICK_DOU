@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import AVFoundation
 
 // MARK: - 照片列表视图
 struct LocationPhotoList: View {
@@ -12,6 +13,8 @@ struct LocationPhotoList: View {
     @State private var showingCamera = false
     @State private var showingPhotosPicker = false
     @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var showingCameraAlert = false
+    @State private var cameraErrorMessage = ""
     
     // 按日期分组的照片
     private var photosByDate: [(Date, [LocationPhoto])] {
@@ -19,6 +22,47 @@ struct LocationPhotoList: View {
             Calendar.current.startOfDay(for: photo.date)
         }
         return grouped.sorted { $0.key > $1.key }
+    }
+    
+    // 检查相机是否可用
+    private var isCameraAvailable: Bool {
+        UIImagePickerController.isSourceTypeAvailable(.camera)
+    }
+    
+    // 检查相机权限并显示相机
+    private func checkCameraPermissionAndShow() {
+        // 首先检查相机硬件是否可用
+        if !isCameraAvailable {
+            cameraErrorMessage = "相机不可用或无法访问"
+            showingCameraAlert = true
+            return
+        }
+        
+        // 检查相机权限状态
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            // 已授权，可以显示相机
+            showingCamera = true
+        case .notDetermined:
+            // 尚未请求权限，请求权限
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self.showingCamera = true
+                    } else {
+                        self.cameraErrorMessage = "需要相机权限才能拍摄照片"
+                        self.showingCameraAlert = true
+                    }
+                }
+            }
+        case .denied, .restricted:
+            // 权限被拒绝或受限
+            cameraErrorMessage = "需要相机权限才能拍摄照片，请在设置中允许访问相机"
+            showingCameraAlert = true
+        @unknown default:
+            cameraErrorMessage = "无法访问相机"
+            showingCameraAlert = true
+        }
     }
     
     var body: some View {
@@ -90,7 +134,9 @@ struct LocationPhotoList: View {
             }
         }
         .confirmationDialog("添加照片", isPresented: $showingActionSheet) {
-            Button("拍摄照片") { showingCamera = true }
+            Button("拍摄照片") { 
+                checkCameraPermissionAndShow()
+            }
             Button("从相册选择") { showingPhotosPicker = true }
         }
         .fullScreenCover(isPresented: $showingCamera) {
@@ -101,6 +147,11 @@ struct LocationPhotoList: View {
             selection: $selectedPhotos,
             matching: .images
         )
+        .alert("相机错误", isPresented: $showingCameraAlert) {
+            Button("确定", role: .cancel) { }
+        } message: {
+            Text(cameraErrorMessage)
+        }
         .onChange(of: selectedPhotos) { _, items in
             Task {
                 for item in items {
@@ -298,11 +349,22 @@ struct CameraView: View {
 // MARK: - 相机选择器
 private struct CameraImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
+    @Environment(\.presentationMode) var presentationMode
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
+        
+        // 检查相机是否可用
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            picker.sourceType = .camera
+            picker.delegate = context.coordinator
+        } else {
+            // 如果相机不可用，在下一个周期自动关闭
+            DispatchQueue.main.async {
+                self.presentationMode.wrappedValue.dismiss()
+            }
+        }
+        
         return picker
     }
     

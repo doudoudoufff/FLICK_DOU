@@ -267,6 +267,11 @@ struct LocationScoutingCard: View {
             VStack(spacing: 16) {
                 Toggle("启用堪景模块", isOn: $project.isLocationScoutingEnabled)
                     .tint(project.color)
+                    .onChange(of: project.isLocationScoutingEnabled) { _, newValue in
+                        print("堪景状态已更改为: \(newValue)")
+                        // 确保立即更新到 CoreData
+                        projectStore.updateProject(project)
+                    }
                 
                 if project.isLocationScoutingEnabled {
                     NavigationLink {

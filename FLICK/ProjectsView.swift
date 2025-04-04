@@ -96,15 +96,12 @@ struct ProjectsView: View {
                 }
             }
             .refreshable {
-                // 模拟加载效果
-                isRefreshing = true
-                
-                // 重新从 CoreData 加载项目
+                // 触发 CoreData 刷新和 iCloud 同步
                 projectStore.loadProjects()
+                projectStore.sync()
                 
-                // 延迟一下以展示加载动画
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
-                isRefreshing = false
+                // 如果需要异步等待
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // 等待1秒
             }
         }
     }

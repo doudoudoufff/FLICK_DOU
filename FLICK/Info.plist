@@ -2,9 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>FLICK需要访问您的相机来拍摄项目现场照片和记录工作进度</string>
+	<string>FLICK需要访问您的相机来拍摄堪景照片</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>FLICK需要访问您的相册来选择和保存项目相关的图片</string>
+	<string>FLICK需要访问您的相册来选择堪景照片</string>
 </dict>
 </plist>

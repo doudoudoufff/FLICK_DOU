@@ -25,6 +25,13 @@ struct OnboardingView: View {
             title: "账户管理",
             description: "便捷的发票信息和账户管理，告别埋藏在聊天记录里的各类账户",
             color: .green
+        ),
+        OnboardingPage(
+            title: "数据同步",
+            description: "选择是否启用 iCloud 同步，让您的项目数据在所有设备间保持一致",
+            color: .blue,
+            systemImage: "cloud.fill",
+            content: AnyView(CloudSyncView())
         )
     ]
     
@@ -53,23 +60,28 @@ struct OnboardingView: View {
                     Spacer()
                         .frame(height: 60)
                     
-                    // App 图标
-                    appIcon
-                        .padding(.bottom, 20)
-                    
-                    VStack(spacing: 16) {
-                        // 标题
-                        Text(pages[index].title)
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(pages[index].color)
+                    // 如果有自定义内容，则显示自定义内容，否则显示默认内容
+                    if let content = pages[index].content {
+                        content
+                    } else {
+                        // App 图标
+                        appIcon
+                            .padding(.bottom, 20)
                         
-                        // 描述
-                        Text(pages[index].description)
-                            .font(.body)
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 32)
+                        VStack(spacing: 16) {
+                            // 标题
+                            Text(pages[index].title)
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(pages[index].color)
+                            
+                            // 描述
+                            Text(pages[index].description)
+                                .font(.body)
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 32)
+                        }
                     }
                     
                     Spacer()
@@ -79,10 +91,6 @@ struct OnboardingView: View {
                         Button(action: {
                             // 创建演示数据
                             createDemoData()
-                            
-                            withAnimation {
-                                hasSeenOnboarding = true
-                            }
                         }) {
                             Text("开始使用")
                                 .font(.headline)
@@ -104,129 +112,10 @@ struct OnboardingView: View {
     }
     
     private func createDemoData() {
-        // 短片项目
-        let shortFilm = Project(
-            id: UUID(),
-            name: "春天的声音",
-            director: "王导演",
-            producer: "赵制片",
-            startDate: Date().addingTimeInterval(86400 * 7),
-            status: .preProduction,
-            color: .blue,
-            tasks: [
-                ProjectTask(
-                    title: "完成最终分镜",
-                    assignee: "导演组",
-                    dueDate: Date().addingTimeInterval(86400 * 2)
-                ),
-                ProjectTask(
-                    title: "确定主要演员",
-                    assignee: "选角导演",
-                    dueDate: Date().addingTimeInterval(86400 * 4)
-                ),
-                ProjectTask(
-                    title: "场地合同签订",
-                    assignee: "制片组",
-                    dueDate: Date().addingTimeInterval(86400 * 5)
-                )
-            ],
-            invoices: [
-                Invoice(
-                    name: "星光场地公司",
-                    phone: "13800138000",
-                    idNumber: "110101199001011234",
-                    bankAccount: "6222021234567890",
-                    bankName: "中国建设银行",
-                    date: Date()
-                )
-            ],
-            locations: [
-                Location(
-                    name: "老街区",
-                    address: "北京市东城区东四胡同",
-                    photos: [],
-                    notes: "需要注意早晚高峰时段的环境音"
-                ),
-                Location(
-                    name: "音乐教室",
-                    address: "北京市海淀区中关村音乐学院",
-                    photos: [],
-                    notes: "已获得场地使用许可"
-                )
-            ],
-            accounts: [
-                Account(
-                    name: "星光场地公司",
-                    type: .location,
-                    bankName: "中国建设银行",
-                    bankBranch: "北京东城支行",
-                    bankAccount: "6222021234567890",
-                    contactName: "李经理",
-                    contactPhone: "13800138000"
-                )
-            ]
-        )
-        
-        // 广告项目
-        let commercial = Project(
-            id: UUID(),
-            name: "新春饮料广告",
-            director: "张导演",
-            producer: "李制片",
-            startDate: Date().addingTimeInterval(86400 * 3),
-            status: .preProduction,
-            color: .orange,
-            tasks: [
-                ProjectTask(
-                    title: "确认产品展示要求",
-                    assignee: "制片组",
-                    dueDate: Date().addingTimeInterval(86400)
-                ),
-                ProjectTask(
-                    title: "道具采购清单",
-                    assignee: "美术组",
-                    dueDate: Date().addingTimeInterval(86400 * 2)
-                ),
-                ProjectTask(
-                    title: "完成灯光设计",
-                    assignee: "灯光组",
-                    dueDate: Date().addingTimeInterval(86400 * 2)
-                )
-            ],
-            invoices: [
-                Invoice(
-                    name: "城市影棚",
-                    phone: "13900139000",
-                    idNumber: "110101199001011235",
-                    bankAccount: "6222021234567891",
-                    bankName: "中国工商银行",
-                    date: Date()
-                )
-            ],
-            locations: [
-                Location(
-                    name: "影棚A",
-                    address: "北京市朝阳区影视基地A区",
-                    photos: [],
-                    notes: "需要提前一天进场搭建"
-                )
-            ],
-            accounts: [
-                Account(
-                    name: "城市影棚",
-                    type: .location,
-                    bankName: "中国工商银行",
-                    bankBranch: "北京朝阳支行",
-                    bankAccount: "6222021234567891",
-                    contactName: "王经理",
-                    contactPhone: "13900139000"
-                )
-            ]
-        )
-        
-        // 添加项目
-        projectStore.addProject(shortFilm)
-        projectStore.addProject(commercial)
+        // 直接设置已看过引导页，不创建示例项目
+        withAnimation {
+            hasSeenOnboarding = true
+        }
     }
 }
 
@@ -235,6 +124,17 @@ struct OnboardingPage {
     let title: String
     let description: String
     let color: Color
+    let systemImage: String?
+    let content: AnyView?
+    
+    // 添加一个便利初始化方法，兼容旧的初始化方式
+    init(title: String, description: String, color: Color, systemImage: String? = nil, content: AnyView? = nil) {
+        self.title = title
+        self.description = description
+        self.color = color
+        self.systemImage = systemImage
+        self.content = content
+    }
 }
 
 // 添加 Bundle 扩展来获取应用图标
@@ -247,6 +147,57 @@ extension Bundle {
             return UIImage(named: lastIcon)
         }
         return nil
+    }
+}
+
+struct CloudSyncView: View {
+    @AppStorage("enableCloudSync") private var enableCloudSync = false
+    @State private var isProcessing = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "cloud.fill")
+                .font(.system(size: 80))
+                .foregroundColor(.blue)
+            
+            Text("启用 iCloud 同步")
+                .font(.title)
+                .bold()
+            
+            Text("启用 iCloud 同步后，您的项目数据将在所有设备间自动同步。您随时可以在设置中更改此选项。")
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Toggle("启用 iCloud 同步", isOn: $enableCloudSync)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .padding(.horizontal)
+                .disabled(isProcessing)
+            
+            if isProcessing {
+                ProgressView("正在配置...")
+            }
+        }
+        .padding()
+        .onChange(of: enableCloudSync) { newValue in
+            if newValue {
+                isProcessing = true
+                
+                // 配置 iCloud 同步
+                PersistenceController.shared.toggleCloudSync(enabled: true) { success, error in
+                    isProcessing = false
+                    
+                    if !success, let error = error {
+                        // 如果配置失败，恢复设置
+                        enableCloudSync = false
+                        print("❌ iCloud 同步配置失败: \(error)")
+                    } else {
+                        print("✓ iCloud 同步配置成功")
+                    }
+                }
+            }
+        }
     }
 }
 

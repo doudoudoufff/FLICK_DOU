@@ -82,7 +82,7 @@ struct AddAccountView: View {
             notes: notes.isEmpty ? nil : notes
         )
         
-        projectStore.addAccount(newAccount, to: project)
+        projectStore.addAccount(to: project, account: newAccount)
         isPresented = false
     }
 } 

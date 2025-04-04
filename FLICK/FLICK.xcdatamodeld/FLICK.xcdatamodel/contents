@@ -1,71 +1,71 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23605" systemVersion="24D70" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
     <entity name="AccountEntity" representedClassName=".AccountEntity" syncable="YES">
-        <attribute name="bankAccount" attributeType="String"/>
-        <attribute name="bankBranch" attributeType="String"/>
-        <attribute name="bankName" attributeType="String"/>
-        <attribute name="contactName" attributeType="String"/>
-        <attribute name="contactPhone" attributeType="String"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="idNumber" optional="YES" attributeType="String"/>
-        <attribute name="name" attributeType="String"/>
-        <attribute name="notes" optional="YES" attributeType="String"/>
-        <attribute name="type" attributeType="String"/>
-        <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="accounts" inverseEntity="ProjectEntity"/>
-    </entity>
-    <entity name="InvoiceEntity" representedClassName=".InvoiceEntity" syncable="YES">
-        <attribute name="bankAccount" attributeType="String"/>
-        <attribute name="bankName" attributeType="String"/>
-        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="idNumber" attributeType="String"/>
-        <attribute name="name" attributeType="String"/>
-        <attribute name="phone" attributeType="String"/>
-        <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="invoices" inverseEntity="ProjectEntity"/>
-    </entity>
-    <entity name="LocationEntity" representedClassName=".LocationEntity" syncable="YES">
-        <attribute name="address" attributeType="String"/>
+        <attribute name="bankAccount" optional="YES" attributeType="String"/>
+        <attribute name="bankBranch" optional="YES" attributeType="String"/>
+        <attribute name="bankName" optional="YES" attributeType="String"/>
         <attribute name="contactName" optional="YES" attributeType="String"/>
         <attribute name="contactPhone" optional="YES" attributeType="String"/>
-        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="name" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="idNumber" optional="YES" attributeType="String"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="notes" optional="YES" attributeType="String"/>
-        <attribute name="status" attributeType="String"/>
-        <attribute name="type" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="accounts" inverseEntity="ProjectEntity"/>
+    </entity>
+    <entity name="InvoiceEntity" representedClassName=".InvoiceEntity" syncable="YES">
+        <attribute name="bankAccount" optional="YES" attributeType="String"/>
+        <attribute name="bankName" optional="YES" attributeType="String"/>
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="idNumber" optional="YES" attributeType="String"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="phone" optional="YES" attributeType="String"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="invoices" inverseEntity="ProjectEntity"/>
+    </entity>
+    <entity name="LocationEntity" representedClassName=".LocationEntity" syncable="YES">
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="contactName" optional="YES" attributeType="String"/>
+        <attribute name="contactPhone" optional="YES" attributeType="String"/>
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
         <relationship name="photos" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LocationPhotoEntity" inverseName="location" inverseEntity="LocationPhotoEntity"/>
-        <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="locations" inverseEntity="ProjectEntity"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="locations" inverseEntity="ProjectEntity"/>
     </entity>
     <entity name="LocationPhotoEntity" representedClassName=".LocationPhotoEntity" syncable="YES">
-        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="imageData" attributeType="Binary"/>
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageData" optional="YES" attributeType="Binary"/>
         <attribute name="note" optional="YES" attributeType="String"/>
         <attribute name="weather" optional="YES" attributeType="String"/>
         <relationship name="location" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="LocationEntity" inverseName="photos" inverseEntity="LocationEntity"/>
     </entity>
     <entity name="ProjectEntity" representedClassName=".ProjectEntity" syncable="YES">
-        <attribute name="color" attributeType="Binary"/>
-        <attribute name="director" attributeType="String"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="color" optional="YES" attributeType="Binary"/>
+        <attribute name="director" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isLocationScoutingEnabled" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
-        <attribute name="name" attributeType="String"/>
-        <attribute name="producer" attributeType="String"/>
-        <attribute name="startDate" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="status" attributeType="String"/>
-        <relationship name="accounts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AccountEntity" inverseName="project" inverseEntity="AccountEntity"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="producer" optional="YES" attributeType="String"/>
+        <attribute name="startDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <relationship name="accounts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="AccountEntity" inverseName="project" inverseEntity="AccountEntity"/>
         <relationship name="invoices" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="InvoiceEntity" inverseName="project" inverseEntity="InvoiceEntity"/>
         <relationship name="locations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LocationEntity" inverseName="project" inverseEntity="LocationEntity"/>
         <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TaskEntity" inverseName="project" inverseEntity="TaskEntity"/>
     </entity>
     <entity name="TaskEntity" representedClassName=".TaskEntity" syncable="YES">
-        <attribute name="assignee" attributeType="String"/>
-        <attribute name="dueDate" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
-        <attribute name="isCompleted" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="assignee" optional="YES" attributeType="String"/>
+        <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isCompleted" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="reminder" optional="YES" attributeType="String"/>
         <attribute name="reminderHour" optional="YES" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="title" attributeType="String"/>
-        <relationship name="project" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="tasks" inverseEntity="ProjectEntity"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="tasks" inverseEntity="ProjectEntity"/>
     </entity>
 </model>

@@ -1,12 +1,156 @@
 import SwiftUI
+import CloudKit
 
 struct SettingsView: View {
     @AppStorage("enableNotifications") private var enableNotifications = true
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = true
+    @EnvironmentObject private var projectStore: ProjectStore
+    @State private var showingSyncAlert = false
+    @State private var syncError: Error?
+    @State private var isSyncing = false
+    @AppStorage("enableCloudSync") private var enableCloudSync = false
+    @AppStorage("lastSyncTime") private var lastSyncTime: Double = 0
     
     var body: some View {
         NavigationStack {
             List {
+                // iCloud 同步状态
+                Section {
+                    HStack {
+                        Label {
+                            Text("iCloud 同步")
+                        } icon: {
+                            Image(systemName: "cloud.fill")
+                                .foregroundStyle(.blue)
+                        }
+                        
+                        Spacer()
+                        
+                        // 同步状态指示器
+                        switch projectStore.syncStatus {
+                        case .unknown:
+                            Text("等待同步")
+                                .foregroundStyle(.secondary)
+                        case .syncing:
+                            HStack(spacing: 4) {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                                Text("同步中...")
+                                    .foregroundStyle(.secondary)
+                            }
+                        case .synced:
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                Text("已同步")
+                                    .foregroundStyle(.secondary)
+                            }
+                        case .error(let error):
+                            HStack(spacing: 4) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                Text("同步失败")
+                                    .foregroundStyle(.red)
+                            }
+                            .onTapGesture {
+                                syncError = error
+                                showingSyncAlert = true
+                            }
+                        }
+                    }
+                    
+                    // 添加上次同步时间
+                    if lastSyncTime > 0 {
+                        HStack {
+                            Label {
+                                Text("上次同步")
+                            } icon: {
+                                Image(systemName: "clock.fill")
+                                    .foregroundStyle(.blue)
+                            }
+                            Spacer()
+                            Text(Date(timeIntervalSince1970: lastSyncTime), style: .relative)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    // 添加数据库信息
+                    if let dbSize = PersistenceController.shared.getDatabaseSize() {
+                        HStack {
+                            Label {
+                                Text("数据库大小")
+                            } icon: {
+                                Image(systemName: "externaldrive.fill")
+                                    .foregroundStyle(.blue)
+                            }
+                            Spacer()
+                            Text(formatFileSize(dbSize))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    // 手动同步按钮
+                    Button(action: {
+                        // 显示同步中状态
+                        isSyncing = true
+                        
+                        // 触发同步
+                        projectStore.sync()
+                        
+                        // 延迟后重置状态
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            isSyncing = false
+                        }
+                    }) {
+                        HStack {
+                            Label("手动同步", systemImage: "arrow.clockwise")
+                            Spacer()
+                            if isSyncing {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
+                        }
+                    }
+                    .disabled(projectStore.syncStatus == .syncing)
+                    
+                    // 添加查看 iCloud 状态按钮
+                    Button {
+                        checkCloudKitStatus()
+                    } label: {
+                        Label("检查 iCloud 状态", systemImage: "magnifyingglass")
+                    }
+                    
+                    // iCloud 同步开关
+                    Toggle(isOn: $enableCloudSync) {
+                        Label {
+                            Text("启用 iCloud 同步")
+                        } icon: {
+                            Image(systemName: "cloud.fill")
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .onChange(of: enableCloudSync) { newValue in
+                        // 显示加载中状态
+                        isSyncing = true
+                        
+                        // 切换 iCloud 同步状态
+                        PersistenceController.shared.toggleCloudSync(enabled: newValue) { success, error in
+                            // 更新 UI
+                            isSyncing = false
+                            
+                            if let error = error {
+                                // 显示通知
+                                syncError = error
+                                showingSyncAlert = true
+                            }
+                        }
+                    }
+                } header: {
+                    Text("数据同步")
+                } footer: {
+                    Text("启用 iCloud 同步后，数据将在所有设备间自动同步")
+                }
+                
                 // 通知设置
                 Section {
                     Toggle(isOn: $enableNotifications) {
@@ -90,6 +234,51 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("设置")
+            .alert("同步错误", isPresented: $showingSyncAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                if let error = syncError {
+                    Text(error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    // 添加格式化文件大小的函数
+    private func formatFileSize(_ size: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(size))
+    }
+    
+    // 添加检查 CloudKit 状态的方法
+    private func checkCloudKitStatus() {
+        CKContainer(identifier: "iCloud.FLICKiCLoud").accountStatus { status, error in
+            DispatchQueue.main.async {
+                var message = ""
+                
+                switch status {
+                case .available:
+                    message = "iCloud 账户可用，同步功能正常"
+                case .noAccount:
+                    message = "未登录 iCloud 账户，请在设置中登录"
+                case .restricted:
+                    message = "iCloud 账户受限，无法使用同步功能"
+                case .couldNotDetermine:
+                    message = "无法确定 iCloud 账户状态，请检查网络连接"
+                @unknown default:
+                    message = "未知状态"
+                }
+                
+                if let error = error {
+                    message += "\n错误: \(error.localizedDescription)"
+                }
+                
+                // 显示状态
+                syncError = NSError(domain: "CloudKit", code: 0, userInfo: [NSLocalizedDescriptionKey: message])
+                showingSyncAlert = true
+            }
         }
     }
 }

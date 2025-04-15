@@ -581,7 +581,7 @@ class ProjectStore: ObservableObject {
     }
     
     // 更新位置
-    func updateLocation(_ location: Location, in project: Project) {
+    func updateLocation(_ location: Location, in project: Project) async {
         print("========== 开始更新场地 ==========")
         print("场地信息:")
         print("- ID: \(location.id)")
@@ -589,6 +589,11 @@ class ProjectStore: ObservableObject {
         print("- 类型: \(location.type.rawValue)")
         print("- 状态: \(location.status.rawValue)")
         print("- 地址: \(location.address)")
+        if location.hasCoordinates {
+            print("- 坐标: 纬度 \(location.latitude!), 经度 \(location.longitude!)")
+        } else {
+            print("- 坐标: 未设置")
+        }
         
         // 1. 查找要更新的 LocationEntity
         let request = LocationEntity.fetchRequest()
@@ -606,6 +611,20 @@ class ProjectStore: ObservableObject {
             entity.contactName = location.contactName
             entity.contactPhone = location.contactPhone
             entity.notes = location.notes
+            
+            // 更新坐标信息
+            if location.hasCoordinates, let lat = location.latitude, let lng = location.longitude {
+                print("✓ 更新坐标: 纬度 \(lat), 经度 \(lng)")
+                entity.latitude = lat
+                entity.longitude = lng
+                entity.hasCoordinates = true
+            } else {
+                print("✓ 清除坐标信息")
+                entity.latitude = 0
+                entity.longitude = 0
+                entity.hasCoordinates = false
+            }
+            
             print("✓ 实体数据更新完成")
             
             do {
@@ -614,13 +633,30 @@ class ProjectStore: ObservableObject {
                 print("✓ CoreData 保存成功")
                 
                 // 4. 更新内存中的数据
-                if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
-                   let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }) {
-                    projects[projectIndex].locations[locationIndex] = location
-                    print("✓ 内存数据更新成功")
-                    objectWillChange.send()
-                    print("✓ 发送视图更新通知")
+                await MainActor.run {
+                    if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+                       let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }) {
+                        // 创建更新后的位置对象
+                        var updatedLocation = location
+                        
+                        // 确保坐标信息正确
+                        if location.hasCoordinates {
+                            print("✓ 内存模型保留坐标: 纬度 \(location.latitude!), 经度 \(location.longitude!)")
+                        } else {
+                            print("✓ 内存模型清除坐标")
+                        }
+                        
+                        // 更新内存中的位置
+                        projects[projectIndex].locations[locationIndex] = updatedLocation
+                        print("✓ 内存数据更新成功")
+                        objectWillChange.send()
+                        print("✓ 发送视图更新通知")
+                    }
                 }
+                
+                // 5. 触发 CoreData 同步
+                PersistenceController.shared.save()
+                print("✓ 触发 CoreData 保存")
             } catch {
                 print("❌ 保存失败:")
                 print("- 错误信息: \(error)")
@@ -1443,18 +1479,34 @@ class ProjectStore: ObservableObject {
                 let locationType = LocationType(rawValue: typeStr) ?? .other
                 let locationStatus = LocationStatus(rawValue: statusStr) ?? .pending
                 
+                // 添加坐标调试信息
+                print("坐标信息检查:")
+                print("- hasCoordinates: \(locationEntity.hasCoordinates)")
+                if locationEntity.hasCoordinates {
+                    print("- 纬度: \(locationEntity.latitude), 经度: \(locationEntity.longitude)")
+                }
+                
                 var location = Location(
                     id: id,
                     name: name,
                     type: locationType,
                     status: locationStatus,
                     address: address,
+                    latitude: locationEntity.hasCoordinates ? locationEntity.latitude : nil,
+                    longitude: locationEntity.hasCoordinates ? locationEntity.longitude : nil,
                     contactName: locationEntity.contactName,
                     contactPhone: locationEntity.contactPhone,
                     photos: [],  // 先创建空照片数组，稍后填充
                     notes: locationEntity.notes,
                     date: date
                 )
+                
+                // 验证创建的 Location 对象
+                print("创建的 Location 对象:")
+                print("- hasCoordinates: \(location.hasCoordinates)")
+                if location.hasCoordinates {
+                    print("- 纬度: \(location.latitude!), 经度: \(location.longitude!)")
+                }
                 
                 // 加载位置照片
                 if let photoEntities = locationEntity.photos?.allObjects as? [LocationPhotoEntity], !photoEntities.isEmpty {

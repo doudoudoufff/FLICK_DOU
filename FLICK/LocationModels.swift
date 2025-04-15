@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import CoreLocation
 
 // 堪景场地类型
 enum LocationType: String, Codable, CaseIterable {
@@ -23,17 +24,42 @@ struct Location: Identifiable, Codable, Equatable, Hashable {
     var type: LocationType
     var status: LocationStatus
     var address: String
+    private var _latitude: Double?
+    private var _longitude: Double?
     var contactName: String?
     var contactPhone: String?
     var photos: [LocationPhoto]
     var notes: String?
     var date: Date
     
+    var latitude: Double? {
+        get { return _latitude }
+        set { _latitude = newValue }
+    }
+    
+    var longitude: Double? {
+        get { return _longitude }
+        set { _longitude = newValue }
+    }
+    
+    var hasCoordinates: Bool {
+        return _latitude != nil && _longitude != nil
+    }
+    
+    var coordinate: CLLocationCoordinate2D? {
+        guard let latitude = _latitude, let longitude = _longitude else {
+            return nil
+        }
+        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+    
     init(id: UUID = UUID(), 
          name: String, 
          type: LocationType = .exterior,
          status: LocationStatus = .pending,
          address: String,
+         latitude: Double? = nil,
+         longitude: Double? = nil,
          contactName: String? = nil,
          contactPhone: String? = nil,
          photos: [LocationPhoto] = [],
@@ -44,6 +70,8 @@ struct Location: Identifiable, Codable, Equatable, Hashable {
         self.type = type
         self.status = status
         self.address = address
+        self._latitude = latitude
+        self._longitude = longitude
         self.contactName = contactName
         self.contactPhone = contactPhone
         self.photos = photos
@@ -58,6 +86,9 @@ struct Location: Identifiable, Codable, Equatable, Hashable {
         entity.type = type.rawValue
         entity.status = status.rawValue
         entity.address = address
+        entity.latitude = _latitude ?? 0
+        entity.longitude = _longitude ?? 0
+        entity.hasCoordinates = hasCoordinates
         entity.contactName = contactName
         entity.contactPhone = contactPhone
         entity.notes = notes
@@ -87,6 +118,8 @@ struct Location: Identifiable, Codable, Equatable, Hashable {
             type: type,
             status: status,
             address: address,
+            latitude: entity.hasCoordinates ? entity.latitude : nil,
+            longitude: entity.hasCoordinates ? entity.longitude : nil,
             contactName: entity.contactName,
             contactPhone: entity.contactPhone,
             photos: photos,
@@ -102,6 +135,8 @@ struct Location: Identifiable, Codable, Equatable, Hashable {
         lhs.type == rhs.type &&
         lhs.status == rhs.status &&
         lhs.address == rhs.address &&
+        lhs.latitude == rhs.latitude &&
+        lhs.longitude == rhs.longitude &&
         lhs.contactName == rhs.contactName &&
         lhs.contactPhone == rhs.contactPhone &&
         lhs.photos == rhs.photos &&

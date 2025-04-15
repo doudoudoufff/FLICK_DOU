@@ -25,6 +25,9 @@ extension LocationEntity {
     @NSManaged public var notes: String?
     @NSManaged public var status: String?
     @NSManaged public var type: String?
+    @NSManaged public var latitude: Double
+    @NSManaged public var longitude: Double
+    @NSManaged public var hasCoordinates: Bool
     @NSManaged public var photos: NSSet?
     @NSManaged public var project: ProjectEntity?
 

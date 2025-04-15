@@ -10,5 +10,7 @@
 	<string>FLICK需要访问您的相机来拍摄堪景照片</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>FLICK需要访问您的相册来选择堪景照片</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FLICK需要访问您的位置以便在添加场地时自动填写位置信息</string>
 </dict>
 </plist>

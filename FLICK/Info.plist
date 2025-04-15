@@ -11,6 +11,10 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>FLICK需要访问您的相册来选择堪景照片</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>FLICK需要访问您的位置以便在添加场地时自动填写位置信息</string>
+	<string>FLICK需要访问您的位置以便在添加场地时自动填写位置信息，同时也用于获取当前位置的天气信息</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>FLICK需要访问您的位置以便获取当前位置的天气信息</string>
+	<key>WeatherKitUsageDescription</key>
+	<string>FLICK需要访问天气信息，以便在拍摄计划时提供当前天气状况</string>
 </dict>
 </plist>

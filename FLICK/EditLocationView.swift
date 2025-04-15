@@ -26,9 +26,7 @@ struct EditLocationView: View {
         self._editedLocation = State(initialValue: location)
         
         // 初始化地图位置
-        // 如果已有坐标，使用存储的坐标，否则使用一个临时默认值
-        // 实际地图会在onAppear时尝试获取用户当前位置
-        let coordinate = location.coordinate ?? CLLocationCoordinate2D(latitude: 39.9087, longitude: 116.3975)
+        let coordinate = location.coordinate ?? CLLocationCoordinate2D(latitude: 39.9087, longitude: 116.3975) // 默认北京坐标
         self._region = State(initialValue: MKCoordinateRegion(
             center: coordinate,
             span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
@@ -201,7 +199,7 @@ struct EditLocationView: View {
                         }
                         .padding([.horizontal, .top])
                         .onAppear {
-                            // 如果已经有坐标，则更新地图位置
+                            // 打开地图时，如果已经有坐标，更新地图位置
                             if let coordinate = editedLocation.coordinate {
                                 let newRegion = MKCoordinateRegion(
                                     center: coordinate,
@@ -209,18 +207,6 @@ struct EditLocationView: View {
                                 )
                                 region = newRegion
                                 mapPosition = .region(newRegion)
-                            } else {
-                                // 如果没有坐标，尝试获取用户当前位置
-                                locationManager.requestLocation()
-                                // 添加监听，当位置更新时更新地图
-                                locationManager.onLocationUpdate = { coordinate in
-                                    let newRegion = MKCoordinateRegion(
-                                        center: coordinate,
-                                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                                    )
-                                    region = newRegion
-                                    mapPosition = .region(newRegion)
-                                }
                             }
                         }
                         
@@ -412,6 +398,11 @@ struct EditLocationView: View {
         // 清除搜索状态
         searchResults = []
         searchText = ""
+        
+        // 在搜索结果选择后显示成功反馈并自动确认
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            showMapPicker = false
+        }
     }
     
     private func getCoordinateFromPoint(_ point: CGPoint) {
@@ -502,6 +493,11 @@ struct EditLocationView: View {
                 if !address.isEmpty {
                     editedLocation.address = address
                     print("更新地址: \(address)")
+                    
+                    // 自动关闭地图选择器，简化用户操作
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showMapPicker = false
+                    }
                 }
             }
         }
@@ -554,9 +550,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var location: CLLocation?
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     
-    // 添加回调以在位置更新时通知
-    var onLocationUpdate: ((CLLocationCoordinate2D) -> Void)?
-    
     override init() {
         super.init()
         locationManager.delegate = self
@@ -571,9 +564,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         self.location = location
-        
-        // 当位置更新时，调用回调
-        onLocationUpdate?(location.coordinate)
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

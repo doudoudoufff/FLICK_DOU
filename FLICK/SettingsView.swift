@@ -567,14 +567,12 @@ struct CreditsView: View {
                 .font(.headline)
             }
             
-            Section("核心团队") {
-                ContributorRow(name: "孙尚前", role: "产品", country: "🇨🇳")
-            }
-            
             Section("测试团队") {
                 ContributorRow(name: "张婧柔", role: "测试", country: "🇨🇳")
+                ContributorRow(name: "17", role: "测试", country: "🇨🇳")
                 ContributorRow(name: "王小跳", role: "测试", country: "🇨🇳")
                 ContributorRow(name: "杨欣蕾", role: "测试", country: "🇨🇳")
+                ContributorRow(name: "孙尚前", role: "产品", country: "🇨🇳")
                 ContributorRow(name: "吴韩臻", role: "测试", country: "🇨🇳")
                 ContributorRow(name: "朱科恩", role: "测试", country: "🇨🇳")
             }

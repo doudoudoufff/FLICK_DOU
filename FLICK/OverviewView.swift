@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OverviewView: View {
     @EnvironmentObject private var projectStore: ProjectStore
+    @StateObject private var weatherManager = WeatherManager.shared
     @State private var selectedDate = Date()
     @State private var showingAddTask = false
     @State private var selectedProject: Project?
@@ -71,12 +72,31 @@ struct OverviewView: View {
                                     .font(.headline)
                                     .foregroundColor(.primary)
                                 
-                                Text("祈求今日拍摄顺利")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                if let weather = weatherManager.weatherInfo {
+                                    HStack(spacing: 6) {
+                                        Text("今日: \(weather.condition)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        
+                                        Text(String(format: "%.1f°C", weather.temperature))
+                                            .font(.subheadline)
+                                            .foregroundColor(.blue)
+                                    }
+                                } else {
+                                    Text("祈求今日拍摄顺利")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                             
                             Spacer()
+                            
+                            if let weather = weatherManager.weatherInfo {
+                                Image(systemName: weather.symbolName.isEmpty ? "sun.max.fill" : weather.symbolName)
+                                    .symbolRenderingMode(.multicolor)
+                                    .font(.system(size: 28))
+                                    .padding(.trailing, 4)
+                            }
                             
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.secondary)
@@ -178,6 +198,9 @@ struct OverviewView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("总览")
+            .onAppear {
+                weatherManager.fetchWeatherData()
+            }
         }
         .sheet(isPresented: $showingAddTask) {
             NavigationView {

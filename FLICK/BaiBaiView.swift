@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BaiBaiView: View {
     let projectColor: Color
+    @StateObject private var weatherManager = WeatherManager.shared
     @State private var currentBlessing: String?
     @State private var showingBlessing = false
     @State private var rotation: Double = 0
@@ -146,6 +147,66 @@ struct BaiBaiView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 
+                // 天气信息卡片
+                if let weather = weatherManager.weatherInfo {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("今日天气")
+                            .font(.title3)
+                            .fontWeight(.medium)
+                        
+                        HStack(spacing: 20) {
+                            // 天气图标 - 使用系统 SF Symbols
+                            Image(systemName: weather.symbolName.isEmpty ? "sun.max.fill" : weather.symbolName)
+                                .symbolRenderingMode(.multicolor)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 60, height: 60)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(weather.condition)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                
+                                Text(String(format: "%.1f°C", weather.temperature))
+                                    .font(.title3)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        Divider()
+                        
+                        // 天气详情
+                        VStack(spacing: 8) {
+                            HStack {
+                                WeatherDetailItem(icon: "wind", label: "风向", value: "\(weather.windDirection) \(String(format: "%.1f", weather.windSpeed))m/s")
+                                Spacer()
+                                WeatherDetailItem(icon: "humidity", label: "湿度", value: "\(String(format: "%.0f", weather.humidity * 100))%")
+                            }
+                            
+                            HStack {
+                                WeatherDetailItem(icon: "eye", label: "能见度", value: "\(String(format: "%.1f", weather.visibility / 1000))km")
+                                Spacer()
+                                WeatherDetailItem(icon: "umbrella", label: "降水量", value: "\(String(format: "%.1f", weather.precipitationIntensity))mm")
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+                } else if weatherManager.isLoading {
+                    // 天气加载中
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                            .padding()
+                        Spacer()
+                    }
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                }
+                
                 // 显示黄历信息
                 if let info = lunarInfo?.data {
                     VStack(alignment: .leading, spacing: 16) {
@@ -202,10 +263,32 @@ struct BaiBaiView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             fetchLunarData()
+            weatherManager.fetchWeatherData()
         }
         .overlay {
-            if isLoading {
+            if isLoading && lunarInfo == nil {
                 ProgressView()
+            }
+        }
+    }
+    
+    // 天气详情项组件
+    private struct WeatherDetailItem: View {
+        let icon: String
+        let label: String
+        let value: String
+        
+        var body: some View {
+            HStack {
+                Image(systemName: icon)
+                    .frame(width: 20, height: 20)
+                VStack(alignment: .leading) {
+                    Text(label)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(value)
+                        .font(.subheadline)
+                }
             }
         }
     }
@@ -243,41 +326,20 @@ struct BaiBaiView: View {
 
                 if let httpResponse = response as? HTTPURLResponse {
                     print("响应状态码: \(httpResponse.statusCode)")
-                    print("响应头: \(httpResponse.allHeaderFields)")
-                    
-                    if let data = data, let responseString = String(data: data, encoding: .utf8) {
-                        print("API 返回的原始数据:")
-                        print(responseString)
-                        
-                        // 尝试解析并打印每个字段
-                        do {
-                            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                               let lunarData = json["data"] as? [String: Any] {
-                                print("\n解析后的数据:")
-                                print("lunar:", lunarData["lunar"] ?? "nil")
-                                print("solar:", lunarData["solar"] ?? "nil")
-                                print("week:", lunarData["week"] ?? "nil")
-                                print("yiDay:", lunarData["yiDay"] ?? "nil")
-                                print("jiDay:", lunarData["jiDay"] ?? "nil")
-                            }
-                        } catch {
-                            print("JSON 解析错误:", error)
-                        }
-                    }
                     
                     if httpResponse.statusCode == 200 {
                         if let data = data {
                             do {
                                 let lunarInfo = try JSONDecoder().decode(LunarInfo.self, from: data)
                                 self.lunarInfo = lunarInfo
-                                print("成功解析数据: \(lunarInfo)")
+                                print("成功解析黄历数据")
                             } catch {
-                                self.error = "数据解析错误: \(error.localizedDescription)"
+                                self.error = "黄历数据解析错误: \(error.localizedDescription)"
                                 print("解析错误详情: \(error)")
                             }
                         }
                     } else {
-                        self.error = "API请求失败 (状态码: \(httpResponse.statusCode))"
+                        self.error = "黄历API请求失败 (状态码: \(httpResponse.statusCode))"
                     }
                 }
             }

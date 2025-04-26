@@ -18,11 +18,28 @@ struct AddLocationView: View {
             Form {
                 Section("基本信息") {
                     TextField("场地名称", text: $name)
-                    Picker("场地类型", selection: $type) {
-                        ForEach(LocationType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                    
+                    // 场地类型选择器
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("场地类型")
+                            Spacer()
+                            NavigationLink(destination: LocationTypeManagementView()) {
+                                Text("管理类型")
+                                    .font(.caption)
+                                    .foregroundColor(Color.blue)
+                            }
                         }
+                        
+                        Picker("", selection: $type) {
+                            ForEach(LocationType.allCases, id: \.rawValue) { type in
+                                Text(type.rawValue).tag(type)
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(height: 100)
                     }
+                    
                     TextField("详细地址", text: $address)
                 }
                 

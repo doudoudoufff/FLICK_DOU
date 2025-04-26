@@ -3,11 +3,136 @@ import CoreData
 import CoreLocation
 
 // 堪景场地类型
-enum LocationType: String, Codable, CaseIterable {
-    case exterior = "外景"
-    case interior = "内景"
-    case studio = "摄影棚"
-    case other = "其他"
+enum LocationType: Equatable, Hashable, Codable {
+    case exterior // 外景
+    case interior // 内景
+    case studio // 摄影棚
+    case custom(String) // 自定义类型
+    case other // 其他
+    
+    // 获取所有预设类型
+    static var presetCases: [LocationType] {
+        [.exterior, .interior, .studio, .other]
+    }
+    
+    // 所有类型（包含已创建的自定义类型）
+    static var allCases: [LocationType] {
+        var result = presetCases
+        
+        // 从UserDefaults加载自定义类型列表
+        if let customTypes = UserDefaults.standard.stringArray(forKey: "FLICK_CustomLocationTypes") {
+            let customCases = customTypes.map { LocationType.custom($0) }
+            result.insert(contentsOf: customCases, at: result.count - 1) // 插入到other前面
+        }
+        
+        return result
+    }
+    
+    // 注册新的自定义类型
+    static func registerCustomType(_ name: String) {
+        guard !name.isEmpty else { return }
+        
+        // 获取现有的自定义类型
+        var customTypes = UserDefaults.standard.stringArray(forKey: "FLICK_CustomLocationTypes") ?? []
+        
+        // 确保不重复添加
+        if !customTypes.contains(name) {
+            customTypes.append(name)
+            UserDefaults.standard.set(customTypes, forKey: "FLICK_CustomLocationTypes")
+        }
+    }
+    
+    // 删除自定义类型
+    static func removeCustomType(_ name: String) {
+        var customTypes = UserDefaults.standard.stringArray(forKey: "FLICK_CustomLocationTypes") ?? []
+        customTypes.removeAll { $0 == name }
+        UserDefaults.standard.set(customTypes, forKey: "FLICK_CustomLocationTypes")
+    }
+    
+    // 获取类型的显示名称
+    var rawValue: String {
+        switch self {
+        case .exterior:
+            return "外景"
+        case .interior:
+            return "内景"
+        case .studio:
+            return "摄影棚"
+        case .custom(let name):
+            return name
+        case .other:
+            return "其他"
+        }
+    }
+    
+    // 从原始值创建类型
+    init?(rawValue: String) {
+        switch rawValue {
+        case "外景":
+            self = .exterior
+        case "内景":
+            self = .interior
+        case "摄影棚":
+            self = .studio
+        case "其他":
+            self = .other
+        default:
+            // 检查是否是自定义类型
+            let customTypes = UserDefaults.standard.stringArray(forKey: "FLICK_CustomLocationTypes") ?? []
+            if customTypes.contains(rawValue) {
+                self = .custom(rawValue)
+            } else {
+                // 未知类型自动注册为自定义类型
+                LocationType.registerCustomType(rawValue)
+                self = .custom(rawValue)
+            }
+        }
+    }
+    
+    // Codable支持
+    enum CodingKeys: String, CodingKey {
+        case type
+        case customName
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(String.self, forKey: .type)
+        
+        switch type {
+        case "exterior":
+            self = .exterior
+        case "interior":
+            self = .interior
+        case "studio":
+            self = .studio
+        case "other":
+            self = .other
+        case "custom":
+            let name = try container.decode(String.self, forKey: .customName)
+            self = .custom(name)
+        default:
+            self = .other
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        switch self {
+        case .exterior:
+            try container.encode("exterior", forKey: .type)
+        case .interior:
+            try container.encode("interior", forKey: .type)
+        case .studio:
+            try container.encode("studio", forKey: .type)
+        case .custom(let name):
+            try container.encode("custom", forKey: .type)
+            try container.encode(name, forKey: .customName)
+        case .other:
+            try container.encode("other", forKey: .type)
+        }
+    }
 }
 
 // 场地状态

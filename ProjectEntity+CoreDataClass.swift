@@ -59,7 +59,8 @@ public class ProjectEntity: NSManagedObject {
             invoices: invoicesArray,
             locations: locationsArray,
             accounts: accountsArray,
-            isLocationScoutingEnabled: isLocationScoutingEnabled
+            isLocationScoutingEnabled: isLocationScoutingEnabled,
+            logoData: logoData
         )
     }
 }

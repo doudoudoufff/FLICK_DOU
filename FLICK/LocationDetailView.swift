@@ -1,6 +1,8 @@
 import SwiftUI
 import PhotosUI
 import MapKit
+import PDFKit
+import CoreData
 
 // MARK: - 视图模式
 enum ViewMode {
@@ -18,7 +20,11 @@ struct LocationDetailView: View {
     @State private var showingPDFReport = false
     @State private var showDeleteConfirmation = false
     @State private var showingMap = false
+    @State private var isGeneratingPDF = false
     @Environment(\.dismiss) private var dismiss
+    @State private var reportPDFData: Data?
+    @State private var generatingProgress: Double = 0
+    @State private var selectedPhotoForPreview: LocationPhoto?
     
     // 获取当前场地的所有照片
     private var locationPhotos: [(Location, LocationPhoto)] {
@@ -26,89 +32,117 @@ struct LocationDetailView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            List {
-                // 基本信息
-                Section {
-                    LocationInfoCard(location: location, showMap: $showingMap)
-                        .equatable()
-                }
+        ScrollView {
+            VStack(spacing: 16) {
+                // 场景基本信息卡片
+                LocationInfoCard(location: location, showMap: $showingMap)
                 
-                // 照片区域
+                // 照片部分
                 Section {
                     LocationPhotoList(
                         project: project,
                         location: $location,
-                        projectColor: projectColor
-                    )
-                }
-            }
-            .navigationTitle(location.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                    projectColor: projectColor
+                )
+                } header: {
                     HStack {
-                        if !location.photos.isEmpty {
-                            Button {
-                                showingExportOptions = true
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                            }
-                        }
-                        
-                        Menu {
-                            Button {
-                                showingEditView = true
-                            } label: {
-                                Label("编辑场地", systemImage: "pencil")
-                            }
-                            
-                            Button(role: .destructive) {
-                                showDeleteConfirmation = true
-                            } label: {
-                                Label("删除场地", systemImage: "trash")
-                            }
+                        Text("照片")
+                            .font(.headline)
+                        Spacer()
+                        Button {
+                            // 显示导出选项
+                            showingExportOptions = true
                         } label: {
-                            Image(systemName: "ellipsis.circle")
+                            Image(systemName: "square.and.arrow.up")
                         }
                     }
+                    .padding(.horizontal)
                 }
             }
-            .sheet(isPresented: $showingEditView) {
-                NavigationStack {
-                    EditLocationView(
-                        location: location,
-                        projectStore: projectStore,
-                        project: project
-                    )
+            .padding(.bottom, 32)
+        }
+        .navigationTitle(location.name)
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button("编辑场地") {
+                        showingEditView = true
+                    }
+                    
+                    Button("生成报告") {
+                        prepareAndShowPDFReport()
+                    }
+                    
+                    Button("删除场地", role: .destructive) {
+                        showDeleteConfirmation = true
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
-            .sheet(isPresented: $showingPDFReport) {
-                PDFReportView(
-                    project: project,
-                    date: Date(),
-                    photos: locationPhotos
+        }
+        .sheet(isPresented: $showingEditView) {
+            NavigationStack {
+                EditLocationView(
+                    location: location,
+                    projectStore: projectStore,
+                    project: project
                 )
             }
-            .sheet(isPresented: $showingMap) {
-                if let coordinate = location.coordinate {
-                    LocationMapView(location: location)
-                }
+        }
+        .sheet(isPresented: $showingPDFReport) {
+            if let pdfData = reportPDFData {
+                PDFPreviewView(pdfData: pdfData, title: "\(project.name) - \(location.name) 场景报告")
             }
-            .confirmationDialog("导出选项", isPresented: $showingExportOptions) {
-                Button("导出场地PDF报告") {
-                    showingPDFReport = true
-                }
-                
-                Button("取消", role: .cancel) {}
+        }
+        .sheet(isPresented: $showingMap) {
+            if let coordinate = location.coordinate {
+                LocationMapView(location: location)
             }
-            .alert("确认删除场地", isPresented: $showDeleteConfirmation) {
-                Button("取消", role: .cancel) {}
-                Button("删除", role: .destructive) {
-                    deleteLocation()
+        }
+        .confirmationDialog("导出选项", isPresented: $showingExportOptions) {
+            Button("导出场地PDF报告") {
+                // 先生成报告，不直接打开预览
+                prepareAndShowPDFReport()
+            }
+            
+            Button("取消", role: .cancel) {}
+        }
+        .alert("确认删除场地", isPresented: $showDeleteConfirmation) {
+            Button("取消", role: .cancel) {}
+            Button("删除", role: .destructive) {
+                deleteLocation()
+            }
+        } message: {
+            Text("确定要删除\"\(location.name)\"场地吗？此操作将删除所有相关照片，且无法撤销。")
+        }
+        .overlay {
+            if isGeneratingPDF {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                    
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        
+                        Text("正在生成PDF报告...")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Button("取消") {
+                            isGeneratingPDF = false
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.white)
+                    }
+                    .padding(25)
+                    .background(Color(.systemBackground).opacity(0.8))
+                    .cornerRadius(15)
+                    .shadow(radius: 10)
                 }
-            } message: {
-                Text("确定要删除\"\(location.name)\"场地吗？此操作将删除所有相关照片，且无法撤销。")
             }
         }
     }
@@ -118,6 +152,40 @@ struct LocationDetailView: View {
         projectStore.deleteLocation(location, from: project)
         // 返回上一级
         dismiss()
+    }
+    
+    private func prepareAndShowPDFReport() {
+        isGeneratingPDF = true
+        generatingProgress = 0
+        
+        Task {
+            do {
+                // 获取项目LOGO（如果有的话）
+                var logoImage: UIImage? = nil
+                if let logoData = project.logoData {
+                    logoImage = UIImage(data: logoData)
+                }
+                
+                // 初始化生成器
+                let generator = PDFReportGenerator(project: project, location: location, logoImage: logoImage)
+                
+                // 生成PDF
+                let (pdfData, fileName) = generator.generatePDF()
+                
+                if let pdfData = pdfData {
+                    reportPDFData = pdfData
+                    isGeneratingPDF = false
+                    showingPDFReport = true
+                    print("PDF报告生成成功，文件名：\(fileName)")
+                } else {
+                    print("PDF生成失败")
+                    isGeneratingPDF = false
+                }
+            } catch {
+                print("生成PDF报告时发生错误：\(error)")
+                isGeneratingPDF = false
+            }
+        }
     }
 }
 

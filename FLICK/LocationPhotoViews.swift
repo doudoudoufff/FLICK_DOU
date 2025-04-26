@@ -73,16 +73,34 @@ struct LocationPhotoList: View {
                 ContentUnavailableView {
                     Label("暂无照片", systemImage: "photo.stack")
                 } description: {
-                    Text("点击添加按钮开始拍摄或选择照片")
+                    Text("点击下方按钮开始拍摄或选择照片")
                 } actions: {
-                    Button(action: { showingActionSheet = true }) {
-                        Text("添加照片")
+                    HStack(spacing: 16) {
+                        Button(action: { checkCameraPermissionAndShow() }) {
+                            HStack {
+                                Image(systemName: "camera.fill")
+                                Text("拍摄")
+                            }
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding(.horizontal, 24)
                             .padding(.vertical, 12)
                             .background(projectColor)
                             .clipShape(Capsule())
+                        }
+                        
+                        Button(action: { showingPhotosPicker = true }) {
+                            HStack {
+                                Image(systemName: "photo.fill")
+                                Text("相册")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(projectColor)
+                            .clipShape(Capsule())
+                        }
                     }
                 }
             } else {
@@ -109,7 +127,7 @@ struct LocationPhotoList: View {
                             }
                         }
                     }
-                    .padding(.bottom, 80)
+                    .padding(.bottom, 100)
                 }
             }
             
@@ -117,10 +135,10 @@ struct LocationPhotoList: View {
             if !location.photos.isEmpty {
                 VStack {
                     Spacer()
-                    HStack {
+                    HStack(spacing: 16) {
                         Spacer()
-                        Button(action: { showingActionSheet = true }) {
-                            Image(systemName: "plus")
+                        Button(action: { checkCameraPermissionAndShow() }) {
+                            Image(systemName: "camera.fill")
                                 .font(.title2.bold())
                                 .foregroundColor(.white)
                                 .frame(width: 56, height: 56)
@@ -128,16 +146,19 @@ struct LocationPhotoList: View {
                                 .clipShape(Circle())
                                 .shadow(radius: 4)
                         }
-                        .padding([.trailing, .bottom], 16)
+                        Button(action: { showingPhotosPicker = true }) {
+                            Image(systemName: "photo.fill")
+                                .font(.title2.bold())
+                                .foregroundColor(.white)
+                                .frame(width: 56, height: 56)
+                                .background(projectColor)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                        }
                     }
+                    .padding([.trailing, .bottom], 16)
                 }
             }
-        }
-        .confirmationDialog("添加照片", isPresented: $showingActionSheet) {
-            Button("拍摄照片") { 
-                checkCameraPermissionAndShow()
-            }
-            Button("从相册选择") { showingPhotosPicker = true }
         }
         .fullScreenCover(isPresented: $showingCamera) {
             CameraView(projectStore: projectStore, project: project, location: location)
@@ -156,14 +177,30 @@ struct LocationPhotoList: View {
             Task {
                 for item in items {
                     if let data = try? await item.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        let photo = LocationPhoto(image: image)
+                       let uiImage = UIImage(data: data) {
+                        // 修正图片方向
+                        let correctedImage = fixImageOrientation(uiImage)
+                        let photo = LocationPhoto(image: correctedImage)
                         await projectStore.addPhotos([photo], to: location, in: project)
                     }
                 }
                 selectedPhotos.removeAll()
             }
         }
+    }
+    
+    // 添加图片方向修正方法
+    private func fixImageOrientation(_ image: UIImage) -> UIImage {
+        if image.imageOrientation == .up {
+            return image
+        }
+        
+        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return normalizedImage ?? image
     }
 }
 
@@ -339,13 +376,29 @@ struct CameraView: View {
     let location: Location
     @Environment(\.dismiss) private var dismiss
     
+    // 添加图片方向修正方法
+    private func fixImageOrientation(_ image: UIImage) -> UIImage {
+        if image.imageOrientation == .up {
+            return image
+        }
+        
+        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return normalizedImage ?? image
+    }
+    
     var body: some View {
         ZStack {
             CameraImagePicker(image: Binding(
                 get: { nil },
                 set: { newImage in
                     if let image = newImage {
-                        let photo = LocationPhoto(image: image)
+                        // 修正图片方向
+                        let correctedImage = fixImageOrientation(image)
+                        let photo = LocationPhoto(image: correctedImage)
                         Task {
                             await projectStore.addPhotos([photo], to: location, in: project)
                         }

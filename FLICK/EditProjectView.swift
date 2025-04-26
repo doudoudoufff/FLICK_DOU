@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct EditProjectView: View {
     @EnvironmentObject var projectStore: ProjectStore
@@ -11,6 +12,13 @@ struct EditProjectView: View {
     @State private var startDate: Date
     @State private var status: Project.Status
     @State private var selectedColor: Color
+    @State private var logoData: Data?
+    
+    // 照片选择器状态
+    @State private var selectedLogo: PhotosPickerItem?
+    @State private var showingCropView = false
+    @State private var selectedImage: UIImage?
+    @State private var croppedImage: UIImage?
     
     init(project: Binding<Project>, isPresented: Binding<Bool>) {
         self._project = project
@@ -22,6 +30,7 @@ struct EditProjectView: View {
         _startDate = State(initialValue: project.wrappedValue.startDate)
         _status = State(initialValue: project.wrappedValue.status)
         _selectedColor = State(initialValue: project.wrappedValue.color)
+        _logoData = State(initialValue: project.wrappedValue.logoData)
     }
     
     var body: some View {
@@ -45,6 +54,47 @@ struct EditProjectView: View {
                 Section(header: Text("项目颜色")) {
                     ColorPicker("选择颜色", selection: $selectedColor)
                 }
+                
+                Section(header: Text("项目LOGO")) {
+                    HStack {
+                        if let logoData = logoData, let uiImage = UIImage(data: logoData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 100)
+                                .cornerRadius(8)
+                        } else {
+                            Text("未设置LOGO")
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        HStack {
+                            PhotosPicker(selection: $selectedLogo, matching: .images) {
+                                Image(systemName: "photo.badge.plus")
+                                    .font(.title2)
+                            }
+                            .buttonStyle(.borderless)
+                            
+                            if logoData != nil {
+                                Button(action: {
+                                    logoData = nil
+                                }) {
+                                    Image(systemName: "trash")
+                                        .font(.title2)
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Text("添加LOGO将在PDF报告中显示")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
             .navigationTitle("编辑项目")
             .navigationBarTitleDisplayMode(.inline)
@@ -58,29 +108,51 @@ struct EditProjectView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
                         let updatedProject = Project(
-                            id: project.id,  // 保持原有 ID
+                            id: project.id,
                             name: name,
                             director: director,
                             producer: producer,
                             startDate: startDate,
                             status: status,
                             color: selectedColor,
-                            tasks: project.tasks,  // 保持原有任务
-                            invoices: project.invoices,  // 保持原有发票
-                            locations: project.locations,  // 保持原有位置
-                            accounts: project.accounts,  // 保持原有账户
-                            isLocationScoutingEnabled: project.isLocationScoutingEnabled
+                            tasks: project.tasks,
+                            invoices: project.invoices,
+                            locations: project.locations,
+                            accounts: project.accounts,
+                            isLocationScoutingEnabled: project.isLocationScoutingEnabled,
+                            logoData: logoData
                         )
                         
-                        // 更新项目
                         projectStore.updateProject(updatedProject)
-                        
-                        // 更新绑定
                         project = updatedProject
-                        
                         isPresented = false
                     }
                     .disabled(name.isEmpty)
+                }
+            }
+            .onChange(of: selectedLogo) { newItem in
+                Task {
+                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        selectedImage = uiImage
+                        showingCropView = true
+                    }
+                }
+            }
+            .fullScreenCover(isPresented: $showingCropView) {
+                if let image = selectedImage {
+                    ImageCropView(
+                        image: image,
+                        croppedImage: Binding(
+                            get: { croppedImage },
+                            set: { newImage in
+                                croppedImage = newImage
+                                if let compressedData = newImage?.jpegData(compressionQuality: 0.7) {
+                                    logoData = compressedData
+                                }
+                            }
+                        )
+                    )
                 }
             }
         }

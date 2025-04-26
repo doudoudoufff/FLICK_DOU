@@ -45,14 +45,31 @@ struct EditLocationView: View {
                         get: { editedLocation.name },
                         set: { editedLocation.name = $0 }
                     ))
-                    Picker("场地类型", selection: Binding(
-                        get: { editedLocation.type },
-                        set: { editedLocation.type = $0 }
-                    )) {
-                        ForEach(LocationType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                    
+                    // 场地类型选择器
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("场地类型")
+                            Spacer()
+                            NavigationLink(destination: LocationTypeManagementView()) {
+                                Text("管理类型")
+                                    .font(.caption)
+                                    .foregroundColor(Color.blue)
+                            }
                         }
+                        
+                        Picker("", selection: Binding(
+                            get: { editedLocation.type },
+                            set: { editedLocation.type = $0 }
+                        )) {
+                            ForEach(LocationType.allCases, id: \.rawValue) { type in
+                            Text(type.rawValue).tag(type)
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(height: 100)
                     }
+                    
                     TextField("详细地址", text: Binding(
                         get: { editedLocation.address },
                         set: { editedLocation.address = $0 }
@@ -86,7 +103,7 @@ struct EditLocationView: View {
                             Label("清除位置信息", systemImage: "xmark.circle")
                         }
                     }
-                } 
+                }
                 
                 Section("状态") {
                     Picker("场地状态", selection: $editedLocation.status) {
@@ -105,7 +122,7 @@ struct EditLocationView: View {
                         get: { editedLocation.contactPhone ?? "" },
                         set: { editedLocation.contactPhone = $0.isEmpty ? nil : $0 }
                     ))
-                    .keyboardType(.phonePad)
+                        .keyboardType(.phonePad)
                 }
                 
                 Section("备注") {
@@ -113,7 +130,7 @@ struct EditLocationView: View {
                         get: { editedLocation.notes ?? "" },
                         set: { editedLocation.notes = $0.isEmpty ? nil : $0 }
                     ))
-                    .frame(height: 100)
+                        .frame(height: 100)
                 }
             }
             .navigationTitle("编辑场地")

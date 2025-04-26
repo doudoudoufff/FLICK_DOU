@@ -15,6 +15,7 @@ struct Project: Identifiable, Codable, Hashable {
     var locations: [Location]  // 确保 locations 在 accounts 之前
     var accounts: [Account]
     var isLocationScoutingEnabled: Bool
+    var logoData: Data? // 项目LOGO数据
     
     public enum Status: String, Codable, CaseIterable {
         case preProduction = "前期"
@@ -38,7 +39,8 @@ struct Project: Identifiable, Codable, Hashable {
         invoices: [Invoice] = [],
         locations: [Location] = [],  // 确保 locations 在 accounts 之前
         accounts: [Account] = [],
-        isLocationScoutingEnabled: Bool = false
+        isLocationScoutingEnabled: Bool = false,
+        logoData: Data? = nil
     ) {
         self.id = id
         self.name = name
@@ -52,6 +54,7 @@ struct Project: Identifiable, Codable, Hashable {
         self.locations = locations  // 确保顺序一致
         self.accounts = accounts
         self.isLocationScoutingEnabled = isLocationScoutingEnabled
+        self.logoData = logoData
     }
     
     func hash(into hasher: inout Hasher) {
@@ -65,7 +68,7 @@ struct Project: Identifiable, Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case id, name, director, producer, startDate, status
         case color, tasks, invoices, locations, accounts
-        case isLocationScoutingEnabled
+        case isLocationScoutingEnabled, logoData
     }
     
     init(from decoder: Decoder) throws {
@@ -82,6 +85,7 @@ struct Project: Identifiable, Codable, Hashable {
         locations = try container.decode([Location].self, forKey: .locations)
         accounts = try container.decode([Account].self, forKey: .accounts)
         isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)
+        logoData = try container.decodeIfPresent(Data.self, forKey: .logoData)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -98,6 +102,7 @@ struct Project: Identifiable, Codable, Hashable {
         try container.encode(locations, forKey: .locations)
         try container.encode(accounts, forKey: .accounts)
         try container.encode(isLocationScoutingEnabled, forKey: .isLocationScoutingEnabled)
+        try container.encodeIfPresent(logoData, forKey: .logoData)
     }
     
     func toEntity(context: NSManagedObjectContext) -> ProjectEntity {
@@ -110,6 +115,7 @@ struct Project: Identifiable, Codable, Hashable {
         entity.status = status.rawValue
         entity.color = color.toData()
         entity.isLocationScoutingEnabled = isLocationScoutingEnabled
+        entity.logoData = logoData
         return entity
     }
     
@@ -143,7 +149,8 @@ struct Project: Identifiable, Codable, Hashable {
             invoices: invoices,
             locations: [],
             accounts: [],
-            isLocationScoutingEnabled: entity.isLocationScoutingEnabled
+            isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
+            logoData: entity.logoData
         )
     }
     

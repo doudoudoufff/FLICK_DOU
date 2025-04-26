@@ -311,6 +311,7 @@ class ProjectStore: ObservableObject {
             projectEntity.status = updatedProject.status.rawValue
             projectEntity.color = updatedProject.color.toData()
             projectEntity.isLocationScoutingEnabled = updatedProject.isLocationScoutingEnabled
+            projectEntity.logoData = updatedProject.logoData  // 添加LOGO数据的更新
             
             // 保存更改
             saveContext()
@@ -1366,7 +1367,8 @@ class ProjectStore: ObservableObject {
             startDate: entity.startDate ?? Date(),
             status: Project.Status(rawValue: entity.status ?? "") ?? .preProduction,
             color: entity.color != nil ? (Color(data: entity.color!) ?? .blue) : .blue,
-            isLocationScoutingEnabled: entity.isLocationScoutingEnabled
+            isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
+            logoData: entity.logoData  // 添加logo数据的加载
         )
         
         // 确保打印出状态，以便调试

@@ -20,6 +20,7 @@ extension ProjectEntity {
     @NSManaged public var director: String?
     @NSManaged public var id: UUID?
     @NSManaged public var isLocationScoutingEnabled: Bool
+    @NSManaged public var logoData: Data?
     @NSManaged public var name: String?
     @NSManaged public var producer: String?
     @NSManaged public var startDate: Date?

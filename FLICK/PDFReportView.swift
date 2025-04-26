@@ -56,33 +56,41 @@ struct PDFReportView: View {
         // 在后台线程生成PDF
         DispatchQueue.global(qos: .userInitiated).async {
             let startTime = Date()
-            let generator = PDFReportGenerator(project: project, date: date, photos: photos)
             
-            if let pdfData = generator.generatePDF() {
-                // 创建临时文件存储PDF
-                let tmpURL = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("\(project.name)_堪景报告_\(formattedDate).pdf")
-                
-                do {
-                    print("PDF生成完成，大小：\(pdfData.count / 1024) KB，耗时：\(Date().timeIntervalSince(startTime)) 秒")
-                    try pdfData.write(to: tmpURL)
-                    
-                    // 在主线程更新UI
-                    DispatchQueue.main.async {
-                        if let document = PDFDocument(url: tmpURL) {
-                            self.pdfDocument = document
-                            self.pdfURL = tmpURL
-                            self.isGenerating = false
-                        }
-                    }
-                } catch {
-                    print("保存PDF文件失败: \(error)")
-                    DispatchQueue.main.async {
-                        self.isGenerating = false
-                    }
-                }
-            } else {
+            var logoImage: UIImage? = nil
+            if let logoData = project.logoData {
+                logoImage = UIImage(data: logoData)
+            }
+            
+            let generator = PDFReportGenerator(project: project, date: date, photos: photos, logoImage: logoImage)
+            let (pdfData, fileName) = generator.generatePDF()
+            
+            guard let pdfData = pdfData else {
                 print("PDF生成失败")
+                DispatchQueue.main.async {
+                    self.isGenerating = false
+                }
+                return
+            }
+            
+            do {
+                let tmpURL = FileManager.default
+                    .temporaryDirectory
+                    .appendingPathComponent(fileName)
+                
+                print("PDF生成完成, 大小: \(pdfData.count / 1024) KB, 耗时: \(Date().timeIntervalSince(startTime)) 秒")
+                try pdfData.write(to: tmpURL)
+                
+                // 在主线程更新UI
+                DispatchQueue.main.async {
+                    if let document = PDFDocument(url: tmpURL) {
+                        self.pdfDocument = document
+                        self.pdfURL = tmpURL
+                    }
+                    self.isGenerating = false
+                }
+            } catch {
+                print("保存PDF文件时发生错误：\(error)")
                 DispatchQueue.main.async {
                     self.isGenerating = false
                 }

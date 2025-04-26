@@ -103,7 +103,8 @@ class PDFReportGenerator {
             
             // 生成文件名
             let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyyMMdd"
+            dateFormatter.locale = Locale(identifier: "zh_CN")
+            dateFormatter.dateFormat = "yyyy年M月d日 HH:mm"
             let dateStr = dateFormatter.string(from: Date())
             
             // 替换所有非字母数字为下划线
@@ -406,7 +407,10 @@ class PDFReportGenerator {
                             }
                             
                             // 绘制照片编号和时间
-                            let timeText = photo.date.formatted(date: .abbreviated, time: .shortened)
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.locale = Locale(identifier: "zh_CN")
+                            dateFormatter.dateFormat = "yyyy年M月d日 HH:mm"
+                            let timeText = dateFormatter.string(from: photo.date)
                             let indexText = "\(photoIndex + 1). \(timeText)"
                             let indexFont = UIFont.boldSystemFont(ofSize: 12)
                             let indexAttributes = [
@@ -530,7 +534,10 @@ class PDFReportGenerator {
         titleText.draw(in: titleRect, withAttributes: titleAttributes)
         
         // 日期
-        let dateText = Date().formatted(date: .long, time: .omitted)
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "zh_CN")
+        dateFormatter.dateFormat = "yyyy年M月d日 HH:mm"
+        let dateText = dateFormatter.string(from: Date())
         let dateFont = UIFont.systemFont(ofSize: 20)
         let dateAttributes = [
             NSAttributedString.Key.font: dateFont,

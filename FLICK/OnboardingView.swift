@@ -8,27 +8,27 @@ struct OnboardingView: View {
     let pages = [
         OnboardingPage(
             title: "欢迎使用 FLICK",
-            description: "专业的影视项目管理工具，让您的工作更轻松高效",
+            description: "专业的影视项目管理工具，让您的拍摄与协作更高效。",
             color: .accentColor
         ),
         OnboardingPage(
-            title: "项目管理",
-            description: "从前期筹备到后期制作，全流程项目管理，让工作效率更高",
+            title: "项目与场景管理",
+            description: "轻松创建、编辑项目，支持多场景、多任务，信息一目了然。",
             color: .orange
         ),
         OnboardingPage(
-            title: "任务追踪",
-            description: "智能任务分配和进度追踪，项目进展一目了然",
+            title: "堪景与照片管理",
+            description: "现场拍照、批量上传，自动生成规范PDF报告，LOGO与时间信息一应俱全，支持一键分享。",
             color: .blue
         ),
         OnboardingPage(
             title: "账户管理",
-            description: "便捷的发票信息和账户管理，告别埋藏在聊天记录里的各类账户",
+            description: "便捷的发票信息和账户管理，告别埋藏在聊天记录里的各类账户。",
             color: .green
         ),
         OnboardingPage(
             title: "数据同步",
-            description: "选择是否启用 iCloud 同步，让您的项目数据在所有设备间保持一致",
+            description: "选择是否启用 iCloud 同步，让您的项目数据在所有设备间保持一致。",
             color: .blue,
             systemImage: "cloud.fill",
             content: AnyView(CloudSyncView())
@@ -36,15 +36,10 @@ struct OnboardingView: View {
     ]
     
     var appIcon: some View {
-        Image(systemName: "film.stack.fill")
+        Image("FLICKLogo")
             .resizable()
             .scaledToFit()
             .frame(width: 120, height: 120)
-            .foregroundStyle(.linearGradient(
-                colors: [.accentColor, .blue],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ))
             .padding(40)
             .background {
                 RoundedRectangle(cornerRadius: 32)

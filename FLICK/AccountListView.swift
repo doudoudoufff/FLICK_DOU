@@ -3,32 +3,33 @@ import SwiftUI
 struct AccountListView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @Binding var project: Project
+    var showManagement: Bool = false
     @State private var showingAddAccount = false
     @State private var editingAccount: Account? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("账户管理")
+                Text("账户信息")
                     .font(.headline)
-                
                 Spacer()
-                
+                if showManagement {
+                    NavigationLink(destination: AccountManagementView(project: $project).environmentObject(projectStore)) {
+                        Label("管理", systemImage: "chevron.right")
+                            .labelStyle(.iconOnly)
+                            .foregroundColor(.accentColor)
+                    }
+                }
                 Button(action: { showingAddAccount = true }) {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.accentColor)
                 }
             }
-            
             if !project.accounts.isEmpty {
                 ScrollView {
                     VStack(spacing: 8) {
-                        ForEach(project.accounts) { account in
-                            AccountRow(
-                                account: account,
-                                project: $project,
-                                editingAccount: $editingAccount
-                            )
+                        ForEach(project.accounts.prefix(3)) { account in
+                            AccountRow(account: account, project: $project, editingAccount: $editingAccount)
                         }
                     }
                 }
@@ -44,28 +45,12 @@ struct AccountListView: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $showingAddAccount) {
-            AddAccountView(
-                isPresented: $showingAddAccount,
-                project: $project
-            )
-            .environmentObject(projectStore)
+            AddAccountView(isPresented: $showingAddAccount, project: $project)
+                .environmentObject(projectStore)
         }
         .sheet(item: $editingAccount) { account in
-            EditAccountView(
-                isPresented: Binding(
-                    get: { editingAccount != nil },
-                    set: { if !$0 { editingAccount = nil } }
-                ),
-                project: $project,
-                account: account
-            )
-            .environmentObject(projectStore)
-        }
-        .onChange(of: projectStore.projects) { _ in
-            print("ProjectStore 更新检测")
-            if let updatedProject = projectStore.projects.first(where: { $0.id == project.id }) {
-                project = updatedProject
-            }
+            EditAccountView(isPresented: .constant(true), project: $project, account: account)
+                .environmentObject(projectStore)
         }
     }
 }

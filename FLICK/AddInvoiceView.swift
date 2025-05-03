@@ -11,11 +11,16 @@ struct AddInvoiceView: View {
     @State private var bankAccount = ""
     @State private var bankName = ""
     @State private var date = Date()
+    @State private var amount = ""
+    @State private var category = Invoice.Category.other
+    @State private var status = Invoice.Status.pending
+    @State private var dueDate: Date? = nil
+    @State private var notes = ""
     
     var body: some View {
         NavigationView {
             Form {
-                Section("个人信息") {
+                Section("基本信息") {
                     TextField("姓名", text: $name)
                     TextField("联系电话", text: $phone)
                         .keyboardType(.numberPad)
@@ -29,8 +34,33 @@ struct AddInvoiceView: View {
                     TextField("开户行", text: $bankName)
                 }
                 
-                Section("记录信息") {
+                Section("开票信息") {
+                    TextField("开票金额", text: $amount)
+                        .keyboardType(.decimalPad)
+                    
+                    Picker("开票类别", selection: $category) {
+                        ForEach(Invoice.Category.allCases, id: \.self) { category in
+                            Text(category.rawValue).tag(category)
+                        }
+                    }
+                    
+                    Picker("开票状态", selection: $status) {
+                        ForEach(Invoice.Status.allCases, id: \.self) { status in
+                            Text(status.rawValue).tag(status)
+                        }
+                    }
+                    
                     DatePicker("记录日期", selection: $date, displayedComponents: .date)
+                    
+                    DatePicker("开票截止日期", selection: Binding(
+                        get: { dueDate ?? Date() },
+                        set: { dueDate = $0 }
+                    ), displayedComponents: .date)
+                }
+                
+                Section("备注") {
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 100)
                 }
             }
             .navigationTitle("添加开票信息")
@@ -55,7 +85,9 @@ struct AddInvoiceView: View {
         !phone.isEmpty && 
         !idNumber.isEmpty && 
         !bankAccount.isEmpty && 
-        !bankName.isEmpty
+        !bankName.isEmpty &&
+        !amount.isEmpty &&
+        Double(amount) != nil
     }
     
     private func saveInvoice() {
@@ -65,10 +97,14 @@ struct AddInvoiceView: View {
             idNumber: idNumber,
             bankAccount: bankAccount,
             bankName: bankName,
-            date: date
+            date: date,
+            amount: Double(amount) ?? 0,
+            category: category,
+            status: status,
+            dueDate: dueDate,
+            notes: notes.isEmpty ? nil : notes
         )
         
-        // 使用 ProjectStore 添加发票
         projectStore.addInvoice(invoice, to: project)
         dismiss()
     }

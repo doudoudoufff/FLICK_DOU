@@ -22,12 +22,7 @@ struct ProjectDetailView: View {
                 )
                 InvoiceListView(project: $project)
                     .environmentObject(projectStore)
-                    .onChange(of: projectStore.projects) { _ in
-                        if let updatedProject = projectStore.projects.first(where: { $0.id == project.id }) {
-                            project = updatedProject
-                        }
-                    }
-                AccountListView(project: $project)
+                AccountListView(project: $project, showManagement: true)
                     .environmentObject(projectStore)
                 LocationScoutingCard(project: $project)
                     .environmentObject(projectStore)

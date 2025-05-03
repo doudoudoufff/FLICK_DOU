@@ -13,14 +13,26 @@
         <attribute name="type" optional="YES" attributeType="String"/>
         <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="accounts" inverseEntity="ProjectEntity"/>
     </entity>
+    <entity name="AttachmentEntity" representedClassName=".AttachmentEntity" syncable="YES">
+        <attribute name="data" optional="YES" attributeType="Binary"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <relationship name="invoice" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InvoiceEntity" inverseName="attachments" inverseEntity="InvoiceEntity"/>
+    </entity>
     <entity name="InvoiceEntity" representedClassName=".InvoiceEntity" syncable="YES">
+        <attribute name="amount" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="bankAccount" optional="YES" attributeType="String"/>
         <attribute name="bankName" optional="YES" attributeType="String"/>
+        <attribute name="category" optional="YES" attributeType="String"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="idNumber" optional="YES" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
         <attribute name="phone" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <relationship name="attachments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AttachmentEntity" inverseName="invoice" inverseEntity="AttachmentEntity"/>
         <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="invoices" inverseEntity="ProjectEntity"/>
     </entity>
     <entity name="LocationEntity" representedClassName=".LocationEntity" syncable="YES">

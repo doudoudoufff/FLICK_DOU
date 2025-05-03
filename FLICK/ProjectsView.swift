@@ -12,24 +12,27 @@ struct ProjectsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 项目统计卡片
-                    HStack(spacing: 16) {
-                        StatCard(
-                            title: "全部项目",
-                            value: "\(projectStore.projects.count)",
-                            icon: "film.fill",
-                            color: .blue
-                        )
-                        
-                        StatCard(
-                            title: "总任务数",
-                            value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
-                            icon: "list.bullet.clipboard.fill",
-                            color: .orange
-                        )
+                    // 项目统计卡片（并排显示，无滚动）
+                    GeometryReader { geometry in
+                        HStack(spacing: 16) {
+                            StatCard(
+                                title: "全部项目",
+                                value: "\(projectStore.projects.count)",
+                                icon: "film.fill",
+                                color: .blue
+                            )
+                            .frame(width: (geometry.size.width - 16 - 32) / 2) // 16为间距，32为两侧padding
+                            StatCard(
+                                title: "总任务数",
+                                value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
+                                icon: "list.bullet.clipboard.fill",
+                                color: .orange
+                            )
+                            .frame(width: (geometry.size.width - 16 - 32) / 2)
+                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
-                    
+                    .frame(height: 100)
                     // 项目列表
                     LazyVStack(spacing: 16) {
                         ForEach(filteredProjects) { project in
@@ -99,7 +102,6 @@ struct ProjectsView: View {
                 // 触发 CoreData 刷新和 iCloud 同步
                 projectStore.loadProjects()
                 projectStore.sync()
-                
                 // 如果需要异步等待
                 try? await Task.sleep(nanoseconds: 1_000_000_000) // 等待1秒
             }
@@ -117,36 +119,6 @@ struct ProjectsView: View {
             case .cancelled: return project.status == .cancelled
             }
         }
-    }
-}
-
-// 统计卡片组件
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .imageScale(.small)
-                Text(title)
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            
-            Text(value)
-                .font(.system(.title2, design: .rounded))
-                .fontWeight(.semibold)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
     }
 }
 

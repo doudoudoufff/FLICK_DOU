@@ -13,49 +13,12 @@ struct ProjectsView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // 项目统计卡片（并排显示，无滚动）
-                    GeometryReader { geometry in
-                        HStack(spacing: 16) {
-                            StatCard(
-                                title: "全部项目",
-                                value: "\(projectStore.projects.count)",
-                                icon: "film.fill",
-                                color: .blue
-                            )
-                            .frame(width: (geometry.size.width - 16 - 32) / 2) // 16为间距，32为两侧padding
-                            StatCard(
-                                title: "总任务数",
-                                value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
-                                icon: "list.bullet.clipboard.fill",
-                                color: .orange
-                            )
-                            .frame(width: (geometry.size.width - 16 - 32) / 2)
-                        }
-                        .padding(.horizontal)
-                    }
-                    .frame(height: 100)
+                    ProjectStatCards()
+                        .environmentObject(projectStore)
                     // 项目列表
                     LazyVStack(spacing: 16) {
-                        ForEach(filteredProjects) { project in
-                            if searchText.isEmpty || 
-                               project.name.localizedCaseInsensitiveContains(searchText) ||
-                               project.director.localizedCaseInsensitiveContains(searchText) ||
-                               project.producer.localizedCaseInsensitiveContains(searchText) {
-                                NavigationLink {
-                                    if let binding = projectStore.binding(for: project.id) {
-                                        ProjectDetailView(project: binding)
-                                    }
-                                } label: {
-                                    ProjectCard(project: project)
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                                .contextMenu {  // 使用长按菜单替代滑动
-                                    Button(role: .destructive) {
-                                        projectToDelete = project
-                                    } label: {
-                                        Label("删除项目", systemImage: "trash")
-                                    }
-                                }
-                            }
+                        ForEach(searchedProjects) { project in
+                            ProjectListRow(project: project)
                         }
                     }
                     .padding(.horizontal)
@@ -118,6 +81,15 @@ struct ProjectsView: View {
             case .completed: return project.status == .completed
             case .cancelled: return project.status == .cancelled
             }
+        }
+    }
+    
+    private var searchedProjects: [Project] {
+        filteredProjects.filter { project in
+            searchText.isEmpty ||
+            project.name.localizedCaseInsensitiveContains(searchText) ||
+            project.director.localizedCaseInsensitiveContains(searchText) ||
+            project.producer.localizedCaseInsensitiveContains(searchText)
         }
     }
 }
@@ -209,6 +181,60 @@ struct InfoRow: View {
             Text(content)
         }
         .font(.subheadline)
+    }
+}
+
+// 项目统计卡片组件
+struct ProjectStatCards: View {
+    @EnvironmentObject var projectStore: ProjectStore
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = max((geometry.size.width - 16 - 32) / 2, 0)
+            HStack(spacing: 16) {
+                StatCard(
+                    title: "全部项目",
+                    value: "\(projectStore.projects.count)",
+                    icon: "film.fill",
+                    color: .blue
+                )
+                .frame(width: width)
+                StatCard(
+                    title: "总任务数",
+                    value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
+                    icon: "list.bullet.clipboard.fill",
+                    color: .orange
+                )
+                .frame(width: width)
+            }
+            .padding(.horizontal)
+        }
+        .frame(height: 100)
+    }
+}
+
+// 新增项目行组件
+struct ProjectListRow: View {
+    @EnvironmentObject var projectStore: ProjectStore
+    let project: Project
+    @State private var projectToDelete: Project? = nil
+
+    var body: some View {
+        NavigationLink {
+            if let binding = projectStore.binding(for: project.id) {
+                ProjectDetailView(project: binding)
+            }
+        } label: {
+            ProjectCard(project: project)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .contextMenu {
+            Button(role: .destructive) {
+                projectToDelete = project
+            } label: {
+                Label("删除项目", systemImage: "trash")
+            }
+        }
     }
 }
 

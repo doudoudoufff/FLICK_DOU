@@ -24,7 +24,7 @@ struct FilterChip: View {
 // MARK: - 场地分组视图
 private struct LocationSection: View {
     let type: LocationType
-    @Binding var project: Project
+    @ObservedObject var project: Project
     let locations: [Location]
     
     var body: some View {

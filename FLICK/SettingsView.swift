@@ -78,19 +78,15 @@ struct SettingsView: View {
                                     }
                                 case .error(let error):
                                     HStack(spacing: 4) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
+                                        Image(systemName: "exclamationmark.circle.fill")
                                             .foregroundStyle(.red)
-                                        Text("同步失败")
-                                            .foregroundStyle(.red)
-                                    }
-                                    .onTapGesture {
-                                        syncError = error
-                                        showingSyncAlert = true
+                                        Text("同步错误")
+                                            .foregroundStyle(.secondary)
                                     }
                                 }
                             }
                             
-                            // 添加上次同步时间
+                            // 上次同步时间
                             if lastSyncTime > 0 {
                                 HStack {
                                     Label {
@@ -100,12 +96,12 @@ struct SettingsView: View {
                                             .foregroundStyle(.blue)
                                     }
                                     Spacer()
-                                    Text(Date(timeIntervalSince1970: lastSyncTime), style: .relative)
+                                    Text(Date(timeIntervalSince1970: lastSyncTime).formatted())
                                         .foregroundStyle(.secondary)
                                 }
                             }
                             
-                            // 添加数据库信息
+                            // 数据库大小
                             if let dbSize = PersistenceController.shared.getDatabaseSize() {
                                 HStack {
                                     Label {
@@ -259,7 +255,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.purple)
                         }
                         Spacer()
-                        Text("1.2.1")
+                        Text("1.3.1")
                             .foregroundStyle(.secondary)
                     }
                     
@@ -278,11 +274,13 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("设置")
-            .alert("同步错误", isPresented: $showingSyncAlert) {
-                Button("确定", role: .cancel) { }
+            .alert("iCloud 状态", isPresented: $showingSyncAlert) {
+                Button("确定", role: .cancel) {}
             } message: {
                 if let error = syncError {
+                    let isError = (error as NSError).userInfo["isError"] as? Bool ?? false
                     Text(error.localizedDescription)
+                        .foregroundColor(isError ? .red : .primary)
                 }
             }
         }
@@ -314,26 +312,39 @@ struct SettingsView: View {
         CKContainer(identifier: "iCloud.FLICKiCLoud").accountStatus { status, error in
             DispatchQueue.main.async {
                 var message = ""
+                var isError = false
                 
                 switch status {
                 case .available:
                     message = "iCloud 账户可用，同步功能正常"
                 case .noAccount:
                     message = "未登录 iCloud 账户，请在设置中登录"
+                    isError = true
                 case .restricted:
                     message = "iCloud 账户受限，无法使用同步功能"
+                    isError = true
                 case .couldNotDetermine:
                     message = "无法确定 iCloud 账户状态，请检查网络连接"
+                    isError = true
                 @unknown default:
                     message = "未知状态"
+                    isError = true
                 }
                 
                 if let error = error {
                     message += "\n错误: \(error.localizedDescription)"
+                    isError = true
                 }
                 
-                // 显示状态
-                syncError = NSError(domain: "CloudKit", code: 0, userInfo: [NSLocalizedDescriptionKey: message])
+                // 显示状态消息
+                syncError = NSError(
+                    domain: "CloudKit",
+                    code: isError ? 1 : 0,
+                    userInfo: [
+                        NSLocalizedDescriptionKey: message,
+                        "isError": isError
+                    ]
+                )
                 showingSyncAlert = true
             }
         }

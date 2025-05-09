@@ -4,8 +4,14 @@ struct InvoiceListView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @Binding var project: Project
     @State private var showingAddInvoice = false
+    @State private var showingManagement = false
     @State private var editingInvoice: Invoice? = nil
-    @State private var showManagement = false
+    @State private var refreshID = UUID()
+    
+    // 判断是否为 iPad
+    private var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -15,10 +21,19 @@ struct InvoiceListView: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: InvoiceManagementView(project: $project).environmentObject(projectStore)) {
-                    Label("管理", systemImage: "chevron.right")
-                        .labelStyle(.iconOnly)
-                        .foregroundColor(.accentColor)
+                if isIPad {
+                    Button(action: { showingManagement = true }) {
+                        Label("管理", systemImage: "chevron.right")
+                            .labelStyle(.iconOnly)
+                            .foregroundColor(.accentColor)
+                    }
+                } else {
+                    NavigationLink(destination: InvoiceManagementView(project: $project).environmentObject(projectStore)) {
+                        Label("管理", systemImage: "chevron.right")
+                            .labelStyle(.iconOnly)
+                            .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
                 }
                 
                 Button(action: { showingAddInvoice = true }) {
@@ -28,19 +43,32 @@ struct InvoiceListView: View {
             }
             
             if !project.invoices.isEmpty {
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(project.invoices) { invoice in
-                            InvoiceRow(invoice: invoice, project: project, editingInvoice: $editingInvoice)
-                        }
+                List {
+                    ForEach(project.invoices.indices, id: \ .self) { index in
+                        InvoiceRow(invoice: $project.invoices[index], project: project)
+                            .environmentObject(projectStore)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .onTapGesture {
+                                editingInvoice = project.invoices[index]
+                            }
                     }
                 }
+                .listStyle(.plain)
+                .frame(height: min(CGFloat(project.invoices.count) * 90, 270)) // 限制最大高度
+                .background(Color.clear)
+                .scrollContentBackground(.hidden)
             } else {
                 Text("暂无开票信息")
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 12)
             }
+        }
+        .id(refreshID)
+        .onChange(of: project.invoices) { _ in
+            refreshID = UUID()
         }
         .padding()
         .background(Color(.systemBackground))
@@ -49,75 +77,24 @@ struct InvoiceListView: View {
         .sheet(isPresented: $showingAddInvoice) {
             AddInvoiceView(project: project)
                 .environmentObject(projectStore)
+                .onDisappear {
+                    refreshID = UUID()
+                }
+        }
+        .sheet(isPresented: $showingManagement) {
+            NavigationView {
+                InvoiceManagementView(project: $project)
+                    .environmentObject(projectStore)
+            }
         }
         .sheet(item: $editingInvoice) { invoice in
-            EditInvoiceView(
-                project: project,
-                invoice: invoice
-            )
-            .environmentObject(projectStore)
-        }
-    }
-}
-
-struct InvoiceDetailView: View {
-    @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var projectStore: ProjectStore
-    @State private var showingEditSheet = false
-    let invoice: Invoice
-    let project: Project
-    
-    var body: some View {
-        NavigationView {
-            List {
-                Section("个人信息") {
-                    InvoiceDetailRow(label: "姓名", text: invoice.name)
-                    InvoiceDetailRow(label: "联系电话", text: invoice.phone)
-                    InvoiceDetailRow(label: "身份证号", text: invoice.idNumber)
-                }
-                
-                Section("银行信息") {
-                    InvoiceDetailRow(label: "开户行", text: invoice.bankName)
-                    InvoiceDetailRow(label: "账号", text: invoice.bankAccount)
-                }
-                
-                Section("记录信息") {
-                    InvoiceDetailRow(label: "记录日期", text: invoice.date.chineseStyleString())
-                }
-            }
-            .navigationTitle("开票信息")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("编辑") {
-                        showingEditSheet = true
+            if let index = project.invoices.firstIndex(where: { $0.id == invoice.id }) {
+                EditInvoiceView(invoice: $project.invoices[index], project: project, isPresented: Binding(get: { editingInvoice != nil }, set: { if !$0 { editingInvoice = nil } }))
+                    .environmentObject(projectStore)
+                    .onDisappear {
+                        refreshID = UUID()
                     }
-                }
-                
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("关闭") {
-                        dismiss()
-                    }
-                }
             }
-        }
-        .sheet(isPresented: $showingEditSheet) {
-            EditInvoiceView(project: project, invoice: invoice)
-                .environmentObject(projectStore)
-        }
-    }
-}
-
-struct InvoiceDetailRow: View {
-    let label: String
-    let text: String
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(text)
         }
     }
 } 

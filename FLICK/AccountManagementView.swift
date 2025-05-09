@@ -134,4 +134,47 @@ struct AccountManagementView: View {
             }
         }
     }
+}
+
+// 账户行组件 - 用于账户管理列表
+struct AccountRow: View {
+    let account: Account
+    @Binding var project: Project
+    @Binding var editingAccount: Account?
+    @EnvironmentObject var projectStore: ProjectStore
+    @State private var showingDeleteAlert = false
+    
+    var body: some View {
+        NavigationLink(destination: AccountDetailView(account: account, project: $project)) {
+            AccountRowContent(account: account)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                showingDeleteAlert = true
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+            
+            Button {
+                editingAccount = account
+            } label: {
+                Label("编辑", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
+        .alert("确认删除", isPresented: $showingDeleteAlert) {
+            Button("取消", role: .cancel) {}
+            Button("删除", role: .destructive) {
+                withAnimation {
+                    projectStore.deleteAccount(account, from: project)
+                    // 确保视图更新
+                    if let updatedProject = projectStore.projects.first(where: { $0.id == project.id }) {
+                        project = updatedProject
+                    }
+                }
+            }
+        } message: {
+            Text("确定要删除这个账户吗？此操作不可撤销。")
+        }
+    }
 } 

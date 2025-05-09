@@ -9,12 +9,14 @@ struct ProjectDetailView: View {
     @State private var showingLocationScoutingView = false
     @State private var showingBaiBai = false
     @State private var editingTask: ProjectTask? = nil
+    @State private var refreshID = UUID()
+    @State private var invoiceToDelete: (invoice: Invoice, project: Project)? = nil
     
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                ProjectInfoCard(project: project)
-                BaiBaiButton(project: project, showingBaiBai: $showingBaiBai)
+                ProjectInfoCard(project: $project)
+                BaiBaiButton(project: $project, showingBaiBai: $showingBaiBai)
                 TaskListCard(
                     project: $project,
                     showingAddTask: $showingAddTask,
@@ -22,6 +24,7 @@ struct ProjectDetailView: View {
                 )
                 InvoiceListView(project: $project)
                     .environmentObject(projectStore)
+                    .id(project.id)
                 AccountListView(project: $project, showManagement: true)
                     .environmentObject(projectStore)
                 LocationScoutingCard(project: $project)
@@ -29,6 +32,36 @@ struct ProjectDetailView: View {
             }
             .padding(.horizontal)
             .padding(.vertical)
+        }
+        .id(refreshID)
+        .onChange(of: project.invoices) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                refreshID = UUID()
+            }
+        }
+        .alert("确认删除", isPresented: Binding(
+            get: { invoiceToDelete != nil },
+            set: { if !$0 { invoiceToDelete = nil } }
+        )) {
+            Button("取消", role: .cancel) {
+                invoiceToDelete = nil
+            }
+            Button("删除", role: .destructive) {
+                if let (invoice, project) = invoiceToDelete {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        projectStore.deleteInvoice(invoice, from: project)
+                    }
+                }
+                invoiceToDelete = nil
+            }
+        } message: {
+            Text("确定要删除这条开票信息吗？此操作不可撤销。")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DeleteInvoice"))) { notification in
+            if let invoice = notification.userInfo?["invoice"] as? Invoice,
+               let project = notification.userInfo?["project"] as? Project {
+                invoiceToDelete = (invoice, project)
+            }
         }
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
@@ -95,7 +128,7 @@ struct ProjectDetailView: View {
 
 // 项目信息卡片
 struct ProjectInfoCard: View {
-    let project: Project
+    @Binding var project: Project
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -119,7 +152,7 @@ struct ProjectInfoCard: View {
 
 // 开机拜拜按钮
 struct BaiBaiButton: View {
-    let project: Project
+    @Binding var project: Project
     @Binding var showingBaiBai: Bool
     
     var body: some View {
@@ -288,7 +321,7 @@ struct LocationScoutingCard: View {
 #Preview {
     NavigationStack {
         ProjectDetailView(project: .constant(Project(name: "测试项目")))
-            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
+             .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }
 }

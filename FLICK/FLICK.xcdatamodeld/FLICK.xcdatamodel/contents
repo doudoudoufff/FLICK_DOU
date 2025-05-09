@@ -23,15 +23,25 @@
         <attribute name="amount" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="bankAccount" optional="YES" attributeType="String"/>
         <attribute name="bankName" optional="YES" attributeType="String"/>
+        <attribute name="buyerAddress" optional="YES" attributeType="String"/>
+        <attribute name="buyerBankInfo" optional="YES" attributeType="String"/>
         <attribute name="category" optional="YES" attributeType="String"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="goodsList" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="idNumber" optional="YES" attributeType="String"/>
+        <attribute name="invoiceCode" optional="YES" attributeType="String"/>
+        <attribute name="invoiceNumber" optional="YES" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="notes" optional="YES" attributeType="String"/>
         <attribute name="phone" optional="YES" attributeType="String"/>
+        <attribute name="sellerAddress" optional="YES" attributeType="String"/>
+        <attribute name="sellerBankInfo" optional="YES" attributeType="String"/>
+        <attribute name="sellerName" optional="YES" attributeType="String"/>
+        <attribute name="sellerTaxNumber" optional="YES" attributeType="String"/>
         <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="totalAmount" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <relationship name="attachments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="AttachmentEntity" inverseName="invoice" inverseEntity="AttachmentEntity"/>
         <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="invoices" inverseEntity="ProjectEntity"/>
     </entity>

@@ -31,6 +31,17 @@ extension InvoiceEntity {
     @NSManaged public var attachments: NSSet?
     @NSManaged public var project: ProjectEntity?
 
+    // 增值税发票特有字段
+    @NSManaged public var invoiceCode: String?
+    @NSManaged public var invoiceNumber: String?
+    @NSManaged public var sellerName: String?
+    @NSManaged public var sellerTaxNumber: String?
+    @NSManaged public var sellerAddress: String?
+    @NSManaged public var sellerBankInfo: String?
+    @NSManaged public var buyerAddress: String?
+    @NSManaged public var buyerBankInfo: String?
+    @NSManaged public var goodsList: String?
+    @NSManaged public var totalAmount: Double
 }
 
 // MARK: Generated accessors for attachments

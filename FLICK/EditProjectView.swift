@@ -107,24 +107,14 @@ struct EditProjectView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        let updatedProject = Project(
-                            id: project.id,
-                            name: name,
-                            director: director,
-                            producer: producer,
-                            startDate: startDate,
-                            status: status,
-                            color: selectedColor,
-                            tasks: project.tasks,
-                            invoices: project.invoices,
-                            locations: project.locations,
-                            accounts: project.accounts,
-                            isLocationScoutingEnabled: project.isLocationScoutingEnabled,
-                            logoData: logoData
-                        )
-                        
-                        projectStore.updateProject(updatedProject)
-                        project = updatedProject
+                        project.name = name
+                        project.director = director
+                        project.producer = producer
+                        project.startDate = startDate
+                        project.status = status
+                        project.color = selectedColor
+                        project.logoData = logoData
+                        projectStore.updateProject(project)
                         isPresented = false
                     }
                     .disabled(name.isEmpty)

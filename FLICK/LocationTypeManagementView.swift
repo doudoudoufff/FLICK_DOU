@@ -95,3 +95,4 @@ struct LocationTypeManagementView: View {
         LocationTypeManagementView()
     }
 } 
+ 

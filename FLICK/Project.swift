@@ -2,20 +2,20 @@ import Foundation
 import SwiftUI
 import CoreData
 
-struct Project: Identifiable, Codable, Hashable {
+class Project: ObservableObject, Identifiable, Codable, Hashable {
     let id: UUID
-    var name: String
-    var director: String
-    var producer: String
-    var startDate: Date
-    var status: Status
-    var color: Color
-    var tasks: [ProjectTask]
-    var invoices: [Invoice]
-    var locations: [Location]  // 确保 locations 在 accounts 之前
-    var accounts: [Account]
-    var isLocationScoutingEnabled: Bool
-    var logoData: Data? // 项目LOGO数据
+    @Published var name: String
+    @Published var director: String
+    @Published var producer: String
+    @Published var startDate: Date
+    @Published var status: Status
+    @Published var color: Color
+    @Published var tasks: [ProjectTask]
+    @Published var invoices: [Invoice]
+    @Published var locations: [Location]  // 确保 locations 在 accounts 之前
+    @Published var accounts: [Account]
+    @Published var isLocationScoutingEnabled: Bool
+    @Published var logoData: Data? // 项目LOGO数据
     
     public enum Status: String, Codable, CaseIterable {
         case preProduction = "前期"
@@ -71,7 +71,7 @@ struct Project: Identifiable, Codable, Hashable {
         case isLocationScoutingEnabled, logoData
     }
     
-    init(from decoder: Decoder) throws {
+    required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)

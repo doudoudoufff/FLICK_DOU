@@ -246,7 +246,7 @@ private struct LocationTypeSection: View {
                 
                 NavigationLink {
                     LocationDetailView(
-                        project: project,  // 传递值而不是绑定
+                        project: project,
                         location: locationBinding,
                         projectColor: project.color
                     )

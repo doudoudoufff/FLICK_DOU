@@ -51,11 +51,11 @@ struct AccountDetailView: View {
             }
             .navigationTitle("账户详情")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("编辑") {
-                        showingEditSheet = true
-                    }
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("编辑") {
+                    showingEditSheet = true
                 }
             }
         }

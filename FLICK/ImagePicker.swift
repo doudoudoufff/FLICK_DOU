@@ -7,13 +7,20 @@ struct ImagePicker: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
+        if UIImagePickerController.isSourceTypeAvailable(sourceType) {
         picker.sourceType = sourceType
+        } else {
+            print("ImagePicker: sourceType不可用，自动切换为相册")
+            picker.sourceType = .photoLibrary
+        }
         picker.delegate = context.coordinator
         
-        // 基本相机配置
+        // 只有在相机模式下才设置这些属性
+        if picker.sourceType == .camera {
         picker.cameraCaptureMode = .photo
         picker.cameraDevice = .rear
         picker.cameraFlashMode = .auto
+        }
         
         // 不使用编辑模式，直接使用原图
         picker.allowsEditing = false

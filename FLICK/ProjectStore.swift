@@ -9,6 +9,7 @@ class ProjectStore: ObservableObject {
     @AppStorage("enableCloudSync") private var enableCloudSync = false
     let context: NSManagedObjectContext
     private var syncObserver: Any?  // 添加同步观察器
+    @Published var lastError: Error?
     
     // 修改同步状态枚举
     enum CloudKitSyncStatus: Equatable {
@@ -116,37 +117,26 @@ class ProjectStore: ObservableObject {
     }
     
     func loadProjects() {
-        print("========== 开始加载项目 ==========")
-        
-        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        print("开始加载项目数据...")
+        let request = ProjectEntity.fetchRequest()
         
         do {
-            let projectEntities = try context.fetch(fetchRequest)
-            print("从 CoreData 获取到 \(projectEntities.count) 个项目")
+            let entities = try context.fetch(request)
+            print("从 CoreData 加载了 \(entities.count) 个项目实体")
             
             var loadedProjects: [Project] = []
-            
-            for entity in projectEntities {
+            for entity in entities {
                 let project = mapProjectEntityToProject(entity)
                 loadedProjects.append(project)
-                
-                // 添加更多日志
-                print("项目: \(project.name), 账户数量: \(project.accounts.count)")
-                for account in project.accounts {
-                    print("  - 账户: \(account.name), ID: \(account.id)")
-                }
             }
             
-            projects = loadedProjects
-            print("✓ 成功加载 \(projects.count) 个项目")
+            DispatchQueue.main.async {
+                self.projects = loadedProjects
+                print("✓ 成功加载 \(loadedProjects.count) 个项目")
+            }
         } catch {
             print("❌ 加载项目失败: \(error)")
         }
-        
-        print("================================")
-        print("- Context: \(context)")
-        print("- 已加载项目数量: \(projects.count)")
-        print("=====================================")
     }
     
     func saveProjects() {
@@ -464,12 +454,12 @@ class ProjectStore: ObservableObject {
                 } else if let error = error {
                     print("❌ 任务信息同步到 iCloud 失败: \(error)")
                 }
-            }
-        } catch {
+                }
+            } catch {
             print("❌ 保存失败:")
             print("错误类型: \(type(of: error))")
-            print("错误描述: \(error.localizedDescription)")
-        }
+                print("错误描述: \(error.localizedDescription)")
+            }
         
         print("================================")
     }
@@ -710,6 +700,7 @@ class ProjectStore: ObservableObject {
     func addInvoice(_ invoice: Invoice, to project: Project) {
         guard let projectEntity = project.fetchEntity(in: context) else {
             print("找不到项目实体")
+            lastError = NSError(domain: "ProjectStore", code: 1, userInfo: [NSLocalizedDescriptionKey: "找不到项目实体"])
             return
         }
         
@@ -719,6 +710,7 @@ class ProjectStore: ObservableObject {
         do {
             try context.save()
             print("发票保存成功")
+            lastError = nil
             
             // 更新内存中的项目数据
             if let index = projects.firstIndex(where: { $0.id == project.id }) {
@@ -742,49 +734,53 @@ class ProjectStore: ObservableObject {
             }
         } catch {
             print("保存发票失败: \(error)")
+            lastError = error
         }
     }
     
     // 更新发票
     func updateInvoice(_ invoice: Invoice, in project: Project) {
         print("开始更新发票...")
-        
-        // 1. 更新 CoreData
-        guard let projectEntity = project.fetchEntity(in: context),
-              let invoiceEntity = projectEntity.invoices?
-                .first(where: { ($0 as? InvoiceEntity)?.id == invoice.id }) as? InvoiceEntity
-        else {
-            print("错误：找不到发票实体")
+        // 1. 先更新内存中的数据
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+           let invoiceIndex = projects[projectIndex].invoices.firstIndex(where: { $0.id == invoice.id }) {
+            projects[projectIndex].invoices[invoiceIndex] = invoice
+            objectWillChange.send()
+        } else {
+            print("❌ 未找到对应的项目或发票")
             return
         }
-        
-        // 更新发票实体
-        invoiceEntity.name = invoice.name
-        invoiceEntity.phone = invoice.phone
-        invoiceEntity.idNumber = invoice.idNumber
-        invoiceEntity.bankAccount = invoice.bankAccount
-        invoiceEntity.bankName = invoice.bankName
-        invoiceEntity.date = invoice.date
-        
+        // 2. 更新 CoreData 实体
+        let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", project.id as CVarArg)
         do {
-            try context.save()
-            print("发票更新成功：\(invoice.name)")
-            
-            // 2. 更新内存中的数据
-            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
-                // 更新内存中的发票数组
-                if let invoiceIndex = projects[projectIndex].invoices.firstIndex(where: { $0.id == invoice.id }) {
-                    projects[projectIndex].invoices[invoiceIndex] = invoice
-                    
-                    // 3. 发送更新通知
-                    objectWillChange.send()
-                    
-                    // 4. 重要：确保项目数据也被更新
-                    let updatedProject = projects[projectIndex]
-                    DispatchQueue.main.async {
-                        self.projects[projectIndex] = updatedProject
-                    }
-                }
+            if let projectEntity = try context.fetch(fetchRequest).first,
+               let invoiceEntity = (projectEntity.invoices?.allObjects as? [InvoiceEntity])?.first(where: { $0.id == invoice.id }) {
+                invoiceEntity.name = invoice.name
+                invoiceEntity.phone = invoice.phone
+                invoiceEntity.idNumber = invoice.idNumber
+                invoiceEntity.bankAccount = invoice.bankAccount
+                invoiceEntity.bankName = invoice.bankName
+                invoiceEntity.date = invoice.date
+                invoiceEntity.amount = invoice.amount
+                invoiceEntity.category = invoice.category.rawValue
+                invoiceEntity.status = invoice.status.rawValue
+                invoiceEntity.dueDate = invoice.dueDate
+                invoiceEntity.notes = invoice.notes
+                invoiceEntity.invoiceCode = invoice.invoiceCode
+                invoiceEntity.invoiceNumber = invoice.invoiceNumber
+                invoiceEntity.sellerName = invoice.sellerName
+                invoiceEntity.sellerTaxNumber = invoice.sellerTaxNumber
+                invoiceEntity.sellerAddress = invoice.sellerAddress
+                invoiceEntity.sellerBankInfo = invoice.sellerBankInfo
+                invoiceEntity.buyerAddress = invoice.buyerAddress
+                invoiceEntity.buyerBankInfo = invoice.buyerBankInfo
+                invoiceEntity.goodsList = invoice.goodsList?.joined(separator: ",")
+                invoiceEntity.totalAmount = invoice.totalAmount ?? 0.0
+                try context.save()
+                print("✓ 发票已保存到 CoreData")
+            } else {
+                print("❌ 未找到发票实体")
             }
         } catch {
             print("发票更新失败：\(error)")
@@ -814,6 +810,8 @@ class ProjectStore: ObservableObject {
                 projects[index].invoices.removeAll { $0.id == invoice.id }
                 objectWillChange.send()  // 通知视图更新
             }
+            // 强制刷新所有项目数据
+            self.loadProjects()
         } catch {
             print("发票删除失败：\(error)")
         }
@@ -1353,9 +1351,6 @@ class ProjectStore: ObservableObject {
         print("================================")
     }
     
-    // 添加一个属性来跟踪最后的同步错误
-    private var lastSyncError: Error? = nil
-    
     // 确保 mapProjectEntityToProject 方法正确加载账户信息
     private func mapProjectEntityToProject(_ entity: ProjectEntity) -> Project {
         // 初始化项目，使用正确的颜色处理方法
@@ -1408,28 +1403,25 @@ class ProjectStore: ObservableObject {
         // 加载发票信息
         if let invoiceEntities = entity.invoices?.allObjects as? [InvoiceEntity], !invoiceEntities.isEmpty {
             print("找到 \(invoiceEntities.count) 个发票实体")
-            
             var validInvoices: [Invoice] = []
             for invoiceEntity in invoiceEntities {
-                guard let id = invoiceEntity.id,
-                      let name = invoiceEntity.name,
-                      let date = invoiceEntity.date else { 
-                    print("⚠️ 跳过无效发票实体")
-                    continue
-                }
-                
-                let invoice = Invoice(
-                    id: id,
-                    name: name,
-                    phone: invoiceEntity.phone ?? "",
-                    idNumber: invoiceEntity.idNumber ?? "",
-                    bankAccount: invoiceEntity.bankAccount ?? "",
-                    bankName: invoiceEntity.bankName ?? "",
-                    date: date
-                )
+                // 使用 fromEntity 方法加载发票数据
+                let invoice = Invoice.fromEntity(invoiceEntity)
                 print("  - 加载发票: \(invoice.name), ID: \(invoice.id)")
+                print("    - 发票代码: \(invoice.invoiceCode ?? "nil")")
+                print("    - 发票号码: \(invoice.invoiceNumber ?? "nil")")
+                print("    - 销售方名称: \(invoice.sellerName ?? "nil")")
+                print("    - 销售方税号: \(invoice.sellerTaxNumber ?? "nil")")
+                print("    - 销售方地址: \(invoice.sellerAddress ?? "nil")")
+                print("    - 销售方银行: \(invoice.sellerBankInfo ?? "nil")")
+                print("    - 购买方地址: \(invoice.buyerAddress ?? "nil")")
+                print("    - 购买方银行: \(invoice.buyerBankInfo ?? "nil")")
+                print("    - 商品列表: \(invoice.goodsList?.joined(separator: ", ") ?? "nil")")
+                print("    - 价税合计: \(invoice.totalAmount ?? 0.0)")
                 validInvoices.append(invoice)
             }
+            // 按日期排序
+            validInvoices = Invoice.sortedByDate(validInvoices)
             project.invoices = validInvoices
             print("✓ 加载了 \(project.invoices.count) 个发票信息")
         } else {

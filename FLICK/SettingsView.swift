@@ -255,7 +255,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.purple)
                         }
                         Spacer()
-                        Text("1.3.1")
+                        Text("1.0.0")
                             .foregroundStyle(.secondary)
                     }
                     
@@ -683,19 +683,19 @@ struct CreditsView: View {
                 HStack {
                     Image(systemName: "medal.fill")
                         .foregroundStyle(.orange)
-                    Text("感谢以下人员对项目的贡献")
+                    Text("感谢以下人员对FLICK的贡献")
                 }
                 .font(.headline)
             }
             
             Section("测试团队") {
-                ContributorRow(name: "张婧柔", role: "测试", country: "🇨🇳")
-                ContributorRow(name: "17", role: "测试", country: "🇨🇳")
-                ContributorRow(name: "王小跳", role: "测试", country: "🇨🇳")
-                ContributorRow(name: "杨欣蕾", role: "测试", country: "🇨🇳")
-                ContributorRow(name: "孙尚前", role: "产品", country: "🇨🇳")
-                ContributorRow(name: "吴韩臻", role: "测试", country: "🇨🇳")
-                ContributorRow(name: "朱科恩", role: "测试", country: "🇨🇳")
+                ContributorRow(name: "Zhang Jingrou", role: "测试")
+                ContributorRow(name: "17", role: "测试")
+                ContributorRow(name: "Wang Xiaotiao", role: "测试")
+                ContributorRow(name: "Yang Xinlei", role: "测试")
+                ContributorRow(name: "Sun Shangqian", role: "产品")
+                ContributorRow(name: "Wu Hanzhen", role: "测试")
+                ContributorRow(name: "Zhu Keen", role: "测试")
             }
         }
         .navigationTitle("致谢")

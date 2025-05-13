@@ -18,7 +18,7 @@ struct InvoiceRow: View {
                     object: nil,
                     userInfo: ["invoice": invoice, "project": project]
                 )
-            } label: {
+                } label: {
                 Label("删除", systemImage: "trash")
             }
             
@@ -63,39 +63,39 @@ struct InvoiceRowContent: View {
     let invoice: Invoice
     
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(invoice.name)
-                    .font(.headline)
-                Text(invoice.phone)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Text(formatBankAccount(invoice.bankAccount))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(String(format: "¥%.2f", invoice.amount))
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                Text(invoice.date.formatted(date: .abbreviated, time: .omitted))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Text(invoice.status.rawValue)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(invoice.name)
+                            .font(.headline)
+                        Text(invoice.phone)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(formatBankAccount(invoice.bankAccount))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(String(format: "¥%.2f", invoice.amount))
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                        Text(invoice.date.formatted(date: .abbreviated, time: .omitted))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(invoice.status.rawValue)
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
                     .background(invoice.status.color.opacity(0.2))
                     .foregroundColor(invoice.status.color)
-                    .cornerRadius(4)
-            }
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
+                            .cornerRadius(4)
+                    }
+                }
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
     

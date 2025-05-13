@@ -272,6 +272,13 @@ struct SettingsView: View {
                 } header: {
                     Text("关于")
                 }
+                
+                Section {
+                    SettingsFooterView()
+                        .listRowInsets(EdgeInsets())
+                        .frame(maxWidth: .infinity)
+                        .background(Color.clear)
+                }
             }
             .navigationTitle("设置")
             .alert("iCloud 状态", isPresented: $showingSyncAlert) {
@@ -366,7 +373,7 @@ struct AboutAppView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
-                Text("版本 1.2.1")
+                Text("版本 1.0.0")
                     .foregroundStyle(.secondary)
                 
                 Divider()
@@ -417,33 +424,6 @@ struct AboutAppView: View {
     }
 }
 
-// 功能特点行视图
-struct FeatureRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 15) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundStyle(.blue)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 5)
-    }
-}
-
 // 协议章节标题样式
 fileprivate struct SectionHeader: View {
     let title: String
@@ -481,7 +461,7 @@ struct UserAgreementView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("FLICK User license Agreement")
+                Text("FLICK User License Agreement")
                     .font(.largeTitle).bold()
                     .foregroundColor(.accentColor)
                     .padding(.top, 16)
@@ -492,23 +472,22 @@ struct UserAgreementView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Divider()
                 Group {
-                    SectionHeader("· General provisions of user agreement")
+                    SectionHeader("· General Provisions of User Agreement")
                     AgreementBlock([
-                        "1. Both parties to this agreement are registered users (hereinafter referred to as 'users') of danziyi (hereinafter referred to as 'operators') and FLICK (including services provided by Mobile APP and other products, hereinafter referred to as 'products and services').",
-                        "2. Before registering, please read the terms of this agreement carefully and complete all registration procedures according to the prompts on the page.",
-                        "3. When the user clicks the 'Agree' button during the registration process, it means that the user has fully understood and fully accepted all the terms under this agreement, and then reached this agreement with the operator.",
+                        "1. Both parties to this agreement are users of FLICK (including services provided by Mobile APP and other products, hereinafter referred to as 'products and services') and danziyi (hereinafter referred to as 'operators').",
+                        "2. Before using FLICK, please read the terms of this agreement carefully.",
+                        "3. When the user uses FLICK, it means that the user has fully understood and fully accepted all the terms under this agreement, and then reached this agreement with the operator.",
                         "4. The operator has the right to modify or supplement the relevant rules under this agreement from time to time and publish them on the website. If the user continues to use, it will be deemed that you accept the revised terms of this agreement."
                     ])
-                    SectionHeader("· User service instructions")
+                    SectionHeader("· User Service Instructions")
                     AgreementBlock([
-                        "1. When registering, users should fill in accurate e-mail address and other relevant personal data according to the registration prompt, which meets the requirements of completeness, accuracy and authenticity.",
-                        "2. Once the user is registered successfully, it will become the operator's legal registered user . The user shall take full responsibility for the security of his/her account, and bear corresponding legal responsibility for all acts and events under his/her user name.",
+                        "1. FLICK does not require registration to use. Users can use FLICK directly without any registration process.",
+                        "2. The user shall take full responsibility for the security of his/her device, and bear corresponding legal responsibility for all acts and events under his/her device.",
                         "3. The user agrees to accept that the operator sends relevant business information to the user through or other means.",
                         "4. The operator is not responsible for the deletion or storage failure of the information released by the user.",
-                        "5. The operator has the right to determine whether the user's behavior meets the requirements of the service terms of the website. If the user violates the provisions of the service terms, the website has the right to interrupt or stop using the network services provided by its users.",
-                        "6. The operator provides account deletion service. If users need to delete accounts, they can contact us through the contact information in this agreement."
+                        "5. The operator has the right to determine whether the user's behavior meets the requirements of the service terms of the website. If the user violates the provisions of the service terms, the website has the right to interrupt or stop using the network services provided by its users."
                     ])
-                    SectionHeader("· Changes and amendments to the contents of the agreement")
+                    SectionHeader("· Changes and Amendments to the Contents of the Agreement")
                     AgreementBlock([
                         "1. The operator has the right to modify the service terms when necessary, and the modified agreement can be viewed on the operator.",
                         "2. If the user does not agree with the content changed by the operator, he/she can stop using the network service of the station.",
@@ -517,17 +496,17 @@ struct UserAgreementView: View {
                         "  (1) Stop using the network service of the operator.",
                         "  (2) Notify the operator to stop the service to the user. After the end of the user service, the user's right to use the network service will terminate immediately. From the time of termination, the user has no right to process any unfinished information or services, and the operator has no obligation to transmit any unfinished information or unfinished services to the user or any third party."
                     ])
-                    SectionHeader("· User privacy protection")
+                    SectionHeader("· User Privacy Protection")
                     AgreementBlock([
                         "The operator will strictly perform the user's privacy confidentiality obligation and promise not to disclose, edit or disclose the user's personal information, except for the following special circumstances:",
-                        "1. With the prior permission and authorization of the registered user;",
+                        "1. With the prior permission and authorization of the user;",
                         "2. Comply with national laws and regulations or cooperate with the requirements of relevant government departments;",
                         "3. Comply with the legal service procedures of the operator;",
                         "4. It is necessary to safeguard the public interests and the legitimate rights and interests of the operator."
                     ])
-                    SectionHeader("· Rights and obligations of registered users")
+                    SectionHeader("· Rights and Obligations of Users")
                     AgreementBlock([
-                        "1. When using the operator's products and services, registered users must comply with the relevant laws and regulations of the People's Republic of China. Users should agree that they will not use this service for any illegal or improper activities, otherwise users will bear all legal liabilities arising therefrom.",
+                        "1. When using the operator's products and services, users must comply with the relevant laws and regulations of the People's Republic of China. Users should agree that they will not use this service for any illegal or improper activities, otherwise users will bear all legal liabilities arising therefrom.",
                         "2. Users shall not upload, display, post, disseminate or otherwise transmit information containing one of the following contents during the use of their account:",
                         "  (1) Endangering national security, disclosing state secrets, subverting state power, and undermining national unity;",
                         "  (2) Damage to national honor and interests;",
@@ -542,26 +521,26 @@ struct UserAgreementView: View {
                         "5. If the user's behavior violates the above agreement, the operator has the right to make an independent judgment and immediately cancel the user's service account. The user shall bear all legal responsibilities for his online behavior. The operator's system records may be submitted to the relevant competent department as evidence of the user's violation of the law.",
                         "6. The user shall agree to protect and maintain the interests of all members of the operator and other users. If the operator or any third party suffers losses due to violation of this agreement or relevant laws and regulations, the user shall bear the legal liabilities arising therefrom."
                     ])
-                    SectionHeader("· Ownership of network service content of the operator")
+                    SectionHeader("· Ownership of Network Service Content of the Operator")
                     AgreementBlock([
-                        "1. The network service content defined by the operator includes but is not limited to: 软件 etc. These contents are protected by the Copyright Law, the Trademark Law, the Patent Law, the Computer Software Protection Regulations and other relevant laws and regulations."
+                        "1. The network service content defined by the operator includes but is not limited to: software etc. These contents are protected by the Copyright Law, the Trademark Law, the Patent Law, the Computer Software Protection Regulations and other relevant laws and regulations."
                     ])
                     SectionHeader("· Disclaimers")
                     AgreementBlock([
-                        "1. The user agrees to bear all risks arising from the use of the operator`s products and services and all consequences arising from the use of network services, and the operator does not assume any responsibility for the user.",
-                        "2. The operator does not guarantee that the service will meet the user`s requirements, that the service will not be interrupted, and that the timeliness, security and possible technical errors of the service will not be guaranteed.",
+                        "1. The user agrees to bear all risks arising from the use of the operator's products and services and all consequences arising from the use of network services, and the operator does not assume any responsibility for the user.",
+                        "2. The operator does not guarantee that the service will meet the user's requirements, that the service will not be interrupted, and that the timeliness, security and possible technical errors of the service will not be guaranteed.",
                         "3. The operator shall not be liable for any risk or loss that may be caused by the user's personal data leakage, loss, embezzlement, tampering or temporary or termination of the service due to hacker attack, computer virus invasion or attack, government control, hardware failure, force majeure and other non-intentional or gross negligence of the operator."
                     ])
-                    SectionHeader("· Other agreements")
+                    SectionHeader("· Other Agreements")
                     AgreementBlock([
                         "1. The user agrees that any dispute arising from the service of the platform shall be governed by the laws of the People's Republic of China, and any party to the relevant dispute may file a lawsuit to the people's court where the operator is domiciled.",
                         "2. The headings in this Agreement are for convenience only and do not affect the interpretation of the terms themselves. Any provision in this Agreement shall be invalid or unenforceable in whole or in part for any reason, and the remaining provisions shall remain binding."
                     ])
-                    SectionHeader("· Contact us")
+                    SectionHeader("· Contact Us")
                     AgreementBlock([
                         "If you have any questions, opinions or suggestions about this agreement or this service, you can contact us through the following ways:",
                         "  (1) Call the customer service hotline 13109923825",
-                        "  (2) Email to:danziyi9@gmail.com",
+                        "  (2) Email to: danziyi9@gmail.com",
                         "  (3) Contact address: 上海市静安区场中路2950号, contact: danziyi"
                     ])
                 }
@@ -574,7 +553,7 @@ struct UserAgreementView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
-        .navigationTitle("User license Agreement")
+        .navigationTitle("User License Agreement")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -597,10 +576,10 @@ struct PrivacyPolicyView: View {
                 Group {
                     SectionHeader("· Introduction")
                     AgreementBlock([
-                        "Welcome to visit our products.  FLICK （Including services provided by Mobile APP and other products, hereinafter referred to as 'products and services'）It is developed and operated by danziyi (hereinafter referred to as 'we'). Ensuring the data security and privacy protection of users is our primary task. This privacy policy specifies the data you collect when accessing and using our products and services and the processing methods.",
-                        "Please carefully read and confirm that you fully understand all the rules and key points of this privacy policy before continuing to use our products. Once you choose to use it, it is deemed that you agree with all the contents of this privacy policy and agree that we collect and use your relevant information according to it. If you have any questions about this policy during reading, you can contact our customer service for consultation. Please contact us through or the feedback method in the product. If you do not agree to the relevant agreement or any of its terms, you should stop using our products and services."
+                        "Welcome to visit our products. FLICK (including services provided by Mobile APP and other products, hereinafter referred to as 'products and services') is developed and operated by danziyi (hereinafter referred to as 'we'). Ensuring the data security and privacy protection of users is our primary task. This privacy policy specifies the data you collect when accessing and using our products and services and the processing methods.",
+                        "Please carefully read and confirm that you fully understand all the rules and key points of this privacy policy before continuing to use our products. Once you choose to use it, it is deemed that you agree with all the contents of this privacy policy. If you have any questions about this policy during reading, you can contact our customer service for consultation. If you do not agree to the relevant agreement or any of its terms, you should stop using our products and services."
                     ])
-                    SectionHeader("· What this policy helps you understand")
+                    SectionHeader("· What This Policy Helps You Understand")
                     AgreementBlock([
                         "This privacy policy helps you understand the following:",
                         "· Definition",
@@ -618,30 +597,19 @@ struct PrivacyPolicyView: View {
                         "juveniles: Refers to natural persons under the age of 18.",
                         "children: Refers to natural persons under the age of 14."
                     ])
-                    SectionHeader("· How do we collect and use your personal information")
+                    SectionHeader("· How Do We Collect and Use Your Personal Information")
                     AgreementBlock([
-                        "Personal information refers to all kinds of information recorded in electronic or other ways that can identify the identity of a specific natural person or reflect the activities of a specific natural person alone or in combination with other information. We collect and use your personal information, including but not limited to etc in accordance with the requirements of the Network Security Law of the People's Republic of China, the Information Security Technology Personal Information Security Specification (GB/T 35273-2017) and other relevant laws and regulations, and in strict accordance with the principles of legitimacy, legality and necessity, for the purpose of your use of the services and/or products we provide.",
-                        "In order to accept our comprehensive product services, you should first register a user account through which we will record relevant data. The account name, password and your contact information you are going to use may be verified by SMS or email."
+                        "FLICK does not collect any personal information from users. Users can use FLICK without any registration or providing any personal data."
                     ])
-                    SectionHeader("· How do we store and protect your personal information")
+                    SectionHeader("· How Do We Store and Protect Your Personal Information")
                     AgreementBlock([
-                        "As a general rule, we only retain your personal information for the time required to achieve the purpose of information collection. We will keep your personal information for as long as it is strictly necessary to manage the relationship with you (for example, when you open an account and obtain services from our products). For the purpose of complying with legal obligations or to prove that a certain right or contract meets the applicable limitation of action requirements, we may need to retain your archived personal information after the expiration of the above period and cannot delete it according to your requirements."
+                        "Since FLICK does not collect any personal information, there is no need to store or protect user data."
                     ])
-                    SectionHeader("· How do we share, transfer and publicly disclose your personal information")
+                    SectionHeader("· How Do We Share, Transfer and Publicly Disclose Your Personal Information")
                     AgreementBlock([
-                        "When managing our daily business activities, we will use your personal information in compliance and appropriately in order to pursue legal interests and better serve customers. For comprehensive consideration of business and various aspects, .",
-                        "We may share your personal information according to laws and regulations or the mandatory requirements of the competent government departments. On the premise of complying with laws and regulations, when we receive the above request for disclosure of information, we will require that corresponding legal documents, such as subpoenas or investigation letters, be issued. We firmly believe that the information we are required to provide should be as transparent as possible within the scope permitted by law.",
-                        "Under the following circumstances, sharing, transferring and public disclosure of your personal information does not require your authorization and consent in advance:",
-                        "1. Directly related to national security and national defense security",
-                        "2. Directly related to criminal investigation, prosecution, trial and execution of judgments",
-                        "3. For the purpose of safeguarding your or other personal life, property and other important legitimate rights and interests, but it is difficult to obtain my consent",
-                        "4. Personal information that you disclose to the public",
-                        "5. Collect personal information from legally disclosed information, such as legal news reports, government information disclosure and other channels",
-                        "6. It is necessary to sign and perform the contract according to the requirements of the personal information subject",
-                        "7. It is necessary to maintain the safe and stable operation of the products or services provided, for example, to find and handle the faults of the products or services",
-                        "8. Other circumstances stipulated by laws and regulations"
+                        "FLICK does not collect any personal information, so there is no sharing, transfer, or public disclosure of user data."
                     ])
-                    SectionHeader("· How to update this policy")
+                    SectionHeader("· How to Update This Policy")
                     AgreementBlock([
                         "Our privacy policy may change.",
                         "Without your explicit consent, we will not reduce your rights under this policy. We will publish any changes to this policy on this page.",
@@ -655,14 +623,14 @@ struct PrivacyPolicyView: View {
                         "6. When the personal information security impact assessment report indicates that there are high risks",
                         "We will also archive the old version of this policy for your reference."
                     ])
-                    SectionHeader("· How to contact us")
+                    SectionHeader("· How to Contact Us")
                     AgreementBlock([
-                        "1. If you have any questions, opinions or suggestions about this policy, you can contact us through the following ways:",
-                        "（1）Call the customer service hotline 13109923825",
-                        "（2）Send an email to: danziyi9@gmail.com",
-                        "（3）Contact address: 上海市静安区场中路2950号, contact: danziyi",
+                        "If you have any questions, opinions or suggestions about this policy, you can contact us through the following ways:",
+                        "  (1) Call the customer service hotline 13109923825",
+                        "  (2) Send an email to: danziyi9@gmail.com",
+                        "  (3) Contact address: 上海市静安区场中路2950号, contact: danziyi",
                         "Our customer service department will reply with the personal information protection department within 30 days and help solve your problem.",
-                        "2. If you are not satisfied with our reply, especially if our personal information processing behavior has damaged your legitimate rights and interests, you can also seek solutions through the following external channels: file a lawsuit to the people's court where  is located, or file a complaint or report to the regulatory authorities such as Netcom, industry and commerce, and public security."
+                        "If you are not satisfied with our reply, especially if our personal information processing behavior has damaged your legitimate rights and interests, you can also seek solutions through the following external channels: file a lawsuit to the people's court where is located, or file a complaint or report to the regulatory authorities such as Netcom, industry and commerce, and public security."
                     ])
                 }
                 Spacer(minLength: 40)
@@ -693,9 +661,10 @@ struct CreditsView: View {
                 ContributorRow(name: "17", role: "测试")
                 ContributorRow(name: "Wang Xiaotiao", role: "测试")
                 ContributorRow(name: "Yang Xinlei", role: "测试")
-                ContributorRow(name: "Sun Shangqian", role: "产品")
+                ContributorRow(name: "Sun Shangqian", role: "测试")
                 ContributorRow(name: "Wu Hanzhen", role: "测试")
                 ContributorRow(name: "Zhu Keen", role: "测试")
+                ContributorRow(name: "Li XinYue", role: "测试")
             }
         }
         .navigationTitle("致谢")
@@ -707,7 +676,6 @@ struct CreditsView: View {
 struct ContributorRow: View {
     let name: String
     let role: String
-    let country: String
     
     var body: some View {
         HStack {
@@ -718,12 +686,29 @@ struct ContributorRow: View {
                     Text(role)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text(country)
                 }
             }
             Spacer()
         }
         .padding(.vertical, 4)
+    }
+}
+
+// 在 SettingsView 主体底部添加备案信息
+struct SettingsFooterView: View {
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("版本 1.0.0")
+                .font(.footnote)
+                .foregroundColor(.gray)
+            Text("Made by danziyi")
+                .font(.footnote)
+                .foregroundColor(.gray)
+            Text("鲁ICP备2025145409号-1A")
+                .font(.footnote)
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

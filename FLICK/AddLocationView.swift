@@ -3,7 +3,7 @@ import SwiftUI
 struct AddLocationView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var projectStore: ProjectStore
-    let project: Project
+    @Binding var project: Project
     
     @State private var name = ""
     @State private var type = LocationType.exterior

@@ -13,6 +13,7 @@ struct LocationScoutingView: View {
     @State private var showingPDFReport = false
     @State private var reportPhotos: [(Location, LocationPhoto)] = []
     @State private var reportDate: Date?
+    @State private var showingAddLocation = false
     
     // 获取所有堪景照片
     private var allLocationPhotos: [(Location, LocationPhoto)] {
@@ -56,8 +57,9 @@ struct LocationScoutingView: View {
                 )
             }
         }
-        .sheet(isPresented: $showingAddSheet) {
-            AddLocationView(project: project)
+        .sheet(isPresented: $showingAddLocation) {
+            AddLocationView(project: $project)
+                .environmentObject(projectStore)
         }
         .sheet(isPresented: $showingPDFReport) {
             if let date = reportDate {

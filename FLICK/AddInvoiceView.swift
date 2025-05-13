@@ -232,7 +232,7 @@ struct AddInvoiceView: View {
                 self.showingSaveError = true
             }
         } else {
-            dismiss()
+        dismiss()
         }
     }
     

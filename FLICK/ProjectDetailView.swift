@@ -321,7 +321,7 @@ struct LocationScoutingCard: View {
 #Preview {
     NavigationStack {
         ProjectDetailView(project: .constant(Project(name: "测试项目")))
-             .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
+            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }
 }

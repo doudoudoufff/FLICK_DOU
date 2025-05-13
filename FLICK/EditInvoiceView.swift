@@ -121,7 +121,7 @@ struct EditInvoiceView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") { saveInvoice() }
-                        .disabled(isFormInvalid)
+                    .disabled(isFormInvalid)
                 }
             }
         }

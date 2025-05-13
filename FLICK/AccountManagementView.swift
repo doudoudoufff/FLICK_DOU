@@ -134,7 +134,7 @@ struct AccountManagementView: View {
             }
         }
     }
-}
+} 
 
 // 账户行组件 - 用于账户管理列表
 struct AccountRow: View {

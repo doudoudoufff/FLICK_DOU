@@ -17,13 +17,12 @@ struct ContentView: View {
     }
     
     var body: some View {
-        Group {
-            if !hasSeenOnboarding {
+        MainTabView()
+            .environmentObject(projectStore)
+            .sheet(isPresented: .constant(!hasSeenOnboarding)) {
                 OnboardingView()
-            } else {
-                MainTabView()
                     .environmentObject(projectStore)
-            }
+                    .presentationDetents([.fraction(0.75), .large])
         }
     }
 }

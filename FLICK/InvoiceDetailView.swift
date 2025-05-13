@@ -209,33 +209,33 @@ struct InvoiceDetailView: View {
         
         if let totalAmount = invoice.totalAmount {
             info += "\n【价税合计】\(String(format: "%.2f", totalAmount))"
-        }
+                }
         
-        if let sellerName = invoice.sellerName {
+                if let sellerName = invoice.sellerName {
             info += "\n【销售方名称】\(sellerName)"
-        }
+                }
         
-        if let sellerTaxNumber = invoice.sellerTaxNumber {
+                if let sellerTaxNumber = invoice.sellerTaxNumber {
             info += "\n【销售方税号】\(sellerTaxNumber)"
-        }
+                }
         
-        if let sellerAddress = invoice.sellerAddress {
+                if let sellerAddress = invoice.sellerAddress {
             info += "\n【销售方地址电话】\(sellerAddress)"
-        }
+                }
         
-        if let sellerBankInfo = invoice.sellerBankInfo {
+                if let sellerBankInfo = invoice.sellerBankInfo {
             info += "\n【销售方银行信息】\(sellerBankInfo)"
-        }
+                }
         
-        if let buyerAddress = invoice.buyerAddress {
+                if let buyerAddress = invoice.buyerAddress {
             info += "\n【购买方地址电话】\(buyerAddress)"
-        }
+                }
         
-        if let buyerBankInfo = invoice.buyerBankInfo {
+                if let buyerBankInfo = invoice.buyerBankInfo {
             info += "\n【购买方银行信息】\(buyerBankInfo)"
-        }
+                }
         
-        if let goodsList = invoice.goodsList, !goodsList.isEmpty {
+                if let goodsList = invoice.goodsList, !goodsList.isEmpty {
             info += "\n【商品名称】\(goodsList.joined(separator: "，"))"
         }
         

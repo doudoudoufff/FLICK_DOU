@@ -28,10 +28,10 @@ struct InvoiceListView: View {
                             .foregroundColor(.accentColor)
                     }
                 } else {
-                    NavigationLink(destination: InvoiceManagementView(project: $project).environmentObject(projectStore)) {
-                        Label("管理", systemImage: "chevron.right")
-                            .labelStyle(.iconOnly)
-                            .foregroundColor(.accentColor)
+                NavigationLink(destination: InvoiceManagementView(project: $project).environmentObject(projectStore)) {
+                    Label("管理", systemImage: "chevron.right")
+                        .labelStyle(.iconOnly)
+                        .foregroundColor(.accentColor)
                     }
                     .buttonStyle(.plain)
                 }
@@ -52,7 +52,7 @@ struct InvoiceListView: View {
                             .listRowBackground(Color.clear)
                             .onTapGesture {
                                 editingInvoice = project.invoices[index]
-                            }
+                        }
                     }
                 }
                 .listStyle(.plain)
@@ -90,7 +90,7 @@ struct InvoiceListView: View {
         .sheet(item: $editingInvoice) { invoice in
             if let index = project.invoices.firstIndex(where: { $0.id == invoice.id }) {
                 EditInvoiceView(invoice: $project.invoices[index], project: project, isPresented: Binding(get: { editingInvoice != nil }, set: { if !$0 { editingInvoice = nil } }))
-                    .environmentObject(projectStore)
+            .environmentObject(projectStore)
                     .onDisappear {
                         refreshID = UUID()
                     }

@@ -53,7 +53,7 @@ class WeatherManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private var lastFetchTime: Date?
     private let cacheTime: TimeInterval = 30 * 60 // 30分钟缓存
     private let locationManager = CLLocationManager()
-    private var shouldUseWeatherKit = false // 默认禁用WeatherKit
+    private var shouldUseWeatherKit = true // 启用WeatherKit
     
     // 私有初始化器，确保只通过shared访问
     private override init() {

@@ -9,24 +9,30 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
-    @StateObject private var projectStore: ProjectStore
+    @EnvironmentObject private var projectStore: ProjectStore
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     
     init(context: NSManagedObjectContext) {
-        _projectStore = StateObject(wrappedValue: ProjectStore(context: context))
+        // 注意：ProjectStore将从FLICKApp通过environmentObject传入，
+        // 这里不再创建新实例，避免多个实例导致数据不一致
     }
     
     var body: some View {
         MainTabView()
-            .environmentObject(projectStore)
             .sheet(isPresented: .constant(!hasSeenOnboarding)) {
                 OnboardingView()
-                    .environmentObject(projectStore)
                     .presentationDetents([.fraction(0.75), .large])
-        }
+            }
+            .onAppear {
+                print("ContentView已加载，项目数: \(projectStore.projects.count)")
+            }
     }
 }
 
 #Preview {
-    ContentView(context: PersistenceController.preview.container.viewContext)
+    let previewContext = PersistenceController.preview.container.viewContext
+    let store = ProjectStore(context: previewContext)
+    
+    return ContentView(context: previewContext)
+        .environmentObject(store)
 }

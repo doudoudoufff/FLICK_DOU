@@ -204,12 +204,10 @@ struct OverviewView: View {
         }
         .sheet(isPresented: $showingAddTask) {
             NavigationView {
-                AddTaskView(
-                    isPresented: $showingAddTask,
-                    project: projectStore.binding(for: selectedProject?.id ?? projectStore.projects[0].id) ?? .constant(projectStore.projects[0])
-                )
-                .environmentObject(projectStore)
+                AddTaskView(isPresented: $showingAddTask)
+                            .environmentObject(projectStore)
             }
+            .presentationDetents([.height(500)])
         }
         .sheet(isPresented: $showingBaiBai) {
             NavigationView {

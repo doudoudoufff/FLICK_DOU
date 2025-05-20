@@ -31,8 +31,8 @@ struct AccountManagementView: View {
                 StatCard(
                     title: "账户总数",
                     value: "\(filteredAccounts.count)",
-                    icon: "person.3.fill",
-                    color: .blue
+                    color: .blue,
+                    icon: "person.3.fill"
                 )
             }
             .padding(.horizontal)

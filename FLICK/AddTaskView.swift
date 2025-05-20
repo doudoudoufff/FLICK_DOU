@@ -2,215 +2,210 @@ import SwiftUI
 
 struct AddTaskView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var projectStore: ProjectStore
+    @EnvironmentObject private var projectStore: ProjectStore
     @Binding var isPresented: Bool
-    @Binding var project: Project
     
     @State private var title = ""
     @State private var assignee = ""
     @State private var dueDate = Date()
     @State private var reminder: ProjectTask.TaskReminder? = nil
-    @State private var reminderHour: Int = 9
-    @State private var showDatePicker = false
-    @State private var showProjectPicker = false
-    @State private var showReminderPicker = false
-    @State private var showHourPicker = false
-    
-    // 提醒小时数选项
-    private let hourOptions = Array(6...22)
+    @State private var reminderHour: Double = 9
+    @State private var selectedProject: Project?
+    @State private var showingCreateProjectSheet = false
+    @State private var showingTaskAddedAlert = false
+    @State private var addedTaskProjectName = ""
     
     var body: some View {
+        NavigationStack {
         Form {
-            Section("必填信息") {
-                TextField("任务内容", text: $title)
-            }
-            
-            Section("任务详情") {
-                // 项目选择
-                Button(action: { showProjectPicker = true }) {
+                Section(header: Text("任务信息")) {
                     HStack {
-                        Text("所属项目")
-                        Spacer()
-                        Text(project.name)
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
-                            .imageScale(.small)
+                        Text("任务内容")
+                        Text("*")
+                            .foregroundColor(.red)
+                            .font(.headline)
+                        TextField("", text: $title)
                     }
-                }
-                
-                TextField("负责人员", text: $assignee)
-                
-                Button(action: { showDatePicker = true }) {
-                    HStack {
-                        Text("截止时间")
-                        Spacer()
-                        Text(dueDate.formatted(date: .numeric, time: .omitted))
-                            .foregroundStyle(.secondary)
+                    TextField("负责人员", text: $assignee)
+                    DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
+                        .environment(\.locale, Locale(identifier: "zh_CN"))
                     }
-                }
-            }
-            
-            Section("提醒设置") {
-                // 提醒频率选择
-                Button(action: { showReminderPicker = true }) {
-                    HStack {
-                        Text("提醒频率")
-                        Spacer()
-                        Text(reminder?.rawValue ?? "不提醒")
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
-                            .imageScale(.small)
-                    }
-                }
-                
-                // 只有设置了提醒才显示提醒时间选项
-                if reminder != nil {
-                    Button(action: { showHourPicker = true }) {
-                        HStack {
-                            Text("提醒时间")
-                            Spacer()
-                            Text("\(reminderHour):00")
-                                .foregroundStyle(.secondary)
-                            Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
-                                .imageScale(.small)
+                Section(header: Text("提醒设置")) {
+                    Picker("提醒频率", selection: $reminder) {
+                        Text("不提醒").tag(ProjectTask.TaskReminder?.none)
+                        ForEach(ProjectTask.TaskReminder.allCases, id: \.self) { reminder in
+                            Text(reminder.rawValue).tag(ProjectTask.TaskReminder?.some(reminder))
                         }
                     }
+                    if reminder != nil {
+                        VStack(alignment: .leading) {
+                    HStack {
+                                Text("提醒时间")
+                        Spacer()
+                                Text("\(Int(reminderHour)):00")
+                                    .foregroundColor(.secondary)
+                    }
+                            Slider(value: $reminderHour, in: 0.0...23.0, step: 1.0)
+                        }
+                    }
+                }
+                Section(header: Text("所属项目")) {
+                    Picker("选择项目", selection: $selectedProject) {
+                        ForEach(projectStore.projects) { project in
+                            Text(project.name).tag(Optional(project))
+                        }
+                    }
+                        HStack {
+                        Spacer(minLength: 0)
+                        Button(action: { showingCreateProjectSheet = true }) {
+                            Text("＋ 新建项目")
+                                .font(.body)
+                                .foregroundColor(.accentColor)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 18)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.accentColor, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
                 }
             }
         }
         .navigationTitle("添加任务")
         .navigationBarTitleDisplayMode(.inline)
+            .presentationDetents([.height(400)])
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("取消") { isPresented = false }
+                    Button("取消") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("添加") {
+                        guard let project = selectedProject, !title.isEmpty else { return }
                     let task = ProjectTask(
                         title: title,
-                        assignee: assignee.isEmpty ? "" : assignee,
+                            assignee: assignee,
                         dueDate: dueDate,
                         isCompleted: false,
                         reminder: reminder,
-                        reminderHour: reminderHour
+                            reminderHour: Int(reminderHour)
                     )
                     projectStore.addTask(task, to: project)
-                    isPresented = false
+                        addedTaskProjectName = project.name
+                        showingTaskAddedAlert = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                            showingTaskAddedAlert = false
+                            dismiss()
+                        }
                 }
-                .disabled(title.isEmpty)
+                    .disabled(title.isEmpty || selectedProject == nil)
             }
         }
-        .sheet(isPresented: $showProjectPicker) {
-            NavigationView {
-                List(projectStore.projects) { proj in
-                    Button(action: {
-                        project = proj
-                        showProjectPicker = false
-                    }) {
-                        HStack {
-                            Text(proj.name)
-                            Spacer()
-                            if proj.id == project.id {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                    }
-                }
-                .navigationTitle("选择项目")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("取消") { showProjectPicker = false }
-                    }
+            .sheet(isPresented: $showingCreateProjectSheet) {
+                AddProjectView(isPresented: $showingCreateProjectSheet)
+                    .environmentObject(projectStore)
+            }
+            .onAppear {
+                if selectedProject == nil {
+                    selectedProject = projectStore.projects.first
                 }
             }
-        }
-        .sheet(isPresented: $showDatePicker) {
-            NavigationView {
-                DatePicker("选择日期", selection: $dueDate, displayedComponents: .date)
-                    .datePickerStyle(.graphical)
-                    .navigationTitle("截止日期")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("确定") { showDatePicker = false }
-                        }
-                    }
-            }
-        }
-        .sheet(isPresented: $showReminderPicker) {
-            NavigationView {
-                List {
-                    Button(action: {
-                        reminder = nil
-                        showReminderPicker = false
-                    }) {
-                        HStack {
-                            Text("不提醒")
-                            Spacer()
-                            if reminder == nil {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                    }
-                    
-                    ForEach(ProjectTask.TaskReminder.allCases) { option in
-                        Button(action: {
-                            reminder = option
-                            showReminderPicker = false
-                        }) {
-                            HStack {
-                                Text(option.rawValue)
-                                Spacer()
-                                if reminder == option {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.accentColor)
-                                }
-                            }
-                        }
-                    }
+            .overlay(
+                Group {
+                    if showingTaskAddedAlert {
+                        VStack {
+                            Text("任务已添加至 \(addedTaskProjectName) 项目")
+                                .padding()
+                                .background(Color(.systemBackground))
+                                .cornerRadius(10)
+                                .shadow(radius: 5)
                 }
-                .navigationTitle("提醒频率")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("取消") { showReminderPicker = false }
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: showingTaskAddedAlert)
                     }
+                    }
+            )
                 }
             }
         }
-        .sheet(isPresented: $showHourPicker) {
-            NavigationView {
-                List {
-                    ForEach(hourOptions, id: \.self) { hour in
-                        Button(action: {
-                            reminderHour = hour
-                            showHourPicker = false
-                        }) {
-                            HStack {
-                                Text("\(hour):00")
-                                Spacer()
-                                if reminderHour == hour {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.accentColor)
-                                }
-                            }
-                        }
-                    }
-                }
-                .navigationTitle("提醒时间")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("取消") { showHourPicker = false }
+
+struct EmptyProjectSection: View {
+    @Binding var showingCreateProjectAlert: Bool
+    var body: some View {
+        Section {
+            VStack(spacing: 16) {
+                Text("您还没有项目")
+                    .font(.headline)
+                Text("请先创建一个项目，再添加任务")
+                    .foregroundColor(.secondary)
+                Button("创建项目") {
+                    showingCreateProjectAlert = true
+        }
+                .buttonStyle(.borderedProminent)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical)
+        }
+    }
+}
+
+struct TaskInfoSection: View {
+    @Binding var taskTitle: String
+    @Binding var taskDescription: String
+    @Binding var dueDate: Date
+    @Binding var assignee: String
+    var body: some View {
+        Section("任务信息") {
+            TextField("任务标题", text: $taskTitle)
+            TextField("任务描述", text: $taskDescription)
+            DatePicker("截止日期", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+            TextField("负责人", text: $assignee)
                     }
                 }
             }
+
+struct ProjectPickerSection: View {
+    @Binding var selectedProject: Project?
+    let projects: [Project]
+    var body: some View {
+        Section("所属项目") {
+            Picker("选择项目", selection: $selectedProject) {
+                ForEach(projects) { project in
+                    Text(project.name)
+                        .tag(Optional(project))
+                }
+            }
+        }
+    }
+}
+
+struct AddTaskButtonSection: View {
+    @Binding var taskTitle: String
+    @Binding var selectedProject: Project?
+    @Binding var dueDate: Date
+    @Binding var assignee: String
+    var projectStore: ProjectStore
+    @Binding var showingTaskAddedAlert: Bool
+    var dismiss: DismissAction
+
+    var body: some View {
+        Section {
+            Button(action: {
+                guard let project = selectedProject else { return }
+                let task = ProjectTask(
+                    title: taskTitle,
+                    assignee: assignee,
+                    dueDate: dueDate
+                )
+                projectStore.addTask(task, to: project)
+                showingTaskAddedAlert = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    dismiss()
+                }
+            }) {
+                Text("添加任务")
+            }
+            .disabled(taskTitle.isEmpty || selectedProject == nil)
         }
     }
 }
@@ -218,8 +213,7 @@ struct AddTaskView: View {
 #Preview {
     NavigationView {
         AddTaskView(
-            isPresented: .constant(true),
-            project: .constant(Project(name: "测试项目"))
+            isPresented: .constant(true)
         )
     }
     .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))

@@ -10,7 +10,10 @@ struct ProjectListView: View {
                 ProjectRowView(project: project)
             }
             .onDelete { indexSet in
-                projectStore.projects.remove(atOffsets: indexSet)
+                for index in indexSet {
+                    let project = projectStore.projects[index]
+                    projectStore.deleteProject(project)
+                }
             }
         }
         .navigationTitle("项目")

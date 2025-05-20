@@ -20,6 +20,7 @@ extension AttachmentEntity {
     @NSManaged public var id: UUID?
     @NSManaged public var name: String?
     @NSManaged public var invoice: InvoiceEntity?
+    @NSManaged public var transaction: TransactionEntity?
 
 }
 

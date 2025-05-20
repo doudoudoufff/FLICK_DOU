@@ -10,21 +10,21 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 30) {
             // Logo
-            Image("FLICKLogo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 120, height: 120)
+        Image("FLICKLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 120, height: 120)
                 .padding(.top, 40)
-            
+                    
             // 引导内容
             VStack(spacing: 20) {
                 Text("欢迎使用 FLICK")
-                    .font(.title)
-                    .fontWeight(.bold)
+                                .font(.title)
+                                .fontWeight(.bold)
                 
                 Text("您的专业影视项目管理助手")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                                .foregroundColor(.secondary)
                 
                 VStack(alignment: .leading, spacing: 15) {
                     FeatureRow(icon: "film", title: "项目全流程管理", description: "从前期到后期，一站式管理您的影视项目")
@@ -33,7 +33,7 @@ struct OnboardingView: View {
                     FeatureRow(icon: "cloud.fill", title: "iCloud 同步", description: "数据自动在设备间同步，确保安全")
                 }
                 .padding(.horizontal)
-            }
+                        }
             
             // iCloud 同步选项
             VStack(spacing: 12) {
@@ -60,21 +60,21 @@ struct OnboardingView: View {
             }
             
             // 开始使用按钮
-            Button(action: {
+                        Button(action: {
                 hasSeenOnboarding = true
                 dismiss()
-            }) {
-                Text("开始使用")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                        }) {
+                            Text("开始使用")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
                     .background(Color.accentColor)
                     .cornerRadius(12)
-            }
+                        }
             .padding(.horizontal, 20)
             .padding(.bottom, 30)
-        }
+                }
         .padding(.horizontal, 20)
         .padding(.vertical, 40)
     }
@@ -104,6 +104,9 @@ struct FeatureRow: View {
 }
 
 #Preview {
-    OnboardingView()
-        .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
+    let previewContext = PersistenceController.preview.container.viewContext
+    let previewStore = ProjectStore(context: previewContext)
+    
+    return OnboardingView()
+        .environmentObject(previewStore)
 } 

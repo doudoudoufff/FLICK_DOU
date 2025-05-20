@@ -45,6 +45,10 @@ class PersistenceController {
         let enableCloudSync = UserDefaults.standard.bool(forKey: "enableCloudSync")
         print("iCloud 同步状态: \(enableCloudSync ? "已启用" : "未启用")")
         
+        // 确保写入UserDefaults
+        UserDefaults.standard.set(enableCloudSync, forKey: "enableCloudSync")
+        UserDefaults.standard.synchronize()
+        
         // 首先使用普通容器
         container = NSPersistentContainer(name: "FLICK")
         print("✓ 创建 NSPersistentContainer")
@@ -108,21 +112,24 @@ class PersistenceController {
                     }
                 }
                 
-                // 如果是 CloudKit 集成错误，禁用 CloudKit
+                // 如果是 CloudKit 集成错误，但保留用户设置
                 if let nsError = error as NSError?,
                    nsError.domain == NSCocoaErrorDomain,
                    nsError.code == 134060,
                    let reason = nsError.userInfo["NSLocalizedFailureReason"] as? String,
                    reason.contains("CloudKit integration requires") {
                     
-                    print("⚠️ 检测到 CloudKit 集成错误，禁用 CloudKit")
+                    print("⚠️ 检测到 CloudKit 集成错误，但保留用户设置")
                     
-                    // 禁用 CloudKit
-                    UserDefaults.standard.set(false, forKey: "enableCloudSync")
-                    self.syncStatus = .disabled
+                    // 不自动关闭iCloud同步设置，只设置状态
+                    self.syncStatus = .error(error)
                     self.supportsCloudKit = false
                     
-                    // 重新创建没有 CloudKit 的存储
+                    // 记录错误但不修改用户设置
+                    print("❌ CloudKit集成错误：\(reason)")
+                    print("⚠️ 用户iCloud同步设置保持不变：\(enableCloudSync ? "已启用" : "已禁用")")
+                    
+                    // 尝试使用没有CloudKit的存储创建
                     self.recreatePersistentStoreWithoutCloudKit()
                 } else {
                     // 尝试删除现有存储并重新创建
@@ -135,10 +142,16 @@ class PersistenceController {
                 if storeDescription.cloudKitContainerOptions != nil {
                     self.syncStatus = .enabled
                     print("✓ CloudKit 已启用")
+                    UserDefaults.standard.set(true, forKey: "enableCloudSync")
+                    UserDefaults.standard.synchronize()
                     self.supportsCloudKit = true
                 } else {
                     self.syncStatus = .disabled
                     print("ℹ️ CloudKit 未启用")
+                    
+                    // 不再自动关闭用户的iCloud同步设置
+                    // 让用户通过设置界面主动控制同步选项
+                    print("⚠️ 注意：CloudKit未在存储描述中配置，但保留用户的同步设置")
                 }
             }
         }
@@ -431,6 +444,10 @@ class PersistenceController {
     private func recreatePersistentStoreWithoutCloudKit() {
         print("尝试重新创建没有 CloudKit 的持久化存储...")
         
+        // 保存用户的iCloud同步设置
+        let userCloudSyncSetting = UserDefaults.standard.bool(forKey: "enableCloudSync")
+        print("保存用户的iCloud同步设置: \(userCloudSyncSetting ? "已启用" : "已禁用")")
+        
         // 获取存储 URL
         guard let storeDescription = container.persistentStoreDescriptions.first,
               let storeURL = storeDescription.url else {
@@ -443,9 +460,9 @@ class PersistenceController {
             try container.persistentStoreCoordinator.destroyPersistentStore(at: storeURL, ofType: NSSQLiteStoreType, options: nil)
             print("✓ 成功删除现有存储")
             
-            // 禁用 CloudKit
+            // 禁用 CloudKit (仅对当前存储实例，不修改用户设置)
             storeDescription.cloudKitContainerOptions = nil
-            print("✓ 禁用 CloudKit")
+            print("✓ 临时禁用 CloudKit 选项以解决错误")
             
             // 重新加载存储
             container.loadPersistentStores { storeDescription, error in
@@ -454,8 +471,18 @@ class PersistenceController {
                     self.syncStatus = .error(error)
                 } else {
                     print("✓ 重新加载存储成功（无 CloudKit）")
-                    self.syncStatus = .disabled
-                    print("ℹ️ CloudKit 已禁用")
+                    
+                    // 恢复用户的iCloud同步设置
+                    print("✓ 恢复用户的iCloud同步设置: \(userCloudSyncSetting ? "已启用" : "已禁用")")
+                    UserDefaults.standard.set(userCloudSyncSetting, forKey: "enableCloudSync")
+                    UserDefaults.standard.synchronize()
+                    
+                    if userCloudSyncSetting {
+                        self.syncStatus = .error(NSError(domain: "PersistenceController", code: 2, 
+                            userInfo: [NSLocalizedDescriptionKey: "iCloud同步暂时不可用，请稍后再试或重启应用"]))
+                    } else {
+                        self.syncStatus = .disabled
+                    }
                 }
             }
         } catch {

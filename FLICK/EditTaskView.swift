@@ -1,55 +1,54 @@
 import SwiftUI
 
 struct EditTaskView: View {
-    @Binding var task: ProjectTask
-    let project: Project
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var projectStore: ProjectStore
     @Binding var isPresented: Bool
-    @EnvironmentObject var projectStore: ProjectStore
+    @Binding var task: ProjectTask
     
     @State private var title: String
     @State private var assignee: String
     @State private var dueDate: Date
     @State private var reminder: ProjectTask.TaskReminder?
     @State private var reminderHour: Double
+    @State private var selectedProject: Project?
+    @State private var showingCreateProjectSheet = false
+    @State private var showingTaskUpdatedAlert = false
+    @State private var updatedTaskProjectName = ""
     
-    init(task: Binding<ProjectTask>, project: Project, isPresented: Binding<Bool>) {
-        self._task = task
-        self.project = project
+    init(isPresented: Binding<Bool>, task: Binding<ProjectTask>) {
         self._isPresented = isPresented
-        
-        // 初始化状态变量
-        _title = State(initialValue: task.wrappedValue.title)
-        _assignee = State(initialValue: task.wrappedValue.assignee)
-        _dueDate = State(initialValue: task.wrappedValue.dueDate)
-        _reminder = State(initialValue: task.wrappedValue.reminder)
-        _reminderHour = State(initialValue: Double(task.wrappedValue.reminderHour))
+        self._task = task
+        self._title = State(initialValue: task.wrappedValue.title)
+        self._assignee = State(initialValue: task.wrappedValue.assignee)
+        self._dueDate = State(initialValue: task.wrappedValue.dueDate)
+        self._reminder = State(initialValue: task.wrappedValue.reminder)
+        self._reminderHour = State(initialValue: Double(task.wrappedValue.reminderHour))
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
-                Section(content: {
-                    TextField("任务内容", text: $title)
-                }, header: {
-                    Text("必填信息")
-                })
-                
-                Section(content: {
+                Section(header: Text("任务信息")) {
+                    HStack {
+                        Text("任务内容")
+                        Text("*")
+                            .foregroundColor(.red)
+                            .font(.headline)
+                        TextField("", text: $title)
+                    }
                     TextField("负责人员", text: $assignee)
                     DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
                         .environment(\.locale, Locale(identifier: "zh_CN"))
-                }, header: {
-                    Text("任务详情")
-                })
+                }
                 
-                Section {
+                Section(header: Text("提醒设置")) {
                     Picker("提醒频率", selection: $reminder) {
                         Text("不提醒").tag(ProjectTask.TaskReminder?.none)
                         ForEach(ProjectTask.TaskReminder.allCases, id: \.self) { reminder in
                             Text(reminder.rawValue).tag(ProjectTask.TaskReminder?.some(reminder))
                         }
                     }
-                    
                     if reminder != nil {
                         VStack(alignment: .leading) {
                             HStack {
@@ -61,40 +60,85 @@ struct EditTaskView: View {
                             Slider(value: $reminderHour, in: 0.0...23.0, step: 1.0)
                         }
                     }
-                } header: {
-                    Text("提醒设置")
+                }
+
+                Section(header: Text("所属项目")) {
+                    Picker("选择项目", selection: $selectedProject) {
+                        ForEach(projectStore.projects) { project in
+                            Text(project.name).tag(Optional(project))
+                        }
+                    }
+                    HStack {
+                        Spacer(minLength: 0)
+                        Button(action: { showingCreateProjectSheet = true }) {
+                            Text("＋ 新建项目")
+                                .font(.body)
+                                .foregroundColor(.accentColor)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 18)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.accentColor, lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .navigationTitle("编辑任务")
             .navigationBarTitleDisplayMode(.inline)
+            .presentationDetents([.height(400)])
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        isPresented = false
-                    }
+                    Button("取消") { dismiss() }
                 }
-                
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        // 创建更新后的任务对象
-                        var updatedTask = task
-                        updatedTask.title = title
-                        updatedTask.assignee = assignee
-                        updatedTask.dueDate = dueDate
-                        updatedTask.reminder = reminder
-                        updatedTask.reminderHour = Int(reminderHour)
-                        
-                        // 使用 ProjectStore 更新任务
-                        projectStore.updateTask(updatedTask, in: project)
-                        
-                        // 更新绑定的任务
-                        task = updatedTask
-                        
-                        isPresented = false
+                        guard let project = selectedProject, !title.isEmpty else { return }
+                        task.title = title
+                        task.assignee = assignee
+                        task.dueDate = dueDate
+                        task.reminder = reminder
+                        task.reminderHour = Int(reminderHour)
+                        projectStore.updateTask(task, in: project)
+                        updatedTaskProjectName = project.name
+                        showingTaskUpdatedAlert = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                            showingTaskUpdatedAlert = false
+                            dismiss()
+                        }
                     }
-                    .disabled(title.isEmpty || assignee.isEmpty)
+                    .disabled(title.isEmpty || selectedProject == nil)
                 }
             }
+            .sheet(isPresented: $showingCreateProjectSheet) {
+                AddProjectView(isPresented: $showingCreateProjectSheet)
+                    .environmentObject(projectStore)
+            }
+            .onAppear {
+                if selectedProject == nil {
+                    if let project = projectStore.projects.first(where: { $0.tasks.contains(task) }) {
+                        selectedProject = project
+                    } else {
+                        selectedProject = projectStore.projects.first
+                    }
+                }
+            }
+            .overlay(
+                Group {
+                    if showingTaskUpdatedAlert {
+                        VStack {
+                            Text("任务已更新至 \(updatedTaskProjectName) 项目")
+                                .padding()
+                                .background(Color(.systemBackground))
+                                .cornerRadius(10)
+                                .shadow(radius: 5)
+                        }
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: showingTaskUpdatedAlert)
+                }
+            }
+            )
         }
     }
 } 

@@ -53,7 +53,8 @@ struct LocationScoutingView: View {
                 LocationToolbarContent(
                     showingAddSheet: $showingAddSheet,
                     showingExportOptions: $showingExportOptions,
-                    project: $project
+                    project: $project,
+                    showingAddLocation: $showingAddLocation
                 )
             }
         }
@@ -266,6 +267,7 @@ struct LocationToolbarContent: View {
     @Binding var showingAddSheet: Bool
     @Binding var showingExportOptions: Bool
     @Binding var project: Project
+    @Binding var showingAddLocation: Bool
     
     var body: some View {
         HStack {
@@ -282,7 +284,7 @@ struct LocationToolbarContent: View {
             }
             
             Button {
-                showingAddSheet = true
+                showingAddLocation = true
             } label: {
                 Image(systemName: "plus.circle.fill")
             }

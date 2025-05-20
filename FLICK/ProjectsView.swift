@@ -10,20 +10,25 @@ struct ProjectsView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
+            VStack(spacing: 0) {
                     // 项目统计卡片（并排显示，无滚动）
-                    ProjectStatCards()
-                        .environmentObject(projectStore)
+                ProjectStatCards()
+                    .environmentObject(projectStore)
+                    .padding(.top)
+                
                     // 项目列表
-                    LazyVStack(spacing: 16) {
-                        ForEach(searchedProjects) { project in
-                            ProjectListRow(project: project)
-                        }
+                List {
+                    ForEach(searchedProjects) { project in
+                        ProjectListRow(project: project)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+                            .listRowBackground(Color.clear)
                     }
-                    .padding(.horizontal)
-                }
-                .padding(.vertical)
+                                }
+                .listStyle(.plain)
+                .background(Color(.systemGroupedBackground))
+                .scrollContentBackground(.hidden)
+                .padding(.horizontal, 0)
             }
             .background(Color(.systemGroupedBackground))
             .searchable(text: $searchText, prompt: "搜索项目")
@@ -50,15 +55,29 @@ struct ProjectsView: View {
                 }
                 Button("删除", role: .destructive) {
                     if let project = projectToDelete {
-                        withAnimation {
+                        // 禁用Alert防止用户连续操作
+                        projectToDelete = nil
+                        
+                        // 使用Task异步处理删除操作
+                        Task {
+                            // 先在UI上延迟一下，让弹窗完全关闭
+                            try? await Task.sleep(nanoseconds: 300_000_000) // 等待300毫秒
+                            
+                            // 在主线程上调用删除方法
+                            await MainActor.run {
                             projectStore.deleteProject(project)
+                            }
                         }
                     }
-                    projectToDelete = nil
                 }
             } message: {
                 if let project = projectToDelete {
                     Text("确定要删除项目「\(project.name)」吗？此操作不可撤销。")
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("DeleteProject"))) { notification in
+                if let project = notification.userInfo?["project"] as? Project {
+                    projectToDelete = project
                 }
             }
             .refreshable {
@@ -188,22 +207,46 @@ struct InfoRow: View {
 struct ProjectStatCards: View {
     @EnvironmentObject var projectStore: ProjectStore
 
+    // 计算独立的统计数据
+    private var totalProjects: Int {
+        projectStore.projects.count
+    }
+    
+    private var totalTasks: Int {
+        // 计算所有项目中的任务总数（排除重复）
+        var taskCount = 0
+        for project in projectStore.projects {
+            taskCount += project.tasks.count
+        }
+        return taskCount
+    }
+    
+    private var activeTasks: Int {
+        // 计算未完成的任务数量
+        var count = 0
+        for project in projectStore.projects {
+            count += project.tasks.filter { !$0.isCompleted }.count
+        }
+        return count
+    }
+
     var body: some View {
         GeometryReader { geometry in
             let width = max((geometry.size.width - 16 - 32) / 2, 0)
             HStack(spacing: 16) {
                 StatCard(
-                    title: "全部项目",
-                    value: "\(projectStore.projects.count)",
-                    icon: "film.fill",
-                    color: .blue
+                    title: "项目总数",
+                    value: "\(totalProjects)",
+                    color: .blue,
+                    icon: "folder.fill"
                 )
                 .frame(width: width)
                 StatCard(
-                    title: "总任务数",
-                    value: "\(projectStore.projects.flatMap { $0.tasks }.count)",
-                    icon: "list.bullet.clipboard.fill",
-                    color: .orange
+                    title: "任务总数",
+                    value: "\(totalTasks)",
+                    color: .orange,
+                    icon: "list.bullet.clipboard.fill"
+            
                 )
                 .frame(width: width)
             }
@@ -217,23 +260,53 @@ struct ProjectStatCards: View {
 struct ProjectListRow: View {
     @EnvironmentObject var projectStore: ProjectStore
     let project: Project
-    @State private var projectToDelete: Project? = nil
-
+    @State private var isDeleting = false
+    
     var body: some View {
-        NavigationLink {
-            if let binding = projectStore.binding(for: project.id) {
-                ProjectDetailView(project: binding)
-            }
-        } label: {
+        ZStack {
             ProjectCard(project: project)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .contextMenu {
-            Button(role: .destructive) {
-                projectToDelete = project
-            } label: {
-                Label("删除项目", systemImage: "trash")
+                .padding(.horizontal, 16)
+            
+            NavigationLink(destination: {
+                if let binding = projectStore.binding(for: project.id) {
+                    ProjectDetailView(project: binding)
+                }
+            }) {
+                EmptyView()
             }
+            .opacity(0)
+        }
+        .disabled(isDeleting)
+        .opacity(isDeleting ? 0.6 : 1.0)
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                // 防止重复点击
+                guard !isDeleting else { return }
+                
+                // 设置状态防止重复操作
+                isDeleting = true
+                
+                // 使用Task包装删除操作
+                Task {
+                    // 先在UI上延迟一下，让滑动动画完成
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 等待300毫秒
+                    
+                    // 发送删除通知
+                    await MainActor.run {
+                        NotificationCenter.default.post(
+                            name: Notification.Name("DeleteProject"),
+                            object: nil,
+                            userInfo: ["project": project]
+                        )
+                    }
+                    
+                    // 重置状态
+                    isDeleting = false
+                }
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+            .tint(.red)
         }
     }
 }

@@ -26,15 +26,6 @@ public class LocationEntity: NSManagedObject {
         let photosArray = (photos?.allObjects as? [LocationPhotoEntity])?
             .compactMap { $0.toModel() } ?? []
         
-        // 调试输出
-        print("从 Core Data 获取位置数据:")
-        print("- ID: \(id)")
-        print("- 名称: \(name)")
-        print("- 坐标状态: \(hasCoordinates ? "有坐标" : "无坐标")")
-        if hasCoordinates {
-            print("- 纬度: \(latitude), 经度: \(longitude)")
-        }
-        
         // 创建 Location 对象
         let location = Location(
             id: id,
@@ -50,13 +41,6 @@ public class LocationEntity: NSManagedObject {
             notes: notes,
             date: date
         )
-        
-        // 验证创建的对象
-        print("创建的 Location 对象验证:")
-        print("- hasCoordinates: \(location.hasCoordinates)")
-        if location.hasCoordinates {
-            print("- 纬度: \(location.latitude!), 经度: \(location.longitude!)")
-        }
         
         return location
     }

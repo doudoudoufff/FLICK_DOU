@@ -75,31 +75,25 @@ struct LocationPhotoList: View {
                 } description: {
                     Text("点击下方按钮开始拍摄或选择照片")
                 } actions: {
-                    HStack(spacing: 16) {
+                    HStack(spacing: 20) {
                         Button(action: { checkCameraPermissionAndShow() }) {
-                            HStack {
-                                Image(systemName: "camera.fill")
-                                Text("拍摄")
-                            }
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(projectColor)
-                            .clipShape(Capsule())
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 64, height: 64)
+                                .background(projectColor)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
                         }
                         
                         Button(action: { showingPhotosPicker = true }) {
-                            HStack {
-                                Image(systemName: "photo.fill")
-                                Text("相册")
-                            }
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(projectColor)
-                            .clipShape(Capsule())
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 64, height: 64)
+                                .background(projectColor)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
                         }
                     }
                 }
@@ -135,28 +129,28 @@ struct LocationPhotoList: View {
             if !location.photos.isEmpty {
                 VStack {
                     Spacer()
-                    HStack(spacing: 16) {
+                    HStack(spacing: 20) {
                         Spacer()
                         Button(action: { checkCameraPermissionAndShow() }) {
                             Image(systemName: "camera.fill")
-                                .font(.title2.bold())
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
+                                .frame(width: 64, height: 64)
                                 .background(projectColor)
-                                .clipShape(Circle())
+                                .clipShape(Capsule())
                                 .shadow(radius: 4)
                         }
                         Button(action: { showingPhotosPicker = true }) {
                             Image(systemName: "photo.fill")
-                                .font(.title2.bold())
+                                .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
+                                .frame(width: 64, height: 64)
                                 .background(projectColor)
-                                .clipShape(Circle())
+                                .clipShape(Capsule())
                                 .shadow(radius: 4)
                         }
                     }
-                    .padding([.trailing, .bottom], 16)
+                    .padding([.trailing, .bottom], 20)
                 }
             }
         }

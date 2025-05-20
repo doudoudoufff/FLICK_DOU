@@ -14,27 +14,25 @@ struct ProjectDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                ProjectInfoCard(project: $project)
-                BaiBaiButton(project: $project, showingBaiBai: $showingBaiBai)
-                TaskListCard(
-                    project: $project,
-                    showingAddTask: $showingAddTask,
-                    editingTask: $editingTask
-                )
-                InvoiceListView(project: $project)
-                    .environmentObject(projectStore)
-                    .id(project.id)
-                AccountListView(project: $project, showManagement: true)
-                    .environmentObject(projectStore)
-                LocationScoutingCard(project: $project)
-                    .environmentObject(projectStore)
-            }
-            .padding(.horizontal)
-            .padding(.vertical)
+            ProjectDetailMainContent(
+                project: $project,
+                projectStore: projectStore,
+                showingEditProject: $showingEditProject,
+                showingAddTask: $showingAddTask,
+                showingLocationScoutingView: $showingLocationScoutingView,
+                showingBaiBai: $showingBaiBai,
+                editingTask: $editingTask,
+                refreshID: $refreshID,
+                invoiceToDelete: $invoiceToDelete
+            )
         }
         .id(refreshID)
         .onChange(of: project.invoices) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                refreshID = UUID()
+            }
+        }
+        .onChange(of: project.transactions) { _ in
             withAnimation(.easeInOut(duration: 0.3)) {
                 refreshID = UUID()
             }
@@ -72,25 +70,24 @@ struct ProjectDetailView: View {
         .sheet(isPresented: $showingAddTask) {
             NavigationView {
                 AddTaskView(
-                    isPresented: $showingAddTask,
-                    project: $project
+                    isPresented: $showingAddTask
                 )
                 .environmentObject(projectStore)
             }
+            .presentationDetents([.height(500)])
         }
         .sheet(item: $editingTask) { task in
             EditTaskView(
+                isPresented: Binding(
+                    get: { editingTask != nil },
+                    set: { if !$0 { editingTask = nil } }
+                ),
                 task: Binding(
                     get: { task },
                     set: { newTask in
                         projectStore.updateTask(newTask, in: project)
                         editingTask = nil
                     }
-                ),
-                project: project,
-                isPresented: Binding(
-                    get: { editingTask != nil },
-                    set: { if !$0 { editingTask = nil } }
                 )
             )
         }
@@ -123,6 +120,38 @@ struct ProjectDetailView: View {
                 Image(systemName: "ellipsis.circle.fill")
             }
         }
+    }
+}
+
+struct ProjectDetailMainContent: View {
+    @Binding var project: Project
+    var projectStore: ProjectStore
+    @Binding var showingEditProject: Bool
+    @Binding var showingAddTask: Bool
+    @Binding var showingLocationScoutingView: Bool
+    @Binding var showingBaiBai: Bool
+    @Binding var editingTask: ProjectTask?
+    @Binding var refreshID: UUID
+    @Binding var invoiceToDelete: (invoice: Invoice, project: Project)?
+
+    var body: some View {
+        VStack(spacing: 16) {
+            ProjectInfoCard(project: $project)
+            TaskListCard(
+                project: $project,
+                showingAddTask: $showingAddTask,
+                editingTask: $editingTask
+            )
+            TransactionListView(project: $project, projectStore: projectStore)
+            LocationScoutingCard(project: $project)
+                .environmentObject(projectStore)
+            InvoiceListView(project: $project)
+                .environmentObject(projectStore)
+            AccountListView(project: $project, showManagement: true)
+                .environmentObject(projectStore)
+        }
+        .padding(.horizontal)
+        .padding(.vertical)
     }
 }
 
@@ -187,7 +216,7 @@ struct TaskListCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("任务列表")
+                Text("提醒我做")
                     .font(.headline)
                 
                 Spacer()
@@ -292,23 +321,18 @@ struct LocationScoutingCard: View {
             
             Divider()
             
-            VStack(spacing: 16) {
-                Toggle("启用堪景模块", isOn: $project.isLocationScoutingEnabled)
-                    .tint(project.color)
-                    .onChange(of: project.isLocationScoutingEnabled) { _, newValue in
-                        print("堪景状态已更改为: \(newValue)")
-                        // 确保立即更新到 CoreData
-                        projectStore.updateProject(project)
-                    }
-                
-                if project.isLocationScoutingEnabled {
+            // 直接显示进入堪景的按钮，不需要切换开关
                     NavigationLink {
                         LocationScoutingView(project: $project)
                             .environmentObject(projectStore)
                     } label: {
-                        Label("堪景", systemImage: "camera.viewfinder")
-                    }
-                }
+                Label("点击去堪景", systemImage: "camera.viewfinder")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(height: 44)
+                    .frame(maxWidth: .infinity)
+                    .background(project.color.gradient)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
         .padding()

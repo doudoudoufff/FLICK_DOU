@@ -14,6 +14,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
     @Published var invoices: [Invoice]
     @Published var locations: [Location]  // 确保 locations 在 accounts 之前
     @Published var accounts: [Account]
+    @Published var transactions: [Transaction] // 添加交易记录
+    @Published var customExpenseTypes: [String] // 自定义费用类型
+    @Published var customGroupTypes: [String] // 自定义组别
     @Published var isLocationScoutingEnabled: Bool
     @Published var logoData: Data? // 项目LOGO数据
     
@@ -39,6 +42,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         invoices: [Invoice] = [],
         locations: [Location] = [],  // 确保 locations 在 accounts 之前
         accounts: [Account] = [],
+        transactions: [Transaction] = [], // 添加交易记录
+        customExpenseTypes: [String] = [],
+        customGroupTypes: [String] = [],
         isLocationScoutingEnabled: Bool = false,
         logoData: Data? = nil
     ) {
@@ -53,6 +59,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         self.invoices = invoices
         self.locations = locations  // 确保顺序一致
         self.accounts = accounts
+        self.transactions = transactions // 添加交易记录
+        self.customExpenseTypes = customExpenseTypes
+        self.customGroupTypes = customGroupTypes
         self.isLocationScoutingEnabled = isLocationScoutingEnabled
         self.logoData = logoData
     }
@@ -67,7 +76,8 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
     
     enum CodingKeys: String, CodingKey {
         case id, name, director, producer, startDate, status
-        case color, tasks, invoices, locations, accounts
+        case color, tasks, invoices, locations, accounts, transactions
+        case customExpenseTypes, customGroupTypes
         case isLocationScoutingEnabled, logoData
     }
     
@@ -84,6 +94,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         invoices = try container.decode([Invoice].self, forKey: .invoices)
         locations = try container.decode([Location].self, forKey: .locations)
         accounts = try container.decode([Account].self, forKey: .accounts)
+        transactions = try container.decodeIfPresent([Transaction].self, forKey: .transactions) ?? []
+        customExpenseTypes = try container.decodeIfPresent([String].self, forKey: .customExpenseTypes) ?? []
+        customGroupTypes = try container.decodeIfPresent([String].self, forKey: .customGroupTypes) ?? []
         isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)
         logoData = try container.decodeIfPresent(Data.self, forKey: .logoData)
     }
@@ -101,6 +114,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         try container.encode(invoices, forKey: .invoices)
         try container.encode(locations, forKey: .locations)
         try container.encode(accounts, forKey: .accounts)
+        try container.encode(transactions, forKey: .transactions)
+        try container.encode(customExpenseTypes, forKey: .customExpenseTypes)
+        try container.encode(customGroupTypes, forKey: .customGroupTypes)
         try container.encode(isLocationScoutingEnabled, forKey: .isLocationScoutingEnabled)
         try container.encodeIfPresent(logoData, forKey: .logoData)
     }
@@ -137,6 +153,8 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         
         let invoices = (entity.invoices?.allObjects as? [InvoiceEntity])?.map(Invoice.fromEntity) ?? []
         
+        // 注意：实际项目中需要从 CoreData 中加载 transactions 和自定义类型
+        
         return Project(
             id: id,
             name: name,
@@ -149,6 +167,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             invoices: invoices,
             locations: [],
             accounts: [],
+            transactions: [], // 添加空的交易记录数组
+            customExpenseTypes: [], // 添加空的自定义费用类型数组
+            customGroupTypes: [], // 添加空的自定义组别数组
             isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
             logoData: entity.logoData
         )

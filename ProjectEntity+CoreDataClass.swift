@@ -37,6 +37,10 @@ public class ProjectEntity: NSManagedObject {
         // 转换 accounts
         let accountsArray = (accounts?.allObjects as? [AccountEntity])?
             .compactMap { $0.toModel() } ?? []
+            
+        // 转换 transactions
+        let transactionsArray = (transactions?.allObjects as? [TransactionEntity])?
+            .compactMap { $0.toModel() } ?? []
         
         // 处理颜色转换
         let projectColor: Color = {
@@ -59,6 +63,7 @@ public class ProjectEntity: NSManagedObject {
             invoices: invoicesArray,
             locations: locationsArray,
             accounts: accountsArray,
+            transactions: transactionsArray,
             isLocationScoutingEnabled: isLocationScoutingEnabled,
             logoData: logoData
         )

@@ -29,6 +29,7 @@ extension ProjectEntity {
     @NSManaged public var invoices: NSSet?
     @NSManaged public var locations: NSSet?
     @NSManaged public var tasks: NSSet?
+    @NSManaged public var transactions: NSSet?
 
 }
 
@@ -97,6 +98,23 @@ extension ProjectEntity {
 
     @objc(removeTasks:)
     @NSManaged public func removeFromTasks(_ values: NSSet)
+
+}
+
+// MARK: Generated accessors for transactions
+extension ProjectEntity {
+
+    @objc(addTransactionsObject:)
+    @NSManaged public func addToTransactions(_ value: TransactionEntity)
+
+    @objc(removeTransactionsObject:)
+    @NSManaged public func removeFromTransactions(_ value: TransactionEntity)
+
+    @objc(addTransactions:)
+    @NSManaged public func addToTransactions(_ values: NSSet)
+
+    @objc(removeTransactions:)
+    @NSManaged public func removeFromTransactions(_ values: NSSet)
 
 }
 

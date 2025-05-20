@@ -120,6 +120,13 @@ class ProjectStore: ObservableObject {
         print("开始加载项目数据...")
         let request = ProjectEntity.fetchRequest()
         
+        // 使用创建日期作为排序依据，确保稳定排序
+        // 在CoreData中，通常新创建的对象ID较大，因此按ID降序可以近似实现按创建时间排序
+        let primarySort = NSSortDescriptor(key: "id", ascending: false)
+        // 使用项目名称作为次要排序条件，在创建时间相同时保持名称字母顺序
+        let secondarySort = NSSortDescriptor(key: "name", ascending: true)
+        request.sortDescriptors = [primarySort, secondarySort]
+        
         do {
             let entities = try context.fetch(request)
             print("从 CoreData 加载了 \(entities.count) 个项目实体")
@@ -130,9 +137,13 @@ class ProjectStore: ObservableObject {
                 loadedProjects.append(project)
             }
             
+            // 确保UI更新在主线程进行
             DispatchQueue.main.async {
+                // 直接替换整个数组，避免部分更新
                 self.projects = loadedProjects
                 print("✓ 成功加载 \(loadedProjects.count) 个项目")
+                // 显式通知视图更新
+                self.objectWillChange.send()
             }
         } catch {
             print("❌ 加载项目失败: \(error)")
@@ -152,7 +163,36 @@ class ProjectStore: ObservableObject {
             - 场地数量: \(project.locations.count)
             """)
             
-            let projectEntity = project.toEntity(context: context)
+            // 检查项目是否已存在
+            let fetchRequest: NSFetchRequest<ProjectEntity> = ProjectEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", project.id as CVarArg)
+            
+            var projectEntity: ProjectEntity
+            
+            do {
+                let results = try context.fetch(fetchRequest)
+                if let existingEntity = results.first {
+                    print("✓ 找到现有项目实体，进行更新")
+                    projectEntity = existingEntity
+                    
+                    // 更新基本属性
+                    projectEntity.name = project.name
+                    projectEntity.director = project.director
+                    projectEntity.producer = project.producer
+                    projectEntity.startDate = project.startDate
+                    projectEntity.status = project.status.rawValue
+                    projectEntity.color = project.color.toData()
+                    projectEntity.isLocationScoutingEnabled = project.isLocationScoutingEnabled
+                    projectEntity.logoData = project.logoData
+                } else {
+                    print("✓ 未找到现有项目实体，创建新实体")
+                    projectEntity = project.toEntity(context: context)
+                }
+            } catch {
+                print("❌ 查询项目实体失败: \(error)")
+                projectEntity = project.toEntity(context: context)
+                print("✓ 创建新实体替代: \(projectEntity.id?.uuidString ?? "未知ID")")
+            }
             
             // 保存场地和照片
             for location in project.locations {
@@ -163,39 +203,188 @@ class ProjectStore: ObservableObject {
                 - 照片数量: \(location.photos.count)
                 """)
                 
-                let locationEntity = location.toEntity(context: context)
-                locationEntity.project = projectEntity
+                // 检查场地是否已存在
+                let locationRequest: NSFetchRequest<LocationEntity> = LocationEntity.fetchRequest()
+                locationRequest.predicate = NSPredicate(format: "id == %@", location.id as CVarArg)
+                
+                var locationEntity: LocationEntity
+                
+                do {
+                    let results = try context.fetch(locationRequest)
+                    if let existingLocation = results.first {
+                        print("✓ 找到现有场地实体，进行更新")
+                        locationEntity = existingLocation
+                        
+                        // 更新基本属性
+                        locationEntity.name = location.name
+                        locationEntity.address = location.address
+                        locationEntity.type = location.type.rawValue
+                        locationEntity.status = location.status.rawValue
+                        locationEntity.contactName = location.contactName
+                        locationEntity.contactPhone = location.contactPhone
+                        locationEntity.notes = location.notes
+                        locationEntity.date = location.date
+                        
+                        if location.hasCoordinates, let lat = location.latitude, let lng = location.longitude {
+                            locationEntity.latitude = lat
+                            locationEntity.longitude = lng
+                            locationEntity.hasCoordinates = true
+                        } else {
+                            locationEntity.hasCoordinates = false
+                        }
+                    } else {
+                        print("✓ 未找到现有场地实体，创建新实体")
+                        locationEntity = location.toEntity(context: context)
+                        locationEntity.project = projectEntity
+                    }
+                } catch {
+                    print("❌ 查询场地实体失败: \(error)")
+                    locationEntity = location.toEntity(context: context)
+                    locationEntity.project = projectEntity
+                    print("✓ 创建新场地实体替代")
+                }
                 
                 // 保存照片
                 for photo in location.photos {
-                    print("创建照片实体: \(photo.id)")
-                    let photoEntity = photo.toEntity(context: context)
-                    photoEntity.location = locationEntity
+                    print("处理照片: \(photo.id)")
+                    
+                    // 检查照片是否已存在
+                    let photoRequest: NSFetchRequest<LocationPhotoEntity> = LocationPhotoEntity.fetchRequest()
+                    photoRequest.predicate = NSPredicate(format: "id == %@", photo.id as CVarArg)
+                    
+                    do {
+                        let results = try context.fetch(photoRequest)
+                        if let existingPhoto = results.first {
+                            print("✓ 找到现有照片实体，进行更新")
+                            existingPhoto.date = photo.date
+                            existingPhoto.weather = photo.weather
+                            existingPhoto.note = photo.note
+                            // 避免重复存储大型图像数据
+                            if existingPhoto.imageData == nil {
+                                existingPhoto.imageData = photo.imageData
+                            }
+                        } else {
+                            print("✓ 创建新照片实体")
+                            let photoEntity = photo.toEntity(context: context)
+                            photoEntity.location = locationEntity
+                        }
+                    } catch {
+                        print("❌ 查询照片实体失败: \(error)")
+                        let photoEntity = photo.toEntity(context: context)
+                        photoEntity.location = locationEntity
+                        print("✓ 创建新照片实体替代")
+                    }
                 }
             }
             
             // 保存任务
             for task in project.tasks {
-                let taskEntity = task.toEntity(context: context)
-                taskEntity.project = projectEntity
+                // 检查任务是否已存在
+                let taskRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
+                taskRequest.predicate = NSPredicate(format: "id == %@", task.id as CVarArg)
+                
+                do {
+                    let results = try context.fetch(taskRequest)
+                    if let existingTask = results.first {
+                        print("✓ 找到现有任务实体，进行更新")
+                        existingTask.title = task.title
+                        existingTask.assignee = task.assignee
+                        existingTask.dueDate = task.dueDate
+                        existingTask.isCompleted = task.isCompleted
+                        existingTask.reminder = task.reminder?.rawValue
+                        existingTask.reminderHour = Int16(task.reminderHour)
+                    } else {
+                        print("✓ 创建新任务实体")
+                        let taskEntity = task.toEntity(context: context)
+                        taskEntity.project = projectEntity
+                    }
+                } catch {
+                    print("❌ 查询任务实体失败: \(error)")
+                    let taskEntity = task.toEntity(context: context)
+                    taskEntity.project = projectEntity
+                    print("✓ 创建新任务实体替代")
+                }
             }
             
             // 保存发票
             for invoice in project.invoices {
-                let invoiceEntity = invoice.toEntity(context: context)
-                invoiceEntity.project = projectEntity
+                // 检查发票是否已存在
+                let invoiceRequest: NSFetchRequest<InvoiceEntity> = InvoiceEntity.fetchRequest()
+                invoiceRequest.predicate = NSPredicate(format: "id == %@", invoice.id as CVarArg)
+                
+                do {
+                    let results = try context.fetch(invoiceRequest)
+                    if let existingInvoice = results.first {
+                        print("✓ 找到现有发票实体，进行更新")
+                        existingInvoice.name = invoice.name
+                        existingInvoice.phone = invoice.phone
+                        existingInvoice.idNumber = invoice.idNumber
+                        existingInvoice.bankAccount = invoice.bankAccount
+                        existingInvoice.bankName = invoice.bankName
+                        existingInvoice.date = invoice.date
+                        existingInvoice.amount = invoice.amount
+                        existingInvoice.category = invoice.category.rawValue
+                        existingInvoice.status = invoice.status.rawValue
+                        existingInvoice.dueDate = invoice.dueDate
+                        existingInvoice.notes = invoice.notes
+                    } else {
+                        print("✓ 创建新发票实体")
+                        let invoiceEntity = invoice.toEntity(context: context)
+                        invoiceEntity.project = projectEntity
+                    }
+                } catch {
+                    print("❌ 查询发票实体失败: \(error)")
+                    let invoiceEntity = invoice.toEntity(context: context)
+                    invoiceEntity.project = projectEntity
+                    print("✓ 创建新发票实体替代")
+                }
             }
             
             // 保存账户
             for account in project.accounts {
-                let accountEntity = account.toEntity(context: context)
-                accountEntity.project = projectEntity
+                // 检查账户是否已存在
+                let accountRequest: NSFetchRequest<AccountEntity> = AccountEntity.fetchRequest()
+                accountRequest.predicate = NSPredicate(format: "id == %@", account.id as CVarArg)
+                
+                do {
+                    let results = try context.fetch(accountRequest)
+                    if let existingAccount = results.first {
+                        print("✓ 找到现有账户实体，进行更新")
+                        existingAccount.name = account.name
+                        existingAccount.type = account.type.rawValue
+                        existingAccount.bankName = account.bankName
+                        existingAccount.bankBranch = account.bankBranch
+                        existingAccount.bankAccount = account.bankAccount
+                        existingAccount.idNumber = account.idNumber
+                        existingAccount.contactName = account.contactName
+                        existingAccount.contactPhone = account.contactPhone
+                        existingAccount.notes = account.notes
+                    } else {
+                        print("✓ 创建新账户实体")
+                        let accountEntity = account.toEntity(context: context)
+                        accountEntity.project = projectEntity
+                    }
+                } catch {
+                    print("❌ 查询账户实体失败: \(error)")
+                    let accountEntity = account.toEntity(context: context)
+                    accountEntity.project = projectEntity
+                    print("✓ 创建新账户实体替代")
+                }
             }
         }
         
+        // 批量保存所有更改
         do {
             try context.save()
             print("✓ CoreData 保存成功")
+            
+            // 记录保存时间
+            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastSaveTime")
+            
+            // 验证保存结果
+            let verifyRequest = ProjectEntity.fetchRequest()
+            let count = try context.count(for: verifyRequest)
+            print("✓ 验证: 数据库中有 \(count) 个项目实体")
         } catch {
             print("""
             ❌ 保存失败:
@@ -203,11 +392,20 @@ class ProjectStore: ObservableObject {
             错误描述: \(error.localizedDescription)
             堆栈跟踪: \(error)
             """)
+            
+            // 尝试进一步诊断错误
+            if let nsError = error as NSError? {
+                print("错误代码: \(nsError.code), 域: \(nsError.domain)")
+                for (key, value) in nsError.userInfo {
+                    print("- \(key): \(value)")
+                }
+            }
         }
         
         // 临时：同时保存到 UserDefaults（作为备份）
         if let encoded = try? JSONEncoder().encode(projects) {
             UserDefaults.standard.set(encoded, forKey: "savedProjects")
+            print("✓ 已保存备份到 UserDefaults")
         }
         
         // 如果启用了 iCloud 同步，则触发同步
@@ -264,33 +462,137 @@ class ProjectStore: ObservableObject {
                 print("✓ 验证成功")
                 print("验证项目名称: \(verified.name ?? "nil")")
             }
+            
+            // 6. 强制调用saveProjects确保所有关联数据也被保存
+            print("✓ 开始调用saveProjects保存全部项目数据")
+            self.saveProjects()
+            
+            // 7. 手动触发CoreData同步到CloudKit
+            print("✓ 开始触发PersistenceController同步")
+            PersistenceController.shared.save()
+            
+            // 8. 触发iCloud同步（如果已启用）
+            if enableCloudSync {
+                print("✓ iCloud同步已启用，开始同步")
+                PersistenceController.shared.syncWithCloud { success, error in
+                    if success {
+                        print("✓ 项目已成功同步到iCloud")
+                    } else if let error = error {
+                        print("⚠️ iCloud同步警告: \(error.localizedDescription)")
+                    }
+                }
+            }
         } catch {
             print("❌ 保存失败:")
             print("错误类型: \(type(of: error))")
             print("错误描述: \(error.localizedDescription)")
+            
+            if let nsError = error as NSError? {
+                print("错误代码: \(nsError.code), 域: \(nsError.domain)")
+                for (key, value) in nsError.userInfo {
+                    print("- \(key): \(value)")
+                }
+            }
         }
+        
         print("================================")
     }
     
     // 删除项目
     func deleteProject(_ project: Project) {
+        print("========== 开始删除项目 ==========")
+        print("项目名称: \(project.name), ID: \(project.id)")
+        
+        // 保持数据引用，避免在处理过程中其他地方修改数据
+        let projectId = project.id
+        
+        // 使用主线程处理所有数据变更，避免并发问题
+        DispatchQueue.main.async {
         // 从 CoreData 中删除
-        if let projectEntity = try? context.fetch(ProjectEntity.fetchRequest())
-            .first(where: { $0.id == project.id }) {
-            context.delete(projectEntity)
-            saveContext()
+            let fetchRequest = ProjectEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", projectId as CVarArg)
+            
+            do {
+                let results = try self.context.fetch(fetchRequest)
+                print("找到匹配的项目实体数量: \(results.count)")
+                
+                if let projectEntity = results.first {
+                    print("✓ 找到项目实体，正在删除")
+                    
+                    // 手动删除相关实体，确保级联删除生效
+                    
+                    // 删除所有任务
+                    if let tasks = projectEntity.tasks?.allObjects as? [TaskEntity], !tasks.isEmpty {
+                        print("- 删除\(tasks.count)个关联任务")
+                        for task in tasks {
+                            self.context.delete(task)
+                        }
+                    }
+                    
+                    // 删除所有场景及其照片
+                    if let locations = projectEntity.locations?.allObjects as? [LocationEntity], !locations.isEmpty {
+                        print("- 删除\(locations.count)个关联场景")
+                        for location in locations {
+                            // 删除场景下的所有照片
+                            if let photos = location.photos?.allObjects as? [LocationPhotoEntity], !photos.isEmpty {
+                                print("  - 删除\(photos.count)个照片")
+                                for photo in photos {
+                                    self.context.delete(photo)
+                                }
+                            }
+                            self.context.delete(location)
+                        }
+                    }
+                    
+                    // 删除所有账户
+                    if let accounts = projectEntity.accounts?.allObjects as? [AccountEntity], !accounts.isEmpty {
+                        print("- 删除\(accounts.count)个关联账户")
+                        for account in accounts {
+                            self.context.delete(account)
+                        }
         }
         
-        // 从内存中删除
-        if let index = projects.firstIndex(where: { $0.id == project.id }) {
-            projects.remove(at: index)
+                    // 删除所有发票
+                    if let invoices = projectEntity.invoices?.allObjects as? [InvoiceEntity], !invoices.isEmpty {
+                        print("- 删除\(invoices.count)个关联发票")
+                        for invoice in invoices {
+                            self.context.delete(invoice)
+                        }
+                    }
+                    
+                    // 最后删除项目实体本身
+                    self.context.delete(projectEntity)
+                    
+                    // 立即保存上下文
+                    try self.context.save()
+                    print("✓ CoreData 删除成功")
+                    
+                    // 触发 CloudKit 同步
+                    PersistenceController.shared.save()
+                    print("✓ 已触发CloudKit同步")
+                    
+                    // 重新加载项目列表以获取最新数据
+                    // 这里不单独更新内存中的数据，而是直接从数据库重新加载所有项目
+                    self.loadProjects()
+                    print("✓ 已重新加载项目列表")
+                } else {
+                    print("❌ 未找到项目实体")
+                }
+            } catch {
+                print("❌ 删除项目失败: \(error)")
+                print("错误描述: \(error.localizedDescription)")
+                
+                // 恢复内存中的项目数据
+                self.loadProjects()
+            }
+            
+            print("================================")
         }
     }
     
     // 更新项目
     func updateProject(_ updatedProject: Project) {
-        if let index = projects.firstIndex(where: { $0.id == updatedProject.id }),
-           let projectEntity = try? context.fetch(ProjectEntity.fetchRequest())
+        if let projectEntity = try? context.fetch(ProjectEntity.fetchRequest())
             .first(where: { $0.id == updatedProject.id }) {
             
             // 更新 CoreData 实体
@@ -306,11 +608,8 @@ class ProjectStore: ObservableObject {
             // 保存更改
             saveContext()
             
-            // 更新内存中的项目并触发视图刷新
-            DispatchQueue.main.async {
-                self.projects[index] = updatedProject
-                self.objectWillChange.send()  // 显式通知视图更新
-            }
+            // 强制重新加载项目列表，确保排序一致
+            loadProjects()
         }
     }
     
@@ -319,9 +618,37 @@ class ProjectStore: ObservableObject {
         if context.hasChanges {
             do {
                 try context.save()
+                print("✓ 成功保存到CoreData本地存储")
+                
+                // 确保数据持久化和同步到iCloud
+                PersistenceController.shared.save()
+                
+                // 检查是否启用了iCloud同步
+                if UserDefaults.standard.bool(forKey: "enableCloudSync") {
+                    // 异步触发iCloud同步
+                    DispatchQueue.global(qos: .background).async {
+                        PersistenceController.shared.syncWithCloud { success, error in
+                            if success {
+                                print("✓ 数据成功同步到iCloud")
+                            } else if let error = error {
+                                print("⚠️ iCloud同步警告: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                } else {
+                    print("ℹ️ iCloud同步未启用，仅保存到本地")
+                }
             } catch {
-                print("保存 CoreData 失败: \(error)")
+                print("❌ 保存CoreData失败: \(error)")
+                
+                // 尝试诊断错误
+                if let nsError = error as NSError? {
+                    print("错误代码: \(nsError.code), 域: \(nsError.domain)")
+                    print("错误详情: \(nsError.userInfo)")
+                }
             }
+        } else {
+            print("ℹ️ 没有CoreData变更需要保存")
         }
     }
     
@@ -756,12 +1083,12 @@ class ProjectStore: ObservableObject {
         do {
             if let projectEntity = try context.fetch(fetchRequest).first,
                let invoiceEntity = (projectEntity.invoices?.allObjects as? [InvoiceEntity])?.first(where: { $0.id == invoice.id }) {
-                invoiceEntity.name = invoice.name
-                invoiceEntity.phone = invoice.phone
-                invoiceEntity.idNumber = invoice.idNumber
-                invoiceEntity.bankAccount = invoice.bankAccount
-                invoiceEntity.bankName = invoice.bankName
-                invoiceEntity.date = invoice.date
+        invoiceEntity.name = invoice.name
+        invoiceEntity.phone = invoice.phone
+        invoiceEntity.idNumber = invoice.idNumber
+        invoiceEntity.bankAccount = invoice.bankAccount
+        invoiceEntity.bankName = invoice.bankName
+        invoiceEntity.date = invoice.date
                 invoiceEntity.amount = invoice.amount
                 invoiceEntity.category = invoice.category.rawValue
                 invoiceEntity.status = invoice.status.rawValue
@@ -777,7 +1104,7 @@ class ProjectStore: ObservableObject {
                 invoiceEntity.buyerBankInfo = invoice.buyerBankInfo
                 invoiceEntity.goodsList = invoice.goodsList?.joined(separator: ",")
                 invoiceEntity.totalAmount = invoice.totalAmount ?? 0.0
-                try context.save()
+            try context.save()
                 print("✓ 发票已保存到 CoreData")
             } else {
                 print("❌ 未找到发票实体")
@@ -1457,81 +1784,55 @@ class ProjectStore: ObservableObject {
         if let locationEntities = entity.locations?.allObjects as? [LocationEntity], !locationEntities.isEmpty {
             print("找到 \(locationEntities.count) 个位置实体")
             
-            var validLocations: [Location] = []
-            for locationEntity in locationEntities {
-                guard let id = locationEntity.id,
-                      let name = locationEntity.name,
-                      let typeStr = locationEntity.type,
-                      let statusStr = locationEntity.status,
-                      let address = locationEntity.address,
-                      let date = locationEntity.date else { 
-                    print("⚠️ 跳过无效位置实体")
-                    continue
+            project.locations = locationEntities.compactMap { entity -> Location? in
+                guard let typeString = entity.type,
+                      let typeEnum = LocationType(rawValue: typeString),
+                      let statusString = entity.status,
+                      let statusEnum = LocationStatus(rawValue: statusString) else {
+                    return nil
                 }
+
+                // 提前获取坐标信息
+                let latitude: Double? = entity.hasCoordinates ? entity.latitude : nil
+                let longitude: Double? = entity.hasCoordinates ? entity.longitude : nil
                 
-                // 使用正确的枚举类型
-                let locationType = LocationType(rawValue: typeStr) ?? .other
-                let locationStatus = LocationStatus(rawValue: statusStr) ?? .pending
-                
-                // 添加坐标调试信息
-                print("坐标信息检查:")
-                print("- hasCoordinates: \(locationEntity.hasCoordinates)")
-                if locationEntity.hasCoordinates {
-                    print("- 纬度: \(locationEntity.latitude), 经度: \(locationEntity.longitude)")
-                }
-                
-                var location = Location(
-                    id: id,
-                    name: name,
-                    type: locationType,
-                    status: locationStatus,
-                    address: address,
-                    latitude: locationEntity.hasCoordinates ? locationEntity.latitude : nil,
-                    longitude: locationEntity.hasCoordinates ? locationEntity.longitude : nil,
-                    contactName: locationEntity.contactName,
-                    contactPhone: locationEntity.contactPhone,
-                    photos: [],  // 先创建空照片数组，稍后填充
-                    notes: locationEntity.notes,
-                    date: date
+                let location = Location(
+                    id: entity.id ?? UUID(),
+                    name: entity.name ?? "",
+                    type: typeEnum,
+                    status: statusEnum,
+                    address: entity.address ?? "",
+                    latitude: latitude,
+                    longitude: longitude,
+                    contactName: entity.contactName,
+                    contactPhone: entity.contactPhone,
+                    notes: entity.notes,
+                    date: entity.date ?? Date()
                 )
                 
-                // 验证创建的 Location 对象
-                print("创建的 Location 对象:")
-                print("- hasCoordinates: \(location.hasCoordinates)")
-                if location.hasCoordinates {
-                    print("- 纬度: \(location.latitude!), 经度: \(location.longitude!)")
-                }
-                
-                // 加载位置照片
-                if let photoEntities = locationEntity.photos?.allObjects as? [LocationPhotoEntity], !photoEntities.isEmpty {
-                    var validPhotos: [LocationPhoto] = []
-                    for photoEntity in photoEntities {
-                        guard let photoId = photoEntity.id,
-                              let photoDate = photoEntity.date,
-                              let imageData = photoEntity.imageData,
-                              let image = UIImage(data: imageData) else {
-                            continue
-                        }
-                        
-                        let photo = LocationPhoto(
-                            id: photoId,
-                            image: image,
-                            date: photoDate,
-                            weather: photoEntity.weather,
-                            note: photoEntity.note
-                        )
-                        validPhotos.append(photo)
+                // 加载照片
+                var locationWithPhotos = location
+                if let photoEntities = entity.photos?.allObjects as? [LocationPhotoEntity] {
+                    locationWithPhotos.photos = photoEntities.compactMap { photoEntity in
+                        return LocationPhoto.fromEntity(photoEntity)
                     }
-                    location.photos = validPhotos
                 }
                 
-                print("  - 加载位置: \(location.name), ID: \(location.id), 照片数: \(location.photos.count)")
-                validLocations.append(location)
+                return locationWithPhotos
             }
-            project.locations = validLocations
             print("✓ 加载了 \(project.locations.count) 个位置信息")
         } else {
             print("⚠️ 项目 \(project.name) 没有关联的位置实体")
+        }
+        
+        // 加载交易记录
+        if let transactionEntities = entity.transactions?.allObjects as? [TransactionEntity], !transactionEntities.isEmpty {    
+            print("找到 \(transactionEntities.count) 个交易记录实体")
+            
+            project.transactions = transactionEntities.compactMap { $0.toModel() }
+            print("✓ 加载了 \(project.transactions.count) 个交易记录")
+        } else {
+            print("⚠️ 项目 \(project.name) 没有关联的交易记录")
         }
         
         return project
@@ -1549,6 +1850,157 @@ class ProjectStore: ObservableObject {
             print("❌ 获取项目实体失败: \(error)")
             return nil
         }
+    }
+    
+    // 添加交易记录
+    func addTransaction(to project: Project, transaction: Transaction) {
+        print("========== 添加交易记录 ==========")
+        print("项目: \(project.name)")
+        print("交易: \(transaction.name), 金额: \(transaction.amount)")
+        
+        // 获取项目实体
+        guard let projectEntity = fetchProjectEntity(id: project.id) else {
+            print("❌ 找不到项目实体")
+            return
+        }
+        
+        // 创建交易实体
+        let transactionEntity = TransactionEntity(context: context)
+        transactionEntity.id = transaction.id
+        transactionEntity.name = transaction.name
+        transactionEntity.amount = transaction.amount
+        transactionEntity.date = transaction.date
+        transactionEntity.transactionDescription = transaction.transactionDescription
+        transactionEntity.expenseType = transaction.expenseType
+        transactionEntity.group = transaction.group
+        transactionEntity.paymentMethod = transaction.paymentMethod
+        transactionEntity.type = transaction.transactionType.rawValue
+        transactionEntity.isVerified = transaction.isVerified
+        
+        // 如果有附件，创建附件实体
+        if let attachmentData = transaction.attachmentData {
+            let attachmentEntity = AttachmentEntity(context: context)
+            attachmentEntity.id = UUID()
+            attachmentEntity.name = "附件_\(transaction.id)"
+            attachmentEntity.data = attachmentData
+            attachmentEntity.transaction = transactionEntity
+            transactionEntity.addToAttachments(attachmentEntity)
+        }
+        
+        // 关联到项目
+        transactionEntity.project = projectEntity
+        
+        // 添加到内存中的项目模型
+        project.transactions.append(transaction)
+        
+        // 保存上下文
+        saveContext()
+        
+        print("✓ 成功添加交易记录")
+        print("================================")
+    }
+    
+    // 更新交易记录
+    func updateTransaction(in project: Project, transaction: Transaction) {
+        print("========== 更新交易记录 ==========")
+        print("项目: \(project.name)")
+        print("交易ID: \(transaction.id)")
+        
+        // 获取交易实体
+        let request = TransactionEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", transaction.id as CVarArg, project.id as CVarArg)
+        
+        do {
+            if let transactionEntity = try context.fetch(request).first {
+                // 更新实体属性
+                transactionEntity.name = transaction.name
+                transactionEntity.amount = transaction.amount
+                transactionEntity.date = transaction.date
+                transactionEntity.transactionDescription = transaction.transactionDescription
+                transactionEntity.expenseType = transaction.expenseType
+                transactionEntity.group = transaction.group
+                transactionEntity.paymentMethod = transaction.paymentMethod
+                transactionEntity.type = transaction.transactionType.rawValue
+                transactionEntity.isVerified = transaction.isVerified
+                
+                // 处理附件更新
+                if let attachmentData = transaction.attachmentData {
+                    // 检查是否已有附件
+                    if let existingAttachments = transactionEntity.attachments, existingAttachments.count > 0 {
+                        // 更新现有附件
+                        if let attachment = existingAttachments.allObjects.first as? AttachmentEntity {
+                            attachment.data = attachmentData
+                        }
+                    } else {
+                        // 创建新附件
+                        let attachmentEntity = AttachmentEntity(context: context)
+                        attachmentEntity.id = UUID()
+                        attachmentEntity.name = "附件_\(transaction.id)"
+                        attachmentEntity.data = attachmentData
+                        attachmentEntity.transaction = transactionEntity
+                        transactionEntity.addToAttachments(attachmentEntity)
+                    }
+                } else {
+                    // 如果没有附件数据，删除现有附件
+                    if let existingAttachments = transactionEntity.attachments {
+                        for attachment in existingAttachments.allObjects {
+                            if let attachment = attachment as? AttachmentEntity {
+                                context.delete(attachment)
+                            }
+                        }
+                    }
+                }
+                
+                // 保存上下文
+                saveContext()
+                
+                // 更新内存中的交易记录
+                if let index = project.transactions.firstIndex(where: { $0.id == transaction.id }) {
+                    project.transactions[index] = transaction
+                }
+                
+                print("✓ 成功更新交易记录")
+            } else {
+                print("⚠️ 找不到要更新的交易记录，尝试添加新记录")
+                addTransaction(to: project, transaction: transaction)
+            }
+        } catch {
+            print("❌ 更新交易记录时出错: \(error)")
+        }
+        
+        print("================================")
+    }
+    
+    // 删除交易记录
+    func deleteTransaction(from project: Project, transactionId: UUID) {
+        print("========== 删除交易记录 ==========")
+        print("项目: \(project.name)")
+        print("交易ID: \(transactionId)")
+        
+        // 获取交易实体
+        let request = TransactionEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", transactionId as CVarArg, project.id as CVarArg)
+        
+        do {
+            if let transactionEntity = try context.fetch(request).first {
+                // 删除实体
+                context.delete(transactionEntity)
+                
+                // 保存上下文
+                saveContext()
+                
+                // 从内存中删除交易记录
+                project.transactions.removeAll { $0.id == transactionId }
+                
+                print("✓ 成功删除交易记录")
+            } else {
+                print("⚠️ 找不到要删除的交易记录")
+            }
+        } catch {
+            print("❌ 删除交易记录时出错: \(error)")
+        }
+        
+        print("================================")
     }
 }
 

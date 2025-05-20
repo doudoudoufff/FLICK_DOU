@@ -16,5 +16,7 @@
 	<string>FLICK需要访问您的位置以便获取当前位置的天气信息</string>
 	<key>WeatherKitUsageDescription</key>
 	<string>FLICK需要访问天气信息，以便在拍摄计划时提供当前天气状况</string>
+	<key>NSMotionUsageDescription</key>
+	<string>FLICK需要访问设备的运动传感器，以启用陀螺仪感应拜拜功能</string>
 </dict>
 </plist>

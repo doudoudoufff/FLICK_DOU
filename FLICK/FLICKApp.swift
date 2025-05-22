@@ -93,11 +93,32 @@ struct FLICKApp: App {
         // 打印当前项目数量，用于调试
         print("保存前的项目数量: \(projectStore.projects.count)")
         
+        // 打印每个项目的预算值
+        for project in projectStore.projects {
+            print("保存前项目 '\(project.name)' 的预算: \(project.budget)")
+        }
+        
         // 保存CoreData上下文
         persistenceController.save()
         
         // 直接使用 StateObject 的 projectStore 保存，确保使用的是同一个实例
         projectStore.saveProjects()
+        
+        // 强制再次保存到持久化存储
+        do {
+            try persistenceController.container.viewContext.save()
+            print("✓ 强制保存视图上下文成功")
+            
+            // 验证预算是否正确保存
+            let request = ProjectEntity.fetchRequest()
+            if let projectEntities = try? persistenceController.container.viewContext.fetch(request) {
+                for entity in projectEntities {
+                    print("验证 - 项目 '\(entity.name ?? "未命名")' 的预算值为: \(entity.budget)")
+                }
+            }
+        } catch {
+            print("❌ 强制保存视图上下文失败: \(error)")
+        }
         
         // 确保iCloud同步设置被保存
         let isCloudSyncEnabled = UserDefaults.standard.bool(forKey: "enableCloudSync")

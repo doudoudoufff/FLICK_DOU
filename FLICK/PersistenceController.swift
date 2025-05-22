@@ -1,5 +1,6 @@
 import CoreData
 import CloudKit
+import UIKit
 
 class PersistenceController {
     static let shared = PersistenceController()
@@ -52,6 +53,9 @@ class PersistenceController {
         // 首先使用普通容器
         container = NSPersistentContainer(name: "FLICK")
         print("✓ 创建 NSPersistentContainer")
+        
+        // 所有存储属性初始化完成后，设置应用生命周期通知监听
+        setupAppLifecycleObservers()
         
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
@@ -491,6 +495,89 @@ class PersistenceController {
         }
     }
     
+    // 设置应用生命周期事件监听
+    private func setupAppLifecycleObservers() {
+        // 监听应用将要进入后台
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+        
+        // 监听应用将要终止
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillTerminate),
+            name: UIApplication.willTerminateNotification,
+            object: nil
+        )
+        
+        // 监听应用进入后台
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        print("✓ 已设置应用生命周期监听器")
+    }
+    
+    // 应用将要失去活跃状态
+    @objc private func appWillResignActive() {
+        print("应用变为非活动状态，正在保存数据...")
+        save()
+    }
+    
+    // 应用将要终止
+    @objc private func appWillTerminate() {
+        print("应用即将终止，强制保存所有数据...")
+        forceSaveAllData()
+    }
+    
+    // 应用进入后台
+    @objc private func appDidEnterBackground() {
+        print("应用进入后台，强制保存所有数据...")
+        forceSaveAllData()
+    }
+    
+    // 强制保存所有数据
+    private func forceSaveAllData() {
+        // 保存前的项目数量
+        var projectCount = 0
+        do {
+            let request = NSFetchRequest<ProjectEntity>(entityName: "ProjectEntity")
+            projectCount = try container.viewContext.count(for: request)
+            print("保存前的项目数量: \(projectCount)")
+        } catch {
+            print("⚠️ 获取项目数量失败: \(error)")
+        }
+        
+        // 确保所有预算值被保存
+        do {
+            let projectEntities = try container.viewContext.fetch(ProjectEntity.fetchRequest())
+            for entity in projectEntities {
+                print("保存前项目 \(entity.name ?? "未命名") 预算: \(entity.budget)")
+            }
+        } catch {
+            print("⚠️ 获取项目实体失败: \(error)")
+        }
+        
+        // 保存数据
+        save()
+        
+        // 同步到云端
+        if supportsCloudKit {
+            syncWithCloud { success, error in
+                if success {
+                    print("✓ 退出前数据同步成功")
+                } else if let error = error {
+                    print("⚠️ 退出前数据同步警告: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
 }
 
 // 添加通知名称

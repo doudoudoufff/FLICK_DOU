@@ -5,6 +5,15 @@ struct TaskRow: View {
     let project: Project
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingEditTask = false
+    // 添加本地状态以实现立即响应
+    @State private var isCompleted: Bool
+    
+    init(task: ProjectTask, project: Project) {
+        self.task = task
+        self.project = project
+        // 初始化本地状态
+        _isCompleted = State(initialValue: task.isCompleted)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -13,7 +22,8 @@ struct TaskRow: View {
                 HStack(spacing: 6) {
                     Text(task.title)
                         .font(.headline)
-                        .foregroundColor(task.isCompleted ? .secondary : .primary)
+                        .foregroundColor(isCompleted ? .secondary : .primary)
+                        .strikethrough(isCompleted, color: .secondary)
                     
                     if task.reminder != nil {
                         Image(systemName: "bell.fill")
@@ -25,17 +35,18 @@ struct TaskRow: View {
                 Spacer()
                 
                 // 完成状态滑块按钮
-                Toggle("", isOn: Binding(
-                    get: { task.isCompleted },
-                    set: { newValue in
-                        var updatedTask = task
-                        updatedTask.isCompleted = newValue
-                        projectStore.updateTask(updatedTask, in: project)
+                Toggle("", isOn: $isCompleted)
+                    .toggleStyle(SwitchToggleStyle(tint: .green))
+                    .labelsHidden()
+                    .frame(width: 45)
+                    .onChange(of: isCompleted) { newValue in
+                        // 简单直接的动画
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            var updatedTask = task
+                            updatedTask.isCompleted = newValue
+                            projectStore.updateTask(updatedTask, in: project)
+                        }
                     }
-                ))
-                .toggleStyle(SwitchToggleStyle(tint: .green))
-                .labelsHidden()
-                .frame(width: 45)
             }
             
             // 任务详情
@@ -43,29 +54,32 @@ struct TaskRow: View {
                 // 负责人
                 Label {
                     Text(task.assignee)
-                        .foregroundColor(task.isCompleted ? .secondary : .primary)
+                        .foregroundColor(isCompleted ? .secondary : .primary)
+                        .strikethrough(isCompleted, color: .secondary)
                 } icon: {
                     Image(systemName: "person")
-                        .foregroundColor(task.isCompleted ? .secondary : .primary)
+                        .foregroundColor(isCompleted ? .secondary : .primary)
                 }
                 
                 // 截止日期
                 Label {
                     Text(task.dueDate.formatted(date: .numeric, time: .omitted))
-                        .foregroundColor(task.isCompleted ? .secondary : .primary)
+                        .foregroundColor(isCompleted ? .secondary : .primary)
+                        .strikethrough(isCompleted, color: .secondary)
                 } icon: {
                     Image(systemName: "calendar")
-                        .foregroundColor(task.isCompleted ? .secondary : .primary)
+                        .foregroundColor(isCompleted ? .secondary : .primary)
                 }
                 
                 // 提醒时间
                 if task.reminder != nil {
                     Label {
                         Text("\(task.reminderHour):00")
-                            .foregroundColor(task.isCompleted ? .secondary : .blue)
+                            .foregroundColor(isCompleted ? .secondary : .blue)
+                            .strikethrough(isCompleted, color: .secondary)
                     } icon: {
                         Image(systemName: "clock")
-                            .foregroundColor(task.isCompleted ? .secondary : .blue)
+                            .foregroundColor(isCompleted ? .secondary : .blue)
                     }
                 }
             }
@@ -76,9 +90,18 @@ struct TaskRow: View {
         .background(Color(.systemBackground))
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .opacity(isCompleted ? 0.8 : 1.0)
         .sheet(isPresented: $showingEditTask) {
             // TODO: 实现编辑任务视图
             Text("编辑任务")
+        }
+        // 添加监听，确保当父视图的任务状态变化时同步更新本地状态
+        .onChange(of: task.isCompleted) { newValue in
+            if isCompleted != newValue {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isCompleted = newValue
+                }
+            }
         }
     }
 } 

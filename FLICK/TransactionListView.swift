@@ -11,6 +11,7 @@ struct TransactionListView: View {
     @State private var startDate: Date = Date().addingTimeInterval(-30*86400) // 默认显示最近30天
     @State private var endDate: Date = Date()
     @State private var showingManagement = false
+    @State private var showingBudgetEditor = false
     
     // 判断是否为 iPad
     private var isIPad: Bool {
@@ -103,6 +104,14 @@ struct TransactionListView: View {
                 }
             }
             
+            // 预算卡片
+            BudgetCard(
+                budget: project.budget,
+                spent: totalExpense,
+                usagePercentage: project.budgetUsagePercentage,
+                onEditBudget: { showingBudgetEditor = true }
+            )
+            
             // 统计卡片
             HStack(spacing: 12) {
                 FinanceCard(
@@ -152,6 +161,17 @@ struct TransactionListView: View {
                 }
                 .padding(.vertical, 6)
             }
+            
+            // 管理账目按钮
+            NavigationLink(destination: TransactionManagementView(project: $project).environmentObject(projectStore)) {
+                Text("管理所有账目")
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.accentColor)
+                    .cornerRadius(8)
+            }
         }
         .padding()
         .background(Color(.systemBackground))
@@ -159,12 +179,11 @@ struct TransactionListView: View {
         .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
         .sheet(isPresented: $isAddingTransaction) {
             NavigationView {
-                TransactionFormView(
+                AddTransactionView(
                     project: $project,
-                    projectStore: projectStore,
-                    transactionToEdit: nil,
                     isPresented: $isAddingTransaction
                 )
+                .environmentObject(projectStore)
             }
         }
         .sheet(isPresented: $showingManagement) {
@@ -173,11 +192,340 @@ struct TransactionListView: View {
                     .environmentObject(projectStore)
             }
         }
+        .sheet(isPresented: $showingBudgetEditor) {
+            BudgetEditorView(project: $project, projectStore: projectStore)
+        }
     }
     
     // 导航到交易记录详情
     private func navigateToTransactionDetail(transaction: Transaction) {
         // 实际应用中，可以跳转到详情页
+    }
+}
+
+// 项目账目摘要卡片 - 用于项目详情页面展示
+struct TransactionSummaryCard: View {
+    @Binding var project: Project
+    @ObservedObject var projectStore: ProjectStore
+    @State private var showingBudgetEditor = false
+    @State private var isAddingTransaction = false
+    
+    // 计算总收入
+    private var totalIncome: Double {
+        project.transactions
+            .filter { $0.transactionType == .income }
+            .reduce(0) { $0 + $1.amount }
+    }
+    
+    // 计算总支出
+    private var totalExpense: Double {
+        project.transactions
+            .filter { $0.transactionType == .expense }
+            .reduce(0) { $0 + $1.amount }
+    }
+    
+    // 格式化金额
+    private func formatAmount(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: NSNumber(value: amount)) ?? "¥\(amount)"
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // 标题和操作按钮
+            HStack {
+                Text("账目管理")
+                    .font(.headline)
+                
+                Spacer()
+                
+                NavigationLink(destination: TransactionManagementView(project: $project).environmentObject(projectStore)) {
+                    Label("管理", systemImage: "chevron.right")
+                        .labelStyle(.iconOnly)
+                        .foregroundColor(.accentColor)
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: { isAddingTransaction = true }) {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(.accentColor)
+                }
+            }
+            
+            Divider()
+            
+            // 预算信息
+            VStack(spacing: 12) {
+                if project.budget > 0 {
+                    HStack {
+                        Text("预算总额")
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        Text(formatAmount(project.budget))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Button(action: { showingBudgetEditor = true }) {
+                            Image(systemName: "pencil")
+                                .font(.footnote)
+                                .foregroundColor(.accentColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .font(.subheadline)
+                    
+                    // 预算进度条
+                    VStack(spacing: 4) {
+                        HStack {
+                            Text("预算使用")
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Text("\(Int(project.budgetUsagePercentage))%")
+                                .foregroundColor(
+                                    project.budgetUsagePercentage < 70 ? .green :
+                                        project.budgetUsagePercentage < 90 ? .orange : .red
+                                )
+                        }
+                        .font(.subheadline)
+                        
+                        ZStack(alignment: .leading) {
+                            Rectangle()
+                                .frame(height: 6)
+                                .foregroundColor(Color(.systemGray5))
+                                .cornerRadius(3)
+                            
+                            Rectangle()
+                                .frame(width: min(max(CGFloat(project.budgetUsagePercentage) / 100.0 * UIScreen.main.bounds.width * 0.8, 0), UIScreen.main.bounds.width * 0.8), height: 6)
+                                .foregroundColor(
+                                    project.budgetUsagePercentage < 70 ? .green :
+                                        project.budgetUsagePercentage < 90 ? .yellow : .red
+                                )
+                                .cornerRadius(3)
+                        }
+                    }
+                } else {
+                    HStack {
+                        Text("尚未设置预算")
+                            .foregroundColor(.secondary)
+                            .font(.subheadline)
+                        
+                        Spacer()
+                        
+                        Button(action: { showingBudgetEditor = true }) {
+                            Text("设置")
+                                .font(.subheadline)
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                }
+            }
+            
+            // 财务摘要
+            HStack(spacing: 12) {
+                FinanceCard(
+                    title: "收入",
+                    value: formatAmount(totalIncome),
+                    color: .green
+                )
+                
+                FinanceCard(
+                    title: "支出",
+                    value: formatAmount(totalExpense),
+                    color: .red
+                )
+                
+                FinanceCard(
+                    title: "结余",
+                    value: formatAmount(totalIncome - totalExpense),
+                    color: totalIncome - totalExpense >= 0 ? .blue : .red
+                )
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .sheet(isPresented: $isAddingTransaction) {
+            NavigationView {
+                AddTransactionView(
+                    project: $project,
+                    isPresented: $isAddingTransaction
+                )
+                .environmentObject(projectStore)
+            }
+        }
+        .sheet(isPresented: $showingBudgetEditor) {
+            BudgetEditorView(project: $project, projectStore: projectStore)
+        }
+    }
+}
+
+// 预算卡片
+struct BudgetCard: View {
+    let budget: Double
+    let spent: Double
+    let usagePercentage: Double
+    let onEditBudget: () -> Void
+    
+    private var remainingBudget: Double {
+        max(budget - spent, 0)
+    }
+    
+    private func formatAmount(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: NSNumber(value: amount)) ?? "¥\(amount)"
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("项目预算")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button(action: onEditBudget) {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.accentColor)
+                }
+            }
+            
+            if budget > 0 {
+                HStack {
+                    Text("总预算: \(formatAmount(budget))")
+                        .font(.subheadline)
+                    
+                    Spacer()
+                    
+                    Text("已使用: \(formatAmount(spent))")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Text("剩余: \(formatAmount(remainingBudget))")
+                        .font(.subheadline)
+                        .foregroundColor(remainingBudget > budget * 0.2 ? .green : .red)
+                    
+                    Spacer()
+                    
+                    Text("\(Int(usagePercentage))%")
+                        .font(.subheadline)
+                        .foregroundColor(usagePercentage < 80 ? .secondary : .red)
+                }
+                
+                // 进度条
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .frame(height: 8)
+                        .foregroundColor(Color(.systemGray5))
+                        .cornerRadius(4)
+                    
+                    Rectangle()
+                        .frame(width: min(max(CGFloat(usagePercentage) / 100.0 * UIScreen.main.bounds.width * 0.8, 0), UIScreen.main.bounds.width * 0.8), height: 8)
+                        .foregroundColor(
+                            usagePercentage < 70 ? .green :
+                                usagePercentage < 90 ? .yellow : .red
+                        )
+                        .cornerRadius(4)
+                }
+            } else {
+                Text("未设置预算")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Button(action: onEditBudget) {
+                    Text("设置预算")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.accentColor)
+                        .cornerRadius(8)
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+    }
+}
+
+// 预算编辑视图
+struct BudgetEditorView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var project: Project
+    @ObservedObject var projectStore: ProjectStore
+    @State private var budgetText: String = ""
+    @State private var showError = false
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("设置项目预算")) {
+                    TextField("预算金额", text: $budgetText)
+                        .keyboardType(.decimalPad)
+                        .onAppear {
+                            budgetText = project.budget > 0 ? String(format: "%.2f", project.budget) : ""
+                        }
+                }
+                
+                Section {
+                    Button("保存") {
+                        saveBudget()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .foregroundColor(.blue)
+                }
+            }
+            .navigationTitle("项目预算")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert(isPresented: $showError) {
+                Alert(
+                    title: Text("输入错误"),
+                    message: Text("请输入有效的预算金额"),
+                    dismissButton: .default(Text("确定"))
+                )
+            }
+        }
+    }
+    
+    private func saveBudget() {
+        guard let budget = Double(budgetText.replacingOccurrences(of: ",", with: ".")),
+              budget >= 0 else {
+            showError = true
+            return
+        }
+        
+        print("设置项目预算，原始值: \(project.budget)")
+        project.budget = budget
+        print("新的预算值: \(budget)")
+        
+        // 保存到CoreData
+        projectStore.updateProject(project)
+        print("已调用updateProject保存预算")
+        
+        dismiss()
     }
 }
 
@@ -188,7 +536,7 @@ struct FinanceCard: View {
     let color: Color
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -200,7 +548,7 @@ struct FinanceCard: View {
                 .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
+        .padding(8)
         .background(color.opacity(0.1))
         .cornerRadius(8)
     }

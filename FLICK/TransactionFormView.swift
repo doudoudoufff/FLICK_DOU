@@ -97,6 +97,39 @@ struct TransactionFormView: View {
             
             // 表单内容
             Form {
+                // 交易类型
+                Section {
+                    HStack(spacing: 10) {
+                        // 支出按钮
+                        Button(action: { transactionType = .expense }) {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "arrow.down.circle.fill")
+                                Text("支出")
+                                Spacer()
+                            }
+                            .padding(.vertical, 12)
+                            .background(transactionType == .expense ? Color.red : Color(.systemGray5))
+                            .foregroundColor(transactionType == .expense ? .white : .gray)
+                            .cornerRadius(8)
+                        }
+                        
+                        // 收入按钮
+                        Button(action: { transactionType = .income }) {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "arrow.up.circle.fill")
+                                Text("收入")
+                                Spacer()
+                            }
+                            .padding(.vertical, 12)
+                            .background(transactionType == .income ? Color.green : Color(.systemGray5))
+                            .foregroundColor(transactionType == .income ? .white : .gray)
+                            .cornerRadius(8)
+                        }
+                    }
+                }
+                
                 // 基本信息
                 Section {
                     TextField("名称", text: $name)
@@ -107,6 +140,7 @@ struct TransactionFormView: View {
                         TextField("0.00", text: $amount)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .foregroundColor(transactionType == .expense ? .red : .green)
                     }
                     
                     DatePicker("日期", selection: $date, displayedComponents: .date)

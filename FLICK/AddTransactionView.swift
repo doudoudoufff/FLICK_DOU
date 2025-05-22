@@ -5,7 +5,28 @@ struct AddTransactionView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var projectStore: ProjectStore
     @Binding var project: Project
+    @Binding var isPresented: Bool
     
+    // 交易类型
+    enum TransactionType {
+        case expense, income
+        
+        var title: String {
+            switch self {
+            case .expense: return "支出"
+            case .income: return "收入"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .expense: return .red
+            case .income: return .green
+            }
+        }
+    }
+    
+    @State private var transactionType: TransactionType = .expense
     @State private var name: String = ""
     @State private var amount: String = ""
     @State private var date: Date = Date()
@@ -39,13 +60,64 @@ struct AddTransactionView: View {
         return defaultGroups + customGroups.filter { !defaultGroups.contains($0) }
     }
     
-    // 对类型分组以网格显示
-    private let columns = [
-        GridItem(.adaptive(minimum: 100), spacing: 10)
-    ]
-    
     var body: some View {
         Form {
+            // 交易类型选择
+            Section {
+                HStack(spacing: 0) {
+                    Button(action: {
+                        print("切换到支出，当前类型: \(transactionType)")
+                        transactionType = .expense
+                        print("切换后类型: \(transactionType)")
+                    }) {
+                        VStack {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 20))
+                            Text("支出")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(transactionType == .expense ? Color.red.opacity(0.9) : Color(.systemGray5))
+                        .foregroundColor(transactionType == .expense ? .white : .primary)
+                        .cornerRadius(10)
+                    }
+                    
+                    Spacer()
+                        .frame(width: 10)
+                    
+                    Button(action: {
+                        print("切换到收入，当前类型: \(transactionType)")
+                        transactionType = .income
+                        print("切换后类型: \(transactionType)")
+                    }) {
+                        VStack {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 20))
+                            Text("收入")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(transactionType == .income ? Color.green.opacity(0.9) : Color(.systemGray5))
+                        .foregroundColor(transactionType == .income ? .white : .primary)
+                        .cornerRadius(10)
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+
+            // 当前项目信息
+            Section {
+                HStack {
+                    Text("所属项目")
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Text(project.name)
+                        .foregroundColor(.secondary)
+                }
+            }
+
             // 姓名和金额（必填）
             Section("基本信息") {
                 // 姓名输入
@@ -78,7 +150,7 @@ struct AddTransactionView: View {
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 120)
-                        .foregroundColor(.red)
+                        .foregroundColor(transactionType.color)
                         .fontWeight(.semibold)
                 }
                 
@@ -98,7 +170,7 @@ struct AddTransactionView: View {
                 }
             }
             
-            // 费用类型选择（网格布局）
+            // 费用类型选择（横向滑动）
             Section(header: HStack {
                 Text("费用类型")
                 Spacer()
@@ -108,19 +180,24 @@ struct AddTransactionView: View {
                 .font(.caption)
                 .foregroundColor(.blue)
             }) {
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 10) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
                         ForEach(["未分类"] + availableExpenseTypes, id: \.self) { type in
-                            ExpenseTypeButton(
-                                title: type,
-                                isSelected: expenseType == type,
-                                action: { expenseType = type }
-                            )
+                            Button(action: {
+                                expenseType = type
+                            }) {
+                                Text(type)
+                                    .font(.system(size: 14))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(expenseType == type ? Color.accentColor : Color(.systemGray5))
+                                    .foregroundColor(expenseType == type ? .white : .primary)
+                                    .cornerRadius(16)
+                            }
                         }
                     }
                     .padding(.vertical, 8)
                 }
-                .frame(height: 150)
             }
             .alert("添加新费用类型", isPresented: $showingAddExpenseType) {
                 TextField("费用类型名称", text: $newExpenseType)
@@ -139,7 +216,7 @@ struct AddTransactionView: View {
                 }
             }
             
-            // 组别选择（网格布局）
+            // 组别选择（横向滑动）
             Section(header: HStack {
                 Text("组别")
                 Spacer()
@@ -149,19 +226,24 @@ struct AddTransactionView: View {
                 .font(.caption)
                 .foregroundColor(.blue)
             }) {
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 10) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
                         ForEach(["未分类"] + availableGroups, id: \.self) { group in
-                            GroupButton(
-                                title: group,
-                                isSelected: self.group == group,
-                                action: { self.group = group }
-                            )
+                            Button(action: {
+                                self.group = group
+                            }) {
+                                Text(group)
+                                    .font(.system(size: 14))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(self.group == group ? Color.accentColor : Color(.systemGray5))
+                                    .foregroundColor(self.group == group ? .white : .primary)
+                                    .cornerRadius(16)
+                            }
                         }
                     }
                     .padding(.vertical, 8)
                 }
-                .frame(height: 150)
             }
             .alert("添加新组别", isPresented: $showingAddGroup) {
                 TextField("组别名称", text: $newGroup)
@@ -213,7 +295,7 @@ struct AddTransactionView: View {
                         PhotosPicker(selection: $selectedPhoto, matching: .images) {
                             HStack {
                                 Image(systemName: "plus.square.on.square")
-                                Text("添加票据或收据照片")
+                                Text("添加附件照片")
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
@@ -231,7 +313,7 @@ struct AddTransactionView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("取消") {
-                    dismiss()
+                    isPresented = false
                 }
             }
             
@@ -300,7 +382,7 @@ struct AddTransactionView: View {
         // 创建新的交易记录
         let transaction = Transaction(
             name: name,
-            amount: amountValue,
+            amount: transactionType == .expense ? -amountValue : amountValue,
             date: date,
             transactionDescription: description,
             expenseType: expenseType,
@@ -319,16 +401,14 @@ struct AddTransactionView: View {
         // 延迟一小段时间以显示保存中状态
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
-            dismiss()
+            isPresented = false
         }
     }
 }
 
-struct AddTransactionView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            AddTransactionView(project: .constant(Project(name: "测试项目")))
-                .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
-        }
+#Preview {
+    NavigationStack {
+        AddTransactionView(project: .constant(Project(name: "测试项目")), isPresented: .constant(true))
+            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
     }
 } 

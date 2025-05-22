@@ -7,6 +7,14 @@ struct OverviewView: View {
     @State private var showingAddTask = false
     @State private var selectedProject: Project?
     @State private var showingBaiBai = false
+    @State private var taskFilter: TaskFilter = .all // 添加任务筛选状态
+    
+    // 任务筛选枚举
+    enum TaskFilter {
+        case all         // 全部（今日任务）
+        case pending     // 待完成
+        case completed   // 已完成
+    }
     
     // 检查指定日期是否有任务
     private func hasTasksOnDate(_ date: Date) -> Bool {
@@ -18,7 +26,7 @@ struct OverviewView: View {
         return false
     }
     
-    // 获取选中日期的所有任务
+    // 获取选中日期的所有任务，并根据筛选条件过滤
     private var tasksForSelectedDate: [TaskWithProject] {
         var result: [TaskWithProject] = []
         for project in projectStore.projects {
@@ -29,6 +37,20 @@ struct OverviewView: View {
                 result.append(TaskWithProject(task: task, project: project))
             }
         }
+        
+        // 应用筛选条件
+        switch taskFilter {
+        case .all:
+            // 全部显示（不额外筛选）
+            break
+        case .pending:
+            // 只显示未完成的任务
+            result = result.filter { !$0.task.isCompleted }
+        case .completed:
+            // 只显示已完成的任务
+            result = result.filter { $0.task.isCompleted }
+        }
+        
         // 先按完成状态排序，未完成的在前，然后按时间排序
         return result.sorted { task1, task2 in
             if task1.task.isCompleted != task2.task.isCompleted {
@@ -38,10 +60,29 @@ struct OverviewView: View {
         }
     }
     
+    // 计算每种类型的任务数量
+    private var allTasksCount: Int {
+        return projectStore.projects.flatMap { project in
+            project.tasks.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) }
+        }.count
+    }
+    
+    private var pendingTasksCount: Int {
+        return projectStore.projects.flatMap { project in
+            project.tasks.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) && !$0.isCompleted }
+        }.count
+    }
+    
+    private var completedTasksCount: Int {
+        return projectStore.projects.flatMap { project in
+            project.tasks.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) && $0.isCompleted }
+        }.count
+    }
+    
     // 修改任务状态切换方法
     private func toggleTaskCompletion(_ taskWithProject: TaskWithProject) {
-        withAnimation {
-            // 使用 ProjectStore 的方法来切换任务状态
+        withAnimation(.easeInOut(duration: 0.2)) {
+            // 执行状态切换
             projectStore.toggleTaskCompletion(taskWithProject.task, in: taskWithProject.project)
         }
     }
@@ -119,29 +160,44 @@ struct OverviewView: View {
                     }
                     .padding(.horizontal)
                     
-                    // 任务统计
-                    HStack(spacing: 16) {
-                        StatisticCard(
+                    // 任务统计 - 改为可点击筛选的卡片
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        FilterStatisticCard(
                             title: "今日任务",
-                            value: "\(tasksForSelectedDate.count)",
+                            value: "\(allTasksCount)",
                             icon: "calendar",
-                            color: .blue
+                            color: .blue,
+                            isSelected: taskFilter == .all,
+                            action: { taskFilter = .all }
                         )
                         
-                        StatisticCard(
+                        FilterStatisticCard(
                             title: "待完成",
-                            value: "\(tasksForSelectedDate.filter { !$0.task.isCompleted }.count)",
+                            value: "\(pendingTasksCount)",
                             icon: "clock",
-                            color: .orange
+                            color: .orange,
+                            isSelected: taskFilter == .pending,
+                            action: { taskFilter = .pending }
+                        )
+                        
+                        FilterStatisticCard(
+                            title: "已完成",
+                            value: "\(completedTasksCount)",
+                            icon: "checkmark.circle",
+                            color: .green,
+                            isSelected: taskFilter == .completed,
+                            action: { taskFilter = .completed }
                         )
                     }
                     .padding(.horizontal)
                     
-                    // 任务列表
-                    if !tasksForSelectedDate.isEmpty {
+                    // 任务列表 - 未完成和已完成分开显示
+                    if !pendingTasks.isEmpty || !completedTasks.isEmpty {
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
-                                Text("任务列表")
+                                // 动态显示标题，根据筛选条件变化
+                                Text(taskFilter == .all ? "今日任务" : 
+                                    (taskFilter == .pending ? "待完成任务" : "已完成任务"))
                                     .font(.headline)
                                 
                                 Spacer()
@@ -159,14 +215,48 @@ struct OverviewView: View {
                             }
                             .padding(.horizontal)
                             
-                            // 修改任务列表的显示方式
-                            LazyVStack(spacing: 16) {  // 使用 LazyVStack 替代 ForEach
-                                ForEach(tasksForSelectedDate) { taskWithProject in
-                                    DailyTaskRow(taskWithProject: taskWithProject) {
-                                        toggleTaskCompletion(taskWithProject)
+                            // 根据筛选条件显示相应任务
+                            if taskFilter == .all || taskFilter == .pending {
+                                // 未完成任务
+                                if !pendingTasks.isEmpty {
+                                    VStack(spacing: 12) {
+                                        ForEach(pendingTasks) { taskWithProject in
+                                            DailyTaskRow(taskWithProject: taskWithProject) {
+                                                toggleTaskCompletion(taskWithProject)
+                                            }
+                                            .transition(.opacity)
+                                        }
                                     }
                                     .padding(.horizontal)
+                                    .animation(.easeInOut(duration: 0.2), value: pendingTasks.map { $0.id })
                                 }
+                            }
+                            
+                            // 显示已完成任务（如果需要）
+                            if (taskFilter == .all || taskFilter == .completed) && !completedTasks.isEmpty {
+                                VStack(alignment: .leading) {
+                                    if taskFilter == .all && !pendingTasks.isEmpty {
+                                        // 仅当显示全部且有未完成任务时才显示此分隔线
+                                        Divider()
+                                            .padding(.vertical, 8)
+                                        
+                                        Text("已完成")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                            .padding(.bottom, 8)
+                                    }
+                                    
+                                    VStack(spacing: 12) {
+                                        ForEach(completedTasks) { taskWithProject in
+                                            DailyTaskRow(taskWithProject: taskWithProject) {
+                                                toggleTaskCompletion(taskWithProject)
+                                            }
+                                            .transition(.opacity)
+                                        }
+                                    }
+                                    .animation(.easeInOut(duration: 0.2), value: completedTasks.map { $0.id })
+                                }
+                                .padding(.horizontal)
                             }
                         }
                     } else {
@@ -175,7 +265,7 @@ struct OverviewView: View {
                                 .font(.system(size: 48))
                                 .foregroundColor(.secondary)
                             
-                            Text("今天没有待办任务")
+                            Text(emptyStateMessage)
                                 .font(.headline)
                                 .foregroundColor(.secondary)
                             
@@ -215,6 +305,27 @@ struct OverviewView: View {
             }
         }
     }
+    
+    // 根据筛选状态显示不同的空状态消息
+    private var emptyStateMessage: String {
+        switch taskFilter {
+        case .all:
+            return "今日没有任务"
+        case .pending:
+            return "今日没有待完成任务"
+        case .completed:
+            return "今日没有已完成任务"
+        }
+    }
+    
+    // 将任务分为已完成和未完成两个数组
+    private var pendingTasks: [TaskWithProject] {
+        tasksForSelectedDate.filter { !$0.task.isCompleted }
+    }
+    
+    private var completedTasks: [TaskWithProject] {
+        tasksForSelectedDate.filter { $0.task.isCompleted }
+    }
 }
 
 // 用于关联任务和所属项目的结构
@@ -228,32 +339,42 @@ struct TaskWithProject: Identifiable, Equatable {
     }
 }
 
-// 统计卡片组件
-struct StatisticCard: View {
+// 添加可筛选的统计卡片组件
+struct FilterStatisticCard: View {
     let title: String
     let value: String
     let icon: String
     let color: Color
+    let isSelected: Bool
+    let action: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                Text(title)
-                    .foregroundColor(.secondary)
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 4) {
+                    Image(systemName: icon)
+                        .foregroundColor(isSelected ? .white : color)
+                    Text(title)
+                        .foregroundColor(isSelected ? .white : .secondary)
+                        .lineLimit(2)
+                }
+                .font(.subheadline)
+                
+                Text(value)
+                    .font(.system(.title2, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundColor(isSelected ? .white : .primary)
             }
-            .font(.subheadline)
-            
-            Text(value)
-                .font(.system(.title, design: .rounded))
-                .fontWeight(.bold)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 85) // 降低高度
+            .padding(12) // 减小内边距
+            .background(isSelected ? color : Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+            .animation(.spring(response: 0.3), value: isSelected)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .buttonStyle(PlainButtonStyle())
+        .frame(minWidth: 0, maxWidth: .infinity) // 确保按钮填充可用空间
     }
 }
 
@@ -261,6 +382,14 @@ struct StatisticCard: View {
 struct DailyTaskRow: View {
     let taskWithProject: TaskWithProject
     let onToggleCompletion: () -> Void
+    @State private var isCompleted: Bool
+    @State private var animateChanges = false
+    
+    init(taskWithProject: TaskWithProject, onToggleCompletion: @escaping () -> Void) {
+        self.taskWithProject = taskWithProject
+        self.onToggleCompletion = onToggleCompletion
+        _isCompleted = State(initialValue: taskWithProject.task.isCompleted)
+    }
     
     var body: some View {
         HStack(spacing: 16) {
@@ -268,7 +397,8 @@ struct DailyTaskRow: View {
                 // 任务标题
                 Text(taskWithProject.task.title)
                     .font(.headline)
-                    .foregroundColor(taskWithProject.task.isCompleted ? .secondary : .primary)
+                    .foregroundColor(isCompleted ? .secondary : .primary)
+                    .strikethrough(isCompleted, color: .secondary) // 添加删除线
                 
                 // 项目信息和时间
                 HStack {
@@ -292,17 +422,40 @@ struct DailyTaskRow: View {
                 .clipShape(Capsule())
             
             // 完成状态切换开关
-            Toggle("", isOn: .init(
-                get: { taskWithProject.task.isCompleted },
-                set: { _ in onToggleCompletion() }
-            ))
-            .toggleStyle(SwitchToggleStyle(tint: taskWithProject.project.color))
+            Toggle("", isOn: $isCompleted)
+                .toggleStyle(SwitchToggleStyle(tint: taskWithProject.project.color))
+                .onChange(of: isCompleted) { newValue in
+                    // 先开始本地动画
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                        animateChanges = true
+                    }
+                    
+                    // 短暂延迟后调用实际状态切换
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            onToggleCompletion()
+                            // 动画完成后重置
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                animateChanges = false
+                            }
+                        }
+                    }
+                }
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
-        .opacity(taskWithProject.task.isCompleted ? 0.8 : 1.0)
+        .opacity(isCompleted ? 0.8 : 1.0)
+        .scaleEffect(animateChanges ? (isCompleted ? 0.98 : 1.02) : 1.0)
+        // 添加监听，确保当父视图的任务状态变化时同步更新本地状态
+        .onChange(of: taskWithProject.task.isCompleted) { newValue in
+            if isCompleted != newValue {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isCompleted = newValue
+                }
+            }
+        }
     }
 }
 

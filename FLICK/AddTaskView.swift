@@ -14,6 +14,7 @@ struct AddTaskView: View {
     @State private var showingCreateProjectSheet = false
     @State private var showingTaskAddedAlert = false
     @State private var addedTaskProjectName = ""
+    @State private var showingProjectRequiredAlert = false
     
     var body: some View {
         NavigationStack {
@@ -49,26 +50,44 @@ struct AddTaskView: View {
                         }
                     }
                 }
-                Section(header: Text("所属项目")) {
-                    Picker("选择项目", selection: $selectedProject) {
-                        ForEach(projectStore.projects) { project in
-                            Text(project.name).tag(Optional(project))
+                Section(header: HStack {
+                    Text("所属项目")
+                    Text("*")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("选择项目")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Button(action: { showingCreateProjectSheet = true }) {
+                                Text("＋ 新建项目")
+                                    .font(.caption)
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(projectStore.projects) { project in
+                                    Button(action: {
+                                        selectedProject = project
+                                    }) {
+                                        Text(project.name)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
+                                            .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
                     }
-                        HStack {
-                        Spacer(minLength: 0)
-                        Button(action: { showingCreateProjectSheet = true }) {
-                            Text("＋ 新建项目")
-                                .font(.body)
-                                .foregroundColor(.accentColor)
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 18)
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.accentColor, lineWidth: 1)
-                                )
-                        }
-                        .buttonStyle(.plain)
                 }
             }
         }
@@ -110,7 +129,7 @@ struct AddTaskView: View {
                     selectedProject = projectStore.projects.first
                 }
             }
-            .overlay(
+                        .overlay(
                 Group {
                     if showingTaskAddedAlert {
                         VStack {
@@ -119,15 +138,25 @@ struct AddTaskView: View {
                                 .background(Color(.systemBackground))
                                 .cornerRadius(10)
                                 .shadow(radius: 5)
-                }
+                        }
                         .transition(.opacity)
                         .animation(.easeInOut, value: showingTaskAddedAlert)
                     }
-                    }
+                }
             )
+            .alert("请选择项目", isPresented: $showingProjectRequiredAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text("请选择一个项目来保存任务。")
+            }
+            .alert("请选择项目", isPresented: $showingProjectRequiredAlert) {
+                Button("确定", role: .cancel) {}
+            } message: {
+                Text("请选择一个项目来添加此任务")
+            }
                 }
             }
-        }
+
 
 struct EmptyProjectSection: View {
     @Binding var showingCreateProjectAlert: Bool

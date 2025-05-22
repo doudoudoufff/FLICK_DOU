@@ -51,6 +51,9 @@ public class ProjectEntity: NSManagedObject {
             return .blue
         }()
         
+        // 打印预算值（用于调试）
+        print("ProjectEntity.toModel - 加载预算值: \(budget)")
+        
         return Project(
             id: id,
             name: name,
@@ -65,7 +68,8 @@ public class ProjectEntity: NSManagedObject {
             accounts: accountsArray,
             transactions: transactionsArray,
             isLocationScoutingEnabled: isLocationScoutingEnabled,
-            logoData: logoData
+            logoData: logoData,
+            budget: budget
         )
     }
 }

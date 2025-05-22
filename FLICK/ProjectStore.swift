@@ -131,9 +131,16 @@ class ProjectStore: ObservableObject {
             let entities = try context.fetch(request)
             print("从 CoreData 加载了 \(entities.count) 个项目实体")
             
+            // 预先验证实体的预算值
+            for entity in entities {
+                print("预先验证 - 项目 '\(entity.name ?? "未命名")' 预算值: \(entity.budget)")
+            }
+            
             var loadedProjects: [Project] = []
             for entity in entities {
                 let project = mapProjectEntityToProject(entity)
+                // 验证预算值正确传递到Project对象
+                print("映射后 - 项目 '\(project.name)' 预算值: \(project.budget)")
                 loadedProjects.append(project)
             }
             
@@ -142,6 +149,12 @@ class ProjectStore: ObservableObject {
                 // 直接替换整个数组，避免部分更新
                 self.projects = loadedProjects
                 print("✓ 成功加载 \(loadedProjects.count) 个项目")
+                
+                // 最终验证
+                for project in self.projects {
+                    print("最终验证 - 项目 '\(project.name)' 预算值: \(project.budget)")
+                }
+                
                 // 显式通知视图更新
                 self.objectWillChange.send()
             }
@@ -184,6 +197,11 @@ class ProjectStore: ObservableObject {
                     projectEntity.color = project.color.toData()
                     projectEntity.isLocationScoutingEnabled = project.isLocationScoutingEnabled
                     projectEntity.logoData = project.logoData
+                    
+                    // 明确设置预算值并打印日志
+                    print("设置项目实体预算值: \(project.budget)")
+                    projectEntity.budget = project.budget
+                    print("设置后预算值: \(projectEntity.budget)")
                 } else {
                     print("✓ 未找到现有项目实体，创建新实体")
                     projectEntity = project.toEntity(context: context)
@@ -377,6 +395,15 @@ class ProjectStore: ObservableObject {
         do {
             try context.save()
             print("✓ CoreData 保存成功")
+            
+            // 立即验证预算值是否正确保存
+            print("=== 立即验证预算值是否保存成功 ===")
+            let budgetVerifyRequest = ProjectEntity.fetchRequest()
+            let projectEntities = try context.fetch(budgetVerifyRequest)
+            for entity in projectEntities {
+                print("验证保存后 - 项目 '\(entity.name ?? "未命名")' 预算值: \(entity.budget)")
+            }
+            print("=== 验证完成 ===")
             
             // 记录保存时间
             UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastSaveTime")
@@ -592,8 +619,19 @@ class ProjectStore: ObservableObject {
     
     // 更新项目
     func updateProject(_ updatedProject: Project) {
+        print("更新项目预算值: \(updatedProject.budget)")
+        
+        // 更新内存中的项目
+        if let index = projects.firstIndex(where: { $0.id == updatedProject.id }) {
+            projects[index] = updatedProject
+            print("✓ 已更新内存中的项目数据")
+        }
+        
+        // 更新CoreData实体
         if let projectEntity = try? context.fetch(ProjectEntity.fetchRequest())
             .first(where: { $0.id == updatedProject.id }) {
+            
+            print("CoreData中原始预算值: \(projectEntity.budget)")
             
             // 更新 CoreData 实体
             projectEntity.name = updatedProject.name
@@ -604,12 +642,15 @@ class ProjectStore: ObservableObject {
             projectEntity.color = updatedProject.color.toData()
             projectEntity.isLocationScoutingEnabled = updatedProject.isLocationScoutingEnabled
             projectEntity.logoData = updatedProject.logoData  // 添加LOGO数据的更新
+            projectEntity.budget = updatedProject.budget      // 添加预算数据的更新
+            
+            print("更新后CoreData中的预算值: \(projectEntity.budget)")
             
             // 保存更改
             saveContext()
             
-            // 强制重新加载项目列表，确保排序一致
-            loadProjects()
+            // 通知UI刷新，但不重新加载项目列表
+            objectWillChange.send()
         }
     }
     
@@ -617,11 +658,28 @@ class ProjectStore: ObservableObject {
     private func saveContext() {
         if context.hasChanges {
             do {
+                // 添加保存前的数据验证日志
+                if let projectEntities = try? context.fetch(ProjectEntity.fetchRequest()) {
+                    for entity in projectEntities {
+                        print("保存前验证 - 项目: \(entity.name ?? "未命名"), 预算: \(entity.budget)")
+                    }
+                }
+                
                 try context.save()
                 print("✓ 成功保存到CoreData本地存储")
                 
                 // 确保数据持久化和同步到iCloud
                 PersistenceController.shared.save()
+                
+                // 强制刷新持久化存储
+                try PersistenceController.shared.container.viewContext.save()
+                
+                // 添加保存后的数据验证日志
+                if let projectEntities = try? context.fetch(ProjectEntity.fetchRequest()) {
+                    for entity in projectEntities {
+                        print("保存后验证 - 项目: \(entity.name ?? "未命名"), 预算: \(entity.budget)")
+                    }
+                }
                 
                 // 检查是否启用了iCloud同步
                 if UserDefaults.standard.bool(forKey: "enableCloudSync") {
@@ -1664,22 +1722,41 @@ class ProjectStore: ObservableObject {
         updatedTask.isCompleted.toggle()
         print("任务状态: \(updatedTask.isCompleted ? "已完成" : "未完成")")
         
-        // 更新任务
-        updateTask(updatedTask, in: project)
-        
-        // 处理提醒
-        if updatedTask.isCompleted {
-            NotificationManager.shared.removeTaskReminders(for: task)
-            print("✓ 已移除任务提醒")
-        } else if let reminder = task.reminder {
-            NotificationManager.shared.scheduleTaskReminder(for: task, in: project)
-            print("✓ 已重新设置任务提醒")
+        // 使用动画更新任务
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            // 立即更新内存中的数据，确保UI能立即响应
+            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+               let taskIndex = projects[projectIndex].tasks.firstIndex(where: { $0.id == task.id }) {
+                projects[projectIndex].tasks[taskIndex].isCompleted = updatedTask.isCompleted
+                // 主动通知视图刷新
+                objectWillChange.send()
+            }
+            
+            // 更新任务到CoreData
+            updateTask(updatedTask, in: project)
+            
+            // 处理提醒
+            if updatedTask.isCompleted {
+                NotificationManager.shared.removeTaskReminders(for: task)
+                print("✓ 已移除任务提醒")
+            } else if let reminder = task.reminder {
+                NotificationManager.shared.scheduleTaskReminder(for: task, in: project)
+                print("✓ 已重新设置任务提醒")
+            }
+            
+            // 确保数据已保存并同步
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.saveProjects()
+            }
         }
         print("================================")
     }
     
     // 确保 mapProjectEntityToProject 方法正确加载账户信息
     private func mapProjectEntityToProject(_ entity: ProjectEntity) -> Project {
+        // 打印预算信息
+        print("从CoreData加载预算值: \(entity.budget)")
+        
         // 初始化项目，使用正确的颜色处理方法
         var project = Project(
             id: entity.id ?? UUID(),
@@ -1690,7 +1767,8 @@ class ProjectStore: ObservableObject {
             status: Project.Status(rawValue: entity.status ?? "") ?? .preProduction,
             color: entity.color != nil ? (Color(data: entity.color!) ?? .blue) : .blue,
             isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
-            logoData: entity.logoData  // 添加logo数据的加载
+            logoData: entity.logoData,  // 添加logo数据的加载
+            budget: entity.budget       // 添加预算数据的加载
         )
         
         // 确保打印出状态，以便调试

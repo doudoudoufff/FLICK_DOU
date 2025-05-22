@@ -20,12 +20,13 @@ struct GlobalTransactionFormView: View {
     @State private var imageSelection: PhotosPickerItem? = nil
     
     // 项目选择
-    @State private var selectedProjectIndex = 0
+    @State private var selectedProjectId: UUID? = nil
     
     // 自定义分类
     @State private var showingExpenseTypeSheet = false
     @State private var showingGroupSheet = false
     @State private var newTypeName = ""
+    @State private var showingCreateProjectSheet = false
     
     // 表单验证
     @State private var showingAlert = false
@@ -33,10 +34,14 @@ struct GlobalTransactionFormView: View {
     
     // 计算属性：获取当前项目
     private var currentProject: Project {
-        guard !projectStore.projects.isEmpty else {
+        if let id = selectedProjectId, let project = projectStore.projects.first(where: { $0.id == id }) {
+            return project
+        } else if !projectStore.projects.isEmpty {
+            // 如果没有选择项目但有可用项目，则选择第一个
+            return projectStore.projects[0]
+        } else {
             return Project(name: "默认项目")
         }
-        return projectStore.projects[selectedProjectIndex]
     }
     
     // 当前项目的费用类型和组别
@@ -76,21 +81,95 @@ struct GlobalTransactionFormView: View {
             
             // 表单内容
             Form {
+                // 交易类型选择
+                Section {
+                    HStack(spacing: 0) {
+                        Button(action: {
+                            print("切换到支出，当前类型: \(transactionType)")
+                            transactionType = .expense
+                            print("切换后类型: \(transactionType)")
+                        }) {
+                            VStack {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 20))
+                                Text("支出")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(transactionType == .expense ? Color.red.opacity(0.9) : Color(.systemGray5))
+                            .foregroundColor(transactionType == .expense ? .white : .primary)
+                            .cornerRadius(10)
+                        }
+                        
+                        Spacer()
+                            .frame(width: 10)
+                        
+                        Button(action: {
+                            print("切换到收入，当前类型: \(transactionType)")
+                            transactionType = .income
+                            print("切换后类型: \(transactionType)")
+                        }) {
+                            VStack {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 20))
+                                Text("收入")
+                                    .font(.headline)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(transactionType == .income ? Color.green.opacity(0.9) : Color(.systemGray5))
+                            .foregroundColor(transactionType == .income ? .white : .primary)
+                            .cornerRadius(10)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
+                
                 // 选择项目
                 Section(header: Text("选择项目")) {
                     if projectStore.projects.isEmpty {
-                        Text("暂无项目")
-                            .foregroundColor(.secondary)
-                    } else {
-                        Picker("项目", selection: $selectedProjectIndex) {
-                            ForEach(0..<projectStore.projects.count, id: \.self) { index in
-                                Text(projectStore.projects[index].name).tag(index)
+                        HStack {
+                            Text("暂无项目")
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                            
+                            Button("创建项目") {
+                                showingCreateProjectSheet = true
                             }
+                            .foregroundColor(.accentColor)
                         }
-                        .pickerStyle(.menu)
-                        .onChange(of: selectedProjectIndex) { _ in
-                            // 切换项目时更新费用类型和组别，如果不在新项目的可选范围内
-                            updateExpenseTypeAndGroup()
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(projectStore.projects) { proj in
+                                    Button(action: {
+                                        selectedProjectId = proj.id
+                                        // 切换项目时更新费用类型和组别
+                                        updateExpenseTypeAndGroup()
+                                    }) {
+                                        Text(proj.name)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedProjectId == proj.id ? Color.accentColor : Color(.systemGray5))
+                                            .foregroundColor(selectedProjectId == proj.id ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
+                                
+                                Button(action: { showingCreateProjectSheet = true }) {
+                                    Text("＋ 新建项目")
+                                        .font(.system(size: 14))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color(.systemGray5))
+                                        .foregroundColor(.accentColor)
+                                        .cornerRadius(16)
+                                }
+                            }
+                            .padding(.vertical, 8)
                         }
                     }
                 }
@@ -105,6 +184,7 @@ struct GlobalTransactionFormView: View {
                         TextField("0.00", text: $amount)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
+                            .foregroundColor(transactionType == .expense ? .red : .green)
                     }
                     
                     DatePicker("日期", selection: $date, displayedComponents: .date)
@@ -142,7 +222,7 @@ struct GlobalTransactionFormView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 8)
                         }
                     }
                     
@@ -176,40 +256,7 @@ struct GlobalTransactionFormView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
-                
-                // 交易类型
-                Section(header: Text("交易类型")) {
-                    HStack(spacing: 10) {
-                        // 支出按钮
-                        Button(action: { transactionType = .expense }) {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "arrow.down.circle.fill")
-                                Text("支出")
-                                Spacer()
-                            }
-                            .padding(.vertical, 12)
-                            .background(transactionType == .expense ? Color.red : Color(.systemGray5))
-                            .foregroundColor(transactionType == .expense ? .white : .gray)
-                            .cornerRadius(8)
-                        }
-                        
-                        // 收入按钮
-                        Button(action: { transactionType = .income }) {
-                            HStack {
-                                Spacer()
-                                Image(systemName: "arrow.up.circle.fill")
-                                Text("收入")
-                                Spacer()
-                            }
-                            .padding(.vertical, 12)
-                            .background(transactionType == .income ? Color.green : Color(.systemGray5))
-                            .foregroundColor(transactionType == .income ? .white : .gray)
-                            .cornerRadius(8)
+                            .padding(.vertical, 8)
                         }
                     }
                 }
@@ -250,7 +297,7 @@ struct GlobalTransactionFormView: View {
         .onAppear {
             // 默认选择最近的项目（假设列表第一个是最近的）
             if !projectStore.projects.isEmpty {
-                selectedProjectIndex = 0
+                selectedProjectId = projectStore.projects[0].id
             }
         }
         .onChange(of: imageSelection) { newItem in
@@ -267,6 +314,10 @@ struct GlobalTransactionFormView: View {
         }
         .sheet(isPresented: $showingGroupSheet) {
             addCustomTypeSheet(title: "添加组别", isExpenseType: false)
+        }
+        .sheet(isPresented: $showingCreateProjectSheet) {
+            AddProjectView(isPresented: $showingCreateProjectSheet)
+                .environmentObject(projectStore)
         }
     }
     
@@ -401,11 +452,13 @@ struct GlobalTransactionFormView: View {
             return
         }
         
+        let finalAmount = transactionType == .expense ? -abs(amountValue) : abs(amountValue)
+        
         // 创建交易记录对象
         var transaction = Transaction(
             id: transactionId,
             name: name,
-            amount: amountValue,
+            amount: finalAmount,
             date: date,
             expenseType: expenseType,
             group: group,

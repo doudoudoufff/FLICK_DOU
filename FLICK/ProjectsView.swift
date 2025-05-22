@@ -4,33 +4,85 @@ struct ProjectsView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
     @State private var searchText = ""
-    @State private var selectedStatus: Project.Status = .all
+    @State private var selectedStatus: Project.Status = .preProduction
     @State private var projectToDelete: Project? = nil
     @State private var isRefreshing = false
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                    // 项目统计卡片（并排显示，无滚动）
-                ProjectStatCards()
-                    .environmentObject(projectStore)
-                    .padding(.top)
+            ZStack {
+                Color(.systemGroupedBackground).edgesIgnoringSafeArea(.all)
                 
-                    // 项目列表
-                List {
-                    ForEach(searchedProjects) { project in
-                        ProjectListRow(project: project)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
-                            .listRowBackground(Color.clear)
+                VStack(spacing: 0) {
+                    // 简化版状态筛选器
+                    StatusTabBar(selectedStatus: $selectedStatus)
+                        .padding(.top, 10)
+                    
+                    if projectStore.projects.isEmpty {
+                        // 无项目时的提示
+                        VStack(spacing: 16) {
+                            Spacer()
+                            
+                            Image(systemName: "folder.badge.plus")
+                                .font(.system(size: 60))
+                                .foregroundColor(.secondary.opacity(0.6))
+                                .padding(.bottom, 8)
+                            
+                            Text("暂无项目")
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            
+                            Text("点击右上角的+按钮创建您的第一个项目")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                            
+                            Button(action: { showingAddProject = true }) {
+                                Text("创建项目")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(Color.accentColor)
+                                    .cornerRadius(8)
+                            }
+                            .padding(.top, 8)
+                            
+                            Spacer()
+                        }
+                    } else if filteredProjects.isEmpty {
+                        // 筛选结果为空的提示
+                        VStack(spacing: 12) {
+                            Spacer()
+                            
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 40))
+                                .foregroundColor(.secondary.opacity(0.6))
+                            
+                            Text("没有\(statusTitle(for: selectedStatus))项目")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Spacer()
+                        }
+                        .padding()
+                    } else {
+                        // 项目列表
+                        List {
+                            ForEach(searchedProjects) { project in
+                                ProjectListRow(project: project)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
+                        .listStyle(.plain)
+                        .background(Color.clear)
+                        .scrollContentBackground(.hidden)
                     }
-                                }
-                .listStyle(.plain)
-                .background(Color(.systemGroupedBackground))
-                .scrollContentBackground(.hidden)
-                .padding(.horizontal, 0)
+                }
             }
-            .background(Color(.systemGroupedBackground))
             .searchable(text: $searchText, prompt: "搜索项目")
             .navigationTitle("项目")
             .toolbar {
@@ -65,7 +117,7 @@ struct ProjectsView: View {
                             
                             // 在主线程上调用删除方法
                             await MainActor.run {
-                            projectStore.deleteProject(project)
+                                projectStore.deleteProject(project)
                             }
                         }
                     }
@@ -90,6 +142,18 @@ struct ProjectsView: View {
         }
     }
     
+    // 获取状态标题
+    private func statusTitle(for status: Project.Status) -> String {
+        switch status {
+        case .all: return ""
+        case .preProduction: return "前期"
+        case .production: return "拍摄"
+        case .postProduction: return "后期"
+        case .completed: return "完成"
+        case .cancelled: return "已取消"
+        }
+    }
+    
     private var filteredProjects: [Project] {
         projectStore.projects.filter { project in
             switch selectedStatus {
@@ -110,6 +174,127 @@ struct ProjectsView: View {
             project.director.localizedCaseInsensitiveContains(searchText) ||
             project.producer.localizedCaseInsensitiveContains(searchText)
         }
+    }
+}
+
+// 简化版状态标签栏
+struct StatusTabBar: View {
+    @Binding var selectedStatus: Project.Status
+    @Namespace private var animation
+    
+    // 定义状态选项
+    private let statusOptions: [Project.Status] = [
+        .preProduction, .production, .postProduction, .completed
+    ]
+    
+    // 获取状态显示名称
+    private func getStatusName(_ status: Project.Status) -> String {
+        switch status {
+        case .preProduction: return "前期"
+        case .production: return "拍摄"
+        case .postProduction: return "后期"
+        case .completed: return "完成"
+        default: return ""
+        }
+    }
+    
+    // 获取状态对应图标
+    private func getStatusIcon(_ status: Project.Status) -> String {
+        switch status {
+        case .preProduction: return "doc.text"
+        case .production: return "camera"
+        case .postProduction: return "slider.horizontal.3"
+        case .completed: return "checkmark.circle"
+        default: return ""
+        }
+    }
+    
+    // 获取状态对应颜色
+    private func getStatusColor(_ status: Project.Status) -> Color {
+        switch status {
+        case .preProduction: return .orange
+        case .production: return .green
+        case .postProduction: return .purple
+        case .completed: return .gray
+        default: return .blue
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // 分段选择器
+            HStack(spacing: 0) {
+                ForEach(statusOptions, id: \.self) { status in
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedStatus = status
+                        }
+                    }) {
+                        VStack(spacing: 6) {
+                            // 图标
+                            Image(systemName: getStatusIcon(status))
+                                .font(.system(size: selectedStatus == status ? 18 : 16))
+                                .foregroundColor(selectedStatus == status ? getStatusColor(status) : .secondary)
+                                .frame(height: 24)
+                                .scaleEffect(selectedStatus == status ? 1.1 : 1.0)
+                                .animation(.spring(response: 0.2, dampingFraction: 0.6), value: selectedStatus == status)
+                            
+                            // 文字
+                            Text(getStatusName(status))
+                                .font(.system(size: 15, weight: selectedStatus == status ? .semibold : .medium))
+                                .foregroundColor(selectedStatus == status ? .primary : .secondary)
+                                .opacity(selectedStatus == status ? 1.0 : 0.7)
+                            
+                            // 选中指示器
+                            ZStack {
+                                if selectedStatus == status {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(getStatusColor(status))
+                                        .frame(width: 24, height: 3)
+                                        .matchedGeometryEffect(id: "underline", in: animation)
+                                } else {
+                                    Rectangle()
+                                        .fill(Color.clear)
+                                        .frame(width: 24, height: 3)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                        .padding(.vertical, 12)
+                        .background(
+                            ZStack {
+                                if selectedStatus == status {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(getStatusColor(status).opacity(0.1))
+                                        .matchedGeometryEffect(id: "background", in: animation)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                }
+                            }
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                }
+            }
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+            .background(Color(.systemBackground))
+            
+            // 分隔线
+            Rectangle()
+                .fill(Color(.systemGray5))
+                .frame(height: 1)
+        }
+    }
+}
+
+// 自定义按钮样式
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -203,59 +388,6 @@ struct InfoRow: View {
     }
 }
 
-// 项目统计卡片组件
-struct ProjectStatCards: View {
-    @EnvironmentObject var projectStore: ProjectStore
-
-    // 计算独立的统计数据
-    private var totalProjects: Int {
-        projectStore.projects.count
-    }
-    
-    private var totalTasks: Int {
-        // 计算所有项目中的任务总数（排除重复）
-        var taskCount = 0
-        for project in projectStore.projects {
-            taskCount += project.tasks.count
-        }
-        return taskCount
-    }
-    
-    private var activeTasks: Int {
-        // 计算未完成的任务数量
-        var count = 0
-        for project in projectStore.projects {
-            count += project.tasks.filter { !$0.isCompleted }.count
-        }
-        return count
-    }
-
-    var body: some View {
-        GeometryReader { geometry in
-            let width = max((geometry.size.width - 16 - 32) / 2, 0)
-            HStack(spacing: 16) {
-                StatCard(
-                    title: "项目总数",
-                    value: "\(totalProjects)",
-                    color: .blue,
-                    icon: "folder.fill"
-                )
-                .frame(width: width)
-                StatCard(
-                    title: "任务总数",
-                    value: "\(totalTasks)",
-                    color: .orange,
-                    icon: "list.bullet.clipboard.fill"
-            
-                )
-                .frame(width: width)
-            }
-            .padding(.horizontal)
-        }
-        .frame(height: 100)
-    }
-}
-
 // 新增项目行组件
 struct ProjectListRow: View {
     @EnvironmentObject var projectStore: ProjectStore
@@ -265,7 +397,6 @@ struct ProjectListRow: View {
     var body: some View {
         ZStack {
             ProjectCard(project: project)
-                .padding(.horizontal, 16)
             
             NavigationLink(destination: {
                 if let binding = projectStore.binding(for: project.id) {

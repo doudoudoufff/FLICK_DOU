@@ -101,30 +101,70 @@ struct ScoutingArchiveSheet: View {
                 
                 // 项目和场景选择
                 VStack(spacing: 16) {
-                    FormRowView(label: "项目", icon: "folder.fill") {
-                        Picker("", selection: $selectedProject) {
-                            Text("选择项目").tag(Optional<Project>(nil))
-                            ForEach(projectStore.projects) { project in
-                                Text(project.name).tag(Optional(project))
+                    // 项目选择
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("项目", systemImage: "folder.fill")
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(projectStore.projects) { project in
+                                    Button(action: {
+                                        selectedProject = project
+                                        // 重置场景选择
+                                        selectedLocation = nil
+                                    }) {
+                                        Text(project.name)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
+                                            .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
-                        .pickerStyle(MenuPickerStyle())
                     }
                     
                     Divider()
                     
+                    // 场景选择
                     if let project = selectedProject {
-                        FormRowView(label: "场景", icon: "mappin.circle.fill") {
-                            Picker("", selection: $selectedLocation) {
-                                Text("选择场景").tag(Optional<Location>(nil))
-                                ForEach(project.locations) { location in
-                                    Text(location.name).tag(Optional(location))
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("场景", systemImage: "mappin.circle.fill")
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                            
+                            if project.locations.isEmpty {
+                                Text("暂无场景，请创建")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.vertical, 4)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(project.locations) { location in
+                                            Button(action: {
+                                                selectedLocation = location
+                                            }) {
+                                                Text(location.name)
+                                                    .font(.system(size: 14))
+                                                    .padding(.horizontal, 12)
+                                                    .padding(.vertical, 6)
+                                                    .background(selectedLocation?.id == location.id ? accentColor : Color(.systemGray5))
+                                                    .foregroundColor(selectedLocation?.id == location.id ? .white : .primary)
+                                                    .cornerRadius(16)
+                                            }
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
                                 }
                             }
-                            .pickerStyle(MenuPickerStyle())
-                        }
-                        
-                        if project.locations.isEmpty || selectedLocation == nil {
+                            
+                            // 创建新场景
                             HStack {
                                 TextField("创建新场景", text: $newLocationName)
                                     .padding(.vertical, 8)
@@ -159,14 +199,10 @@ struct ScoutingArchiveSheet: View {
                                 }
                                 .disabled(newLocationName.isEmpty)
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.leading, 30)
-                        } else {
-                            Divider()
                         }
+                        
+                        Divider()
                     }
-                    
-                    Divider()
                     
                     FormRowView(label: "备注", icon: "text.bubble.fill") {
                         TextField("", text: $note, prompt: Text("可选").foregroundColor(.secondary))

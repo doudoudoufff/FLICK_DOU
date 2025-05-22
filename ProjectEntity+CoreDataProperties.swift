@@ -16,6 +16,7 @@ extension ProjectEntity {
         return NSFetchRequest<ProjectEntity>(entityName: "ProjectEntity")
     }
 
+    @NSManaged public var budget: Double
     @NSManaged public var color: Data?
     @NSManaged public var director: String?
     @NSManaged public var id: UUID?

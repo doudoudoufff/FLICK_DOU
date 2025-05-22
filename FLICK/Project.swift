@@ -19,6 +19,24 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
     @Published var customGroupTypes: [String] // 自定义组别
     @Published var isLocationScoutingEnabled: Bool
     @Published var logoData: Data? // 项目LOGO数据
+    @Published var budget: Double // 项目预算
+    
+    // 计算预算使用百分比
+    var budgetUsagePercentage: Double {
+        guard budget > 0 else { return 0 }
+        let totalExpense = transactions
+            .filter { $0.transactionType == .expense }
+            .reduce(0) { $0 + $1.amount }
+        return (totalExpense / budget) * 100
+    }
+    
+    // 计算剩余预算
+    var remainingBudget: Double {
+        let totalExpense = transactions
+            .filter { $0.transactionType == .expense }
+            .reduce(0) { $0 + $1.amount }
+        return max(budget - totalExpense, 0)
+    }
     
     public enum Status: String, Codable, CaseIterable {
         case preProduction = "前期"
@@ -46,7 +64,8 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         customExpenseTypes: [String] = [],
         customGroupTypes: [String] = [],
         isLocationScoutingEnabled: Bool = false,
-        logoData: Data? = nil
+        logoData: Data? = nil,
+        budget: Double = 0.0
     ) {
         self.id = id
         self.name = name
@@ -64,6 +83,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         self.customGroupTypes = customGroupTypes
         self.isLocationScoutingEnabled = isLocationScoutingEnabled
         self.logoData = logoData
+        self.budget = budget
     }
     
     func hash(into hasher: inout Hasher) {
@@ -78,7 +98,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         case id, name, director, producer, startDate, status
         case color, tasks, invoices, locations, accounts, transactions
         case customExpenseTypes, customGroupTypes
-        case isLocationScoutingEnabled, logoData
+        case isLocationScoutingEnabled, logoData, budget
     }
     
     required init(from decoder: Decoder) throws {
@@ -99,6 +119,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         customGroupTypes = try container.decodeIfPresent([String].self, forKey: .customGroupTypes) ?? []
         isLocationScoutingEnabled = try container.decode(Bool.self, forKey: .isLocationScoutingEnabled)
         logoData = try container.decodeIfPresent(Data.self, forKey: .logoData)
+        budget = try container.decodeIfPresent(Double.self, forKey: .budget) ?? 0.0
     }
     
     func encode(to encoder: Encoder) throws {
@@ -119,6 +140,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         try container.encode(customGroupTypes, forKey: .customGroupTypes)
         try container.encode(isLocationScoutingEnabled, forKey: .isLocationScoutingEnabled)
         try container.encodeIfPresent(logoData, forKey: .logoData)
+        try container.encode(budget, forKey: .budget)
     }
     
     func toEntity(context: NSManagedObjectContext) -> ProjectEntity {
@@ -132,6 +154,12 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         entity.color = color.toData()
         entity.isLocationScoutingEnabled = isLocationScoutingEnabled
         entity.logoData = logoData
+        
+        // 设置预算值并添加明确调试日志
+        print("Project.toEntity - 项目 \(name) 设置预算值: \(budget)")
+        entity.budget = budget
+        print("Project.toEntity - 设置后实体预算值: \(entity.budget)")
+        
         return entity
     }
     
@@ -146,6 +174,9 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             return nil
         }
         
+        // 打印预算值（调试）
+        print("Project.fromEntity - 加载预算值: \(entity.budget)")
+        
         let tasks: [ProjectTask] = (entity.tasks?.allObjects as? [TaskEntity])?.compactMap { taskEntity in
             guard let task = taskEntity as? TaskEntity else { return nil }
             return ProjectTask.fromEntity(task)
@@ -155,7 +186,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         
         // 注意：实际项目中需要从 CoreData 中加载 transactions 和自定义类型
         
-        return Project(
+        let project = Project(
             id: id,
             name: name,
             director: entity.director ?? "",
@@ -171,8 +202,16 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             customExpenseTypes: [], // 添加空的自定义费用类型数组
             customGroupTypes: [], // 添加空的自定义组别数组
             isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
-            logoData: entity.logoData
+            logoData: entity.logoData,
+            budget: entity.budget // 确保预算值被传递到Project对象
         )
+        
+        // 添加预算值调试日志
+        print("Project实例化后的预算值: \(project.budget)")
+        
+        // 确保打印出状态，以便调试
+        
+        return project
     }
     
     // 在 CoreData 中查找对应的实体

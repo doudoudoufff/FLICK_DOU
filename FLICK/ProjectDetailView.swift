@@ -142,7 +142,7 @@ struct ProjectDetailMainContent: View {
                 showingAddTask: $showingAddTask,
                 editingTask: $editingTask
             )
-            TransactionListView(project: $project, projectStore: projectStore)
+            TransactionSummaryCard(project: $project, projectStore: projectStore)
             LocationScoutingCard(project: $project)
                 .environmentObject(projectStore)
             InvoiceListView(project: $project)
@@ -206,11 +206,34 @@ struct TaskListCard: View {
     @Binding var showingAddTask: Bool
     @Binding var editingTask: ProjectTask?
     @EnvironmentObject var projectStore: ProjectStore
+    @State private var refreshID = UUID()
+    @State private var showingTaskManagement = false
     
     private var taskProgress: Double {
         let totalTasks = project.tasks.count
         guard totalTasks > 0 else { return 0.0 }
         return Double(project.tasks.filter { $0.isCompleted }.count) / Double(totalTasks)
+    }
+    
+    // 获取排序后的任务列表
+    private var sortedTasks: [ProjectTask] {
+        // 排序逻辑：
+        // 1. 首先按完成状态分组：未完成任务在前，已完成任务在后
+        // 2. 然后在各自组内按照截止日期排序
+        return project.tasks.sorted { task1, task2 in
+            // 首先按完成状态排序：未完成的排在前面
+            if task1.isCompleted != task2.isCompleted {
+                return !task1.isCompleted
+            }
+            
+            // 然后在各自分组内（已完成或未完成）按照截止日期排序
+            return task1.dueDate < task2.dueDate
+        }
+    }
+    
+    // 判断是否为iPad
+    private var isIPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
     }
     
     var body: some View {
@@ -220,6 +243,22 @@ struct TaskListCard: View {
                     .font(.headline)
                 
                 Spacer()
+                
+                // 添加管理按钮
+                if isIPad {
+                    Button(action: { showingTaskManagement = true }) {
+                        Label("管理", systemImage: "chevron.right")
+                            .labelStyle(.iconOnly)
+                            .foregroundColor(.accentColor)
+                    }
+                } else {
+                    NavigationLink(destination: TaskManagementView(project: $project).environmentObject(projectStore)) {
+                        Label("管理", systemImage: "chevron.right")
+                            .labelStyle(.iconOnly)
+                            .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
                 
                 Button(action: {
                     showingAddTask = true
@@ -256,15 +295,17 @@ struct TaskListCard: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
+                // 使用List显示前5个任务，支持滑动查看
                 List {
-                    ForEach(project.tasks) { task in
+                    // 使用排序后的任务列表，只显示前5个
+                    ForEach(Array(sortedTasks.prefix(5)), id: \.id) { task in
                         TaskRow(task: task, project: project)
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
-                                    withAnimation {
+                                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                         projectStore.deleteTask(task, from: project)
                                     }
                                 } label: {
@@ -278,18 +319,44 @@ struct TaskListCard: View {
                                 }
                                 .tint(.blue)
                             }
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: task.isCompleted)
                     }
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: sortedTasks)
                 }
                 .listStyle(.plain)
-                .frame(height: CGFloat(project.tasks.count) * 100) // 设置固定高度
+                .frame(height: min(CGFloat(min(project.tasks.count, 5)) * 100, 350)) // 限制高度
                 .background(Color.clear)
                 .scrollContentBackground(.hidden)
+                
+                // 如果有超过5个任务，显示"查看更多"按钮
+                if project.tasks.count > 5 {
+                    NavigationLink(destination: TaskManagementView(project: $project).environmentObject(projectStore)) {
+                        Text("查看全部\(project.tasks.count)个任务")
+                            .font(.subheadline)
+                            .foregroundColor(.accentColor)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 8)
+                    }
+                }
+            }
+        }
+        .id(refreshID)
+        .onChange(of: project.tasks) { _ in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                refreshID = UUID()
             }
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .sheet(isPresented: $showingTaskManagement) {
+            NavigationView {
+                TaskManagementView(project: $project)
+                    .environmentObject(projectStore)
+            }
+        }
     }
 }
 
@@ -326,7 +393,7 @@ struct LocationScoutingCard: View {
                         LocationScoutingView(project: $project)
                             .environmentObject(projectStore)
                     } label: {
-                Label("点击去堪景", systemImage: "camera.viewfinder")
+                Label("查看堪景图", systemImage: "camera.viewfinder")
                     .font(.headline)
                     .foregroundStyle(.white)
                     .frame(height: 44)

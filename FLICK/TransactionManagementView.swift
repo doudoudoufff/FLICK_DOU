@@ -32,6 +32,7 @@ struct TransactionManagementView: View {
         start: Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date(),
         end: Date()
     )
+    @State private var showingBudgetEditor = false
     
     // 筛选相关状态
     @State private var selectedExpenseType: String? = nil
@@ -156,6 +157,19 @@ struct TransactionManagementView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // 预算信息
+            if project.budget > 0 {
+                BudgetInfoView(
+                    budget: project.budget,
+                    spent: project.transactions.filter { $0.transactionType == .expense }.reduce(0) { $0 + $1.amount },
+                    usagePercentage: project.budgetUsagePercentage,
+                    onEditBudget: { showingBudgetEditor = true }
+                )
+                .padding()
+                
+                Divider()
+            }
+            
             // 统计卡片区域
             HStack(spacing: 12) {
                 TransactionStatCard(
@@ -179,7 +193,7 @@ struct TransactionManagementView: View {
                     icon: "equal.circle.fill"
                 )
             }
-            .frame(height: 100)
+            .frame(height: 60)
             .padding()
             
             Divider()
@@ -400,6 +414,14 @@ struct TransactionManagementView: View {
         .navigationTitle("账目管理")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if project.budget == 0 {
+                    Button(action: { showingBudgetEditor = true }) {
+                        Label("设置预算", systemImage: "dollarsign.circle")
+                    }
+                }
+            }
+            
             ToolbarItem(placement: .primaryAction) {
                 Button(action: {
                     showingAddTransaction = true
@@ -410,12 +432,11 @@ struct TransactionManagementView: View {
         }
         .sheet(isPresented: $showingAddTransaction) {
             NavigationView {
-                TransactionFormView(
+                AddTransactionView(
                     project: $project,
-                    projectStore: projectStore,
-                    transactionToEdit: nil,
                     isPresented: $showingAddTransaction
                 )
+                .environmentObject(projectStore)
             }
             .onDisappear {
                 DispatchQueue.main.async {
@@ -425,15 +446,18 @@ struct TransactionManagementView: View {
         }
         .sheet(item: $editingTransaction) { transaction in
             NavigationView {
-                TransactionFormView(
+                EditTransactionView(
+                    transaction: Binding(
+                        get: { transaction },
+                        set: { _ in }
+                    ),
                     project: $project,
-                    projectStore: projectStore,
-                    transactionToEdit: transaction,
                     isPresented: Binding(
                         get: { editingTransaction != nil },
                         set: { if !$0 { editingTransaction = nil } }
                     )
                 )
+                .environmentObject(projectStore)
             }
             .onDisappear {
                 DispatchQueue.main.async {
@@ -472,6 +496,9 @@ struct TransactionManagementView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingBudgetEditor) {
+            BudgetEditorView(project: $project, projectStore: projectStore)
+        }
         .alert("确认删除", isPresented: $showingDeleteAlert) {
             Button("取消", role: .cancel) {
                 transactionToDelete = nil
@@ -490,7 +517,86 @@ struct TransactionManagementView: View {
     }
 }
 
-
+// 预算信息视图
+struct BudgetInfoView: View {
+    let budget: Double
+    let spent: Double
+    let usagePercentage: Double
+    let onEditBudget: () -> Void
+    
+    private var remainingBudget: Double {
+        max(budget - spent, 0)
+    }
+    
+    private func formatAmount(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: NSNumber(value: amount)) ?? "¥\(amount)"
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("项目预算")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button(action: onEditBudget) {
+                    Image(systemName: "pencil")
+                        .foregroundColor(.accentColor)
+                }
+            }
+            
+            Divider()
+            
+            HStack {
+                Text("总预算: \(formatAmount(budget))")
+                    .fontWeight(.medium)
+                
+                Spacer()
+                
+                Text("剩余: \(formatAmount(remainingBudget))")
+                    .foregroundColor(remainingBudget > budget * 0.2 ? .green : .red)
+            }
+            .font(.subheadline)
+            
+            VStack(spacing: 4) {
+                HStack {
+                    Text("预算使用")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    Text("\(Int(usagePercentage))%")
+                        .font(.caption)
+                        .foregroundColor(
+                            usagePercentage < 70 ? .green :
+                                usagePercentage < 90 ? .orange : .red
+                        )
+                }
+                
+                // 进度条
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .frame(height: 6)
+                        .foregroundColor(Color(.systemGray5))
+                        .cornerRadius(3)
+                    
+                    Rectangle()
+                        .frame(width: min(max(CGFloat(usagePercentage) / 100.0 * UIScreen.main.bounds.width * 0.85, 0), UIScreen.main.bounds.width * 0.85), height: 6)
+                        .foregroundColor(
+                            usagePercentage < 70 ? .green :
+                                usagePercentage < 90 ? .orange : .red
+                        )
+                        .cornerRadius(3)
+                }
+            }
+        }
+    }
+}
 
 // 筛选按钮组件
 struct FilterButton: View {
@@ -585,7 +691,7 @@ struct TransactionStatCard: View {
     let icon: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(color)
@@ -599,11 +705,11 @@ struct TransactionStatCard: View {
                 .foregroundColor(color)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .frame(height: 20)
+                .frame(height: 18)
         }
-        .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, minHeight: 65, alignment: .leading)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
         .background(color.opacity(0.1))
         .cornerRadius(10)
     }

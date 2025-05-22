@@ -15,6 +15,7 @@ struct EditTaskView: View {
     @State private var showingCreateProjectSheet = false
     @State private var showingTaskUpdatedAlert = false
     @State private var updatedTaskProjectName = ""
+    @State private var showingProjectRequiredAlert = false
     
     init(isPresented: Binding<Bool>, task: Binding<ProjectTask>) {
         self._isPresented = isPresented
@@ -62,26 +63,43 @@ struct EditTaskView: View {
                     }
                 }
 
-                Section(header: Text("所属项目")) {
-                    Picker("选择项目", selection: $selectedProject) {
-                        ForEach(projectStore.projects) { project in
-                            Text(project.name).tag(Optional(project))
+                Section(header: HStack {
+                    Text("所属项目")
+                    Text("*")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("选择项目")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Button(action: { showingCreateProjectSheet = true }) {
+                                Text("＋ 新建项目")
+                                    .font(.caption)
+                                    .foregroundColor(.accentColor)
+                            }
                         }
-                    }
-                    HStack {
-                        Spacer(minLength: 0)
-                        Button(action: { showingCreateProjectSheet = true }) {
-                            Text("＋ 新建项目")
-                                .font(.body)
-                                .foregroundColor(.accentColor)
-                                .padding(.vertical, 6)
-                                .padding(.horizontal, 18)
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.accentColor, lineWidth: 1)
-                                )
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(projectStore.projects) { project in
+                                    Button(action: {
+                                        selectedProject = project
+                                    }) {
+                                        Text(project.name)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
+                                            .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -94,7 +112,17 @@ struct EditTaskView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        guard let project = selectedProject, !title.isEmpty else { return }
+                        if title.isEmpty {
+                            return
+                        }
+                        
+                        if selectedProject == nil {
+                            showingProjectRequiredAlert = true
+                            return
+                        }
+                        
+                        guard let project = selectedProject else { return }
+                        
                         task.title = title
                         task.assignee = assignee
                         task.dueDate = dueDate
@@ -108,7 +136,7 @@ struct EditTaskView: View {
                             dismiss()
                         }
                     }
-                    .disabled(title.isEmpty || selectedProject == nil)
+                    .disabled(title.isEmpty)
                 }
             }
             .sheet(isPresented: $showingCreateProjectSheet) {
@@ -136,9 +164,14 @@ struct EditTaskView: View {
                         }
                         .transition(.opacity)
                         .animation(.easeInOut, value: showingTaskUpdatedAlert)
+                    }
                 }
-            }
             )
+            .alert("请选择项目", isPresented: $showingProjectRequiredAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text("请选择一个项目来保存任务。")
+            }
         }
     }
 } 

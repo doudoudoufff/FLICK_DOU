@@ -2,7 +2,7 @@
 //  TaskEntity+CoreDataProperties.swift
 //  FLICK
 //
-//  Created by 豆子 on 2025/2/23.
+//  Created by 豆子 on 2025/5/22.
 //
 //
 
@@ -22,6 +22,7 @@ extension TaskEntity {
     @NSManaged public var isCompleted: Bool
     @NSManaged public var reminder: String?
     @NSManaged public var reminderHour: Int16
+    @NSManaged public var startDate: Date?
     @NSManaged public var title: String?
     @NSManaged public var project: ProjectEntity?
 

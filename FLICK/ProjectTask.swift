@@ -5,7 +5,8 @@ struct ProjectTask: Identifiable, Codable, Hashable {
     let id: UUID
     var title: String       // 任务内容
     var assignee: String    // 任务人员
-    var dueDate: Date      // 截止时间
+    var startDate: Date     // 开始时间
+    var dueDate: Date       // 截止时间
     var isCompleted: Bool
     var reminder: TaskReminder?
     
@@ -32,12 +33,13 @@ struct ProjectTask: Identifiable, Codable, Hashable {
     var reminderHour: Int = 9 // 默认早上9点提醒
     
     enum CodingKeys: String, CodingKey {
-        case id, title, assignee, dueDate, isCompleted, reminder, reminderHour
+        case id, title, assignee, startDate, dueDate, isCompleted, reminder, reminderHour
     }
     
     init(id: UUID = UUID(),
          title: String,
          assignee: String,
+         startDate: Date? = nil,
          dueDate: Date,
          isCompleted: Bool = false,
          reminder: TaskReminder? = nil,
@@ -45,10 +47,25 @@ struct ProjectTask: Identifiable, Codable, Hashable {
         self.id = id
         self.title = title
         self.assignee = assignee
+        self.startDate = startDate ?? dueDate // 如果没有提供开始日期，则默认与截止日期相同
         self.dueDate = dueDate
         self.isCompleted = isCompleted
         self.reminder = reminder
         self.reminderHour = reminderHour
+    }
+    
+    // 判断任务是否跨天
+    var isCrossDays: Bool {
+        !Calendar.current.isDate(startDate, inSameDayAs: dueDate)
+    }
+    
+    // 计算任务持续天数
+    var durationDays: Int {
+        let calendar = Calendar.current
+        let startDay = calendar.startOfDay(for: startDate)
+        let dueDay = calendar.startOfDay(for: dueDate)
+        let components = calendar.dateComponents([.day], from: startDay, to: dueDay)
+        return max(1, (components.day ?? 0) + 1) // 至少为1天
     }
 }
 
@@ -59,6 +76,7 @@ extension ProjectTask {
         entity.id = id
         entity.title = title
         entity.assignee = assignee
+        entity.startDate = startDate
         entity.dueDate = dueDate
         entity.isCompleted = isCompleted
         entity.reminder = reminder?.rawValue
@@ -81,6 +99,7 @@ extension ProjectTask {
             id: id,
             title: title,
             assignee: assignee,
+            startDate: entity.startDate ?? dueDate, // 使用startDate，如果为nil则使用dueDate
             dueDate: dueDate,
             isCompleted: entity.isCompleted,
             reminder: reminder,

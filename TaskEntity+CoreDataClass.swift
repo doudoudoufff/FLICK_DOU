@@ -26,6 +26,7 @@ public class TaskEntity: NSManagedObject {
             id: id,
             title: title,
             assignee: assignee,
+            startDate: self.startDate,
             dueDate: dueDate,
             isCompleted: isCompleted,
             reminder: reminder,

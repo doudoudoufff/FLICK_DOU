@@ -91,16 +91,105 @@ struct TransactionCategory {
     }
 }
 
-// 默认费用类型 - 与TransactionCategory.expense保持一致
-struct ExpenseType {
-    static let defaults = TransactionCategory.expense
-}
-
-// 默认组别类型
-struct GroupType {
-    static let defaults = [
+// 自定义标签管理器
+class TagManager {
+    // 单例模式
+    static let shared = TagManager()
+    
+    // UserDefaults中存储标签的键
+    private let expenseTypesKey = "customExpenseTypes"
+    private let groupTypesKey = "customGroupTypes"
+    
+    // 默认费用类型
+    private let defaultExpenseTypes = [
+        "交通", "餐饮", "杂支", "差旅", "住宿", "器材", "场地", "演员费用", "后期制作", "其他"
+    ]
+    
+    // 默认组别类型
+    private let defaultGroupTypes = [
         "制片组", "摄影组", "灯光组", "场务组", "道具组", "演员组", "美术组", "后期组", "导演组", "其他"
     ]
+    
+    private init() {
+        // 初始化时，如果UserDefaults中没有数据，则写入默认值
+        if UserDefaults.standard.object(forKey: expenseTypesKey) == nil {
+            UserDefaults.standard.set(defaultExpenseTypes, forKey: expenseTypesKey)
+        }
+        
+        if UserDefaults.standard.object(forKey: groupTypesKey) == nil {
+            UserDefaults.standard.set(defaultGroupTypes, forKey: groupTypesKey)
+        }
+    }
+    
+    // 获取所有费用类型（包括默认和自定义）
+    func getAllExpenseTypes() -> [String] {
+        return UserDefaults.standard.stringArray(forKey: expenseTypesKey) ?? defaultExpenseTypes
+    }
+    
+    // 获取所有组别类型（包括默认和自定义）
+    func getAllGroupTypes() -> [String] {
+        return UserDefaults.standard.stringArray(forKey: groupTypesKey) ?? defaultGroupTypes
+    }
+    
+    // 添加新的费用类型
+    func addExpenseType(_ type: String) {
+        var types = getAllExpenseTypes()
+        if !types.contains(type) && !type.isEmpty {
+            types.append(type)
+            UserDefaults.standard.set(types, forKey: expenseTypesKey)
+        }
+    }
+    
+    // 添加新的组别类型
+    func addGroupType(_ group: String) {
+        var groups = getAllGroupTypes()
+        if !groups.contains(group) && !group.isEmpty {
+            groups.append(group)
+            UserDefaults.standard.set(groups, forKey: groupTypesKey)
+        }
+    }
+    
+    // 删除费用类型
+    func removeExpenseType(_ type: String) {
+        var types = getAllExpenseTypes()
+        if let index = types.firstIndex(of: type) {
+            types.remove(at: index)
+            UserDefaults.standard.set(types, forKey: expenseTypesKey)
+        }
+    }
+    
+    // 删除组别类型
+    func removeGroupType(_ group: String) {
+        var groups = getAllGroupTypes()
+        if let index = groups.firstIndex(of: group) {
+            groups.remove(at: index)
+            UserDefaults.standard.set(groups, forKey: groupTypesKey)
+        }
+    }
+    
+    // 重置为默认费用类型
+    func resetExpenseTypes() {
+        UserDefaults.standard.set(defaultExpenseTypes, forKey: expenseTypesKey)
+    }
+    
+    // 重置为默认组别类型
+    func resetGroupTypes() {
+        UserDefaults.standard.set(defaultGroupTypes, forKey: groupTypesKey)
+    }
+}
+
+// 为了兼容性保留原有结构体，但内部使用TagManager
+struct ExpenseType {
+    static var defaults: [String] {
+        return TagManager.shared.getAllExpenseTypes()
+    }
+}
+
+// 为了兼容性保留原有结构体，但内部使用TagManager
+struct GroupType {
+    static var defaults: [String] {
+        return TagManager.shared.getAllGroupTypes()
+    }
 }
 
 // 支付方式

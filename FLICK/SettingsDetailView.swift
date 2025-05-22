@@ -161,6 +161,24 @@ struct SettingsDetailView: View {
                     Text("启用 iCloud 同步后，数据将在所有设备间自动同步")
                 }
                 
+                // 自定义标签管理
+                Section {
+                    NavigationLink {
+                        CustomTagsSettingsView()
+                    } label: {
+                        Label {
+                            Text("自定义标签管理")
+                        } icon: {
+                            Image(systemName: "tag.fill")
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                } header: {
+                    Text("账户与费用")
+                } footer: {
+                    Text("管理自定义的费用类型和组别标签")
+                }
+                
                 // 外观设置
                 Section {
                     Picker("主题", selection: $appTheme) {

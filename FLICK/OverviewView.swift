@@ -19,11 +19,24 @@ struct OverviewView: View {
     // 检查指定日期是否有任务
     private func hasTasksOnDate(_ date: Date) -> Bool {
         for project in projectStore.projects {
-            if project.tasks.contains(where: { Calendar.current.isDate($0.dueDate, inSameDayAs: date) }) {
+            if project.tasks.contains(where: { task in
+                let calendar = Calendar.current
+                let taskStartDay = calendar.startOfDay(for: task.startDate)
+                let taskEndDay = calendar.startOfDay(for: task.dueDate)
+                let checkDay = calendar.startOfDay(for: date)
+                
+                // 检查日期是否在任务开始日期和截止日期之间（含边界）
+                return (checkDay >= taskStartDay && checkDay <= taskEndDay)
+            }) {
                 return true
             }
         }
         return false
+    }
+    
+    // 获取所有任务用于日历显示
+    private func getAllTasksForCalendar() -> [ProjectTask] {
+        return projectStore.projects.flatMap { $0.tasks }
     }
     
     // 获取选中日期的所有任务，并根据筛选条件过滤
@@ -31,7 +44,13 @@ struct OverviewView: View {
         var result: [TaskWithProject] = []
         for project in projectStore.projects {
             let tasks = project.tasks.filter { task in
-                Calendar.current.isDate(task.dueDate, inSameDayAs: selectedDate)
+                let calendar = Calendar.current
+                let taskStartDay = calendar.startOfDay(for: task.startDate)
+                let taskEndDay = calendar.startOfDay(for: task.dueDate)
+                let checkDay = calendar.startOfDay(for: selectedDate)
+                
+                // 检查选中日期是否在任务开始日期和截止日期之间（含边界）
+                return (checkDay >= taskStartDay && checkDay <= taskEndDay)
             }
             for task in tasks {
                 result.append(TaskWithProject(task: task, project: project))
@@ -62,21 +81,15 @@ struct OverviewView: View {
     
     // 计算每种类型的任务数量
     private var allTasksCount: Int {
-        return projectStore.projects.flatMap { project in
-            project.tasks.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) }
-        }.count
+        return tasksForSelectedDate.count
     }
     
     private var pendingTasksCount: Int {
-        return projectStore.projects.flatMap { project in
-            project.tasks.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) && !$0.isCompleted }
-        }.count
+        return tasksForSelectedDate.filter { !$0.task.isCompleted }.count
     }
     
     private var completedTasksCount: Int {
-        return projectStore.projects.flatMap { project in
-            project.tasks.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) && $0.isCompleted }
-        }.count
+        return tasksForSelectedDate.filter { $0.task.isCompleted }.count
     }
     
     // 修改任务状态切换方法
@@ -93,63 +106,21 @@ struct OverviewView: View {
                 VStack(spacing: 20) {
                     // 日历卡片
                     VStack(spacing: 0) {
-                        ChineseCalendarView(selectedDate: $selectedDate, hasTasksOnDate: hasTasksOnDate)
-                            .padding(.horizontal)
+                        ChineseCalendarView(
+                            selectedDate: $selectedDate, 
+                            hasTasksOnDate: hasTasksOnDate,
+                            getTasksForCalendar: getAllTasksForCalendar
+                        )
+                        .padding(.horizontal)
                     }
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
                     .padding(.horizontal)
                     
-                    // 拜拜卡片 - 确保与日历组件等宽
-                    NavigationLink(destination: BaiBaiView(projectColor: .orange)) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "hands.sparkles.fill")
-                                .font(.title2)
-                                .foregroundColor(.orange)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("开机拜拜")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                
-                                if let weather = weatherManager.weatherInfo {
-                                    HStack(spacing: 6) {
-                                        Text("今日: \(weather.condition)")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                        
-                                        Text(String(format: "%.1f°C", weather.temperature))
-                                            .font(.subheadline)
-                                            .foregroundColor(.blue)
-                                    }
-                                } else {
-                                    Text("祈求今日拍摄顺利")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            if let weather = weatherManager.weatherInfo {
-                                Image(systemName: weather.symbolName.isEmpty ? "sun.max.fill" : weather.symbolName)
-                                    .symbolRenderingMode(.multicolor)
-                                    .font(.system(size: 28))
-                                    .padding(.trailing, 4)
-                            }
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
-                                .font(.system(.subheadline, weight: .medium))
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)  // 确保占满全宽
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    }
-                    .padding(.horizontal)  // 与日历组件使用相同的水平内边距
+                    // 拜拜卡片已隐藏 
+                    // NavigationLink(destination: BaiBaiView(projectColor: .orange)) { ... }
+                    
                     
                     // 功能卡片网格
                     LazyVGrid(columns: [
@@ -383,7 +354,6 @@ struct DailyTaskRow: View {
     let taskWithProject: TaskWithProject
     let onToggleCompletion: () -> Void
     @State private var isCompleted: Bool
-    @State private var animateChanges = false
     
     init(taskWithProject: TaskWithProject, onToggleCompletion: @escaping () -> Void) {
         self.taskWithProject = taskWithProject
@@ -404,7 +374,13 @@ struct DailyTaskRow: View {
                 HStack {
                     Text(taskWithProject.project.name)
                     Text("•")
-                    Text(taskWithProject.task.dueDate.formatted(date: .omitted, time: .shortened))
+                    
+                    // 显示日期范围（如果跨天）
+                    if taskWithProject.task.isCrossDays {
+                        Text("\(taskWithProject.task.startDate.chineseStyleShortString())-\(taskWithProject.task.dueDate.chineseStyleShortString())")
+                    } else {
+                        Text(taskWithProject.task.dueDate.formatted(date: .omitted, time: .shortened))
+                    }
                 }
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -424,21 +400,9 @@ struct DailyTaskRow: View {
             // 完成状态切换开关
             Toggle("", isOn: $isCompleted)
                 .toggleStyle(SwitchToggleStyle(tint: taskWithProject.project.color))
-                .onChange(of: isCompleted) { newValue in
-                    // 先开始本地动画
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
-                        animateChanges = true
-                    }
-                    
-                    // 短暂延迟后调用实际状态切换
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            onToggleCompletion()
-                            // 动画完成后重置
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                animateChanges = false
-                            }
-                        }
+                .onChange(of: isCompleted) { _ in
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        onToggleCompletion()
                     }
                 }
         }
@@ -447,15 +411,22 @@ struct DailyTaskRow: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
         .opacity(isCompleted ? 0.8 : 1.0)
-        .scaleEffect(animateChanges ? (isCompleted ? 0.98 : 1.02) : 1.0)
         // 添加监听，确保当父视图的任务状态变化时同步更新本地状态
         .onChange(of: taskWithProject.task.isCompleted) { newValue in
             if isCompleted != newValue {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    isCompleted = newValue
-                }
+                isCompleted = newValue
             }
         }
+    }
+}
+
+// 扩展Calendar以获取一天的结束时间
+extension Calendar {
+    func endOfDay(for date: Date) -> Date {
+        var components = DateComponents()
+        components.day = 1
+        components.second = -1
+        return self.date(byAdding: components, to: startOfDay(for: date))!
     }
 }
 

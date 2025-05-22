@@ -47,18 +47,14 @@ struct EditTransactionView: View {
     @State private var showingAlert: Bool = false
     @State private var alertMessage: String = ""
     
-    // 获取可用的费用类型列表（包括默认和自定义）
+    // 获取可用的费用类型列表
     private var availableExpenseTypes: [String] {
-        let defaultTypes = ExpenseType.defaults
-        let customTypes = project.customExpenseTypes
-        return defaultTypes + customTypes.filter { !defaultTypes.contains($0) }
+        return TagManager.shared.getAllExpenseTypes()
     }
     
-    // 获取可用的组别列表（包括默认和自定义）
+    // 获取可用的组别列表
     private var availableGroups: [String] {
-        let defaultGroups = GroupType.defaults
-        let customGroups = project.customGroupTypes
-        return defaultGroups + customGroups.filter { !defaultGroups.contains($0) }
+        return TagManager.shared.getAllGroupTypes()
     }
     
     var body: some View {
@@ -219,9 +215,8 @@ struct EditTransactionView: View {
                 
                 Button("添加") {
                     if !newExpenseType.isEmpty && !availableExpenseTypes.contains(newExpenseType) {
-                        project.customExpenseTypes.append(newExpenseType)
+                        TagManager.shared.addExpenseType(newExpenseType)
                         expenseType = newExpenseType
-                        projectStore.saveProjects()
                     }
                     newExpenseType = ""
                 }
@@ -265,9 +260,8 @@ struct EditTransactionView: View {
                 
                 Button("添加") {
                     if !newGroup.isEmpty && !availableGroups.contains(newGroup) {
-                        project.customGroupTypes.append(newGroup)
+                        TagManager.shared.addGroupType(newGroup)
                         group = newGroup
-                        projectStore.saveProjects()
                     }
                     newGroup = ""
                 }

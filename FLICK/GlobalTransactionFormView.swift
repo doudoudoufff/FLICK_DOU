@@ -44,13 +44,13 @@ struct GlobalTransactionFormView: View {
         }
     }
     
-    // 当前项目的费用类型和组别
+    // 费用类型和组别
     private var expenseTypes: [String] {
-        currentProject.customExpenseTypes.isEmpty ? ExpenseType.defaults : currentProject.customExpenseTypes
+        return TagManager.shared.getAllExpenseTypes()
     }
     
     private var groupTypes: [String] {
-        currentProject.customGroupTypes.isEmpty ? GroupType.defaults : currentProject.customGroupTypes
+        return TagManager.shared.getAllGroupTypes()
     }
     
     var body: some View {
@@ -343,13 +343,10 @@ struct GlobalTransactionFormView: View {
     
     // 切换项目时更新费用类型和组别
     private func updateExpenseTypeAndGroup() {
-        let availableTypes = currentProject.customExpenseTypes.isEmpty ? 
-            ExpenseType.defaults : currentProject.customExpenseTypes
+        let availableTypes = TagManager.shared.getAllExpenseTypes()
+        let availableGroups = TagManager.shared.getAllGroupTypes()
             
-        let availableGroups = currentProject.customGroupTypes.isEmpty ?
-            GroupType.defaults : currentProject.customGroupTypes
-            
-        // 确保选择的费用类型和组别在新项目的可选范围内
+        // 确保选择的费用类型和组别在可选范围内
         if !availableTypes.contains(expenseType) {
             expenseType = "未分类"
         }
@@ -390,28 +387,18 @@ struct GlobalTransactionFormView: View {
     // 添加自定义类型
     private func addCustomType(isExpenseType: Bool) {
         guard !newTypeName.isEmpty else { return }
-        guard !projectStore.projects.isEmpty else { return }
-        
-        // 获取当前选择的项目
-        var updatedProject = currentProject
         
         if isExpenseType {
             // 添加费用类型
-            var customTypes = updatedProject.customExpenseTypes
-            if !customTypes.contains(newTypeName) {
-                customTypes.append(newTypeName)
-                updatedProject.customExpenseTypes = customTypes
-                projectStore.updateProject(updatedProject)
+            if !TagManager.shared.getAllExpenseTypes().contains(newTypeName) {
+                TagManager.shared.addExpenseType(newTypeName)
                 expenseType = newTypeName
             }
             showingExpenseTypeSheet = false
         } else {
             // 添加组别
-            var customTypes = updatedProject.customGroupTypes
-            if !customTypes.contains(newTypeName) {
-                customTypes.append(newTypeName)
-                updatedProject.customGroupTypes = customTypes
-                projectStore.updateProject(updatedProject)
+            if !TagManager.shared.getAllGroupTypes().contains(newTypeName) {
+                TagManager.shared.addGroupType(newTypeName)
                 group = newTypeName
             }
             showingGroupSheet = false

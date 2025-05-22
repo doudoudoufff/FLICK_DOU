@@ -40,22 +40,12 @@ struct TransactionManagementView: View {
     
     // 获取所有费用类型列表
     private var allExpenseTypes: [String] {
-        // 先取项目自定义类型，如果没有则使用默认值
-        if !project.customExpenseTypes.isEmpty {
-            return project.customExpenseTypes
-        } else {
-            return ExpenseType.defaults
-        }
+        return TagManager.shared.getAllExpenseTypes()
     }
     
     // 获取所有组别列表
     private var allGroups: [String] {
-        // 先取项目自定义组别，如果没有则使用默认值
-        if !project.customGroupTypes.isEmpty {
-            return project.customGroupTypes
-        } else {
-            return GroupType.defaults
-        }
+        return TagManager.shared.getAllGroupTypes()
     }
     
     // 按费用类型统计

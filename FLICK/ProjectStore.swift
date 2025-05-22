@@ -767,6 +767,7 @@ class ProjectStore: ObservableObject {
                 // 更新任务实体的属性
                 taskEntity.title = task.title
                 taskEntity.assignee = task.assignee
+                taskEntity.startDate = task.startDate
                 taskEntity.dueDate = task.dueDate
                 taskEntity.isCompleted = task.isCompleted
                 taskEntity.reminder = task.reminder?.rawValue
@@ -799,6 +800,7 @@ class ProjectStore: ObservableObject {
         print("任务信息:")
         print("- 标题: \(task.title)")
         print("- 负责人: \(task.assignee ?? "")")
+        print("- 开始时间: \(task.startDate)")
         print("- 截止时间: \(task.dueDate)")
         
         guard let projectEntity = project.fetchEntity(in: context) else {
@@ -811,6 +813,7 @@ class ProjectStore: ObservableObject {
         taskEntity.id = task.id
         taskEntity.title = task.title
         taskEntity.assignee = task.assignee
+        taskEntity.startDate = task.startDate
         taskEntity.dueDate = task.dueDate
         taskEntity.isCompleted = task.isCompleted
         taskEntity.project = projectEntity
@@ -1559,16 +1562,19 @@ class ProjectStore: ObservableObject {
                 ProjectTask(
                     title: "完成最终分镜",
                     assignee: "导演组",
+                    startDate: Date(),
                     dueDate: Date().addingTimeInterval(86400 * 2)
                 ),
                 ProjectTask(
                     title: "确定主要演员",
                     assignee: "选角导演",
+                    startDate: Date().addingTimeInterval(86400),
                     dueDate: Date().addingTimeInterval(86400 * 4)
                 ),
                 ProjectTask(
                     title: "场地合同签订",
                     assignee: "制片组",
+                    startDate: Date().addingTimeInterval(86400 * 2),
                     dueDate: Date().addingTimeInterval(86400 * 5)
                 )
             ],
@@ -1622,17 +1628,20 @@ class ProjectStore: ObservableObject {
                 ProjectTask(
                     title: "确认产品展示要求",
                     assignee: "制片组",
+                    startDate: Date(),
                     dueDate: Date().addingTimeInterval(86400)
                 ),
                 ProjectTask(
                     title: "道具采购清单",
                     assignee: "美术组",
+                    startDate: Date().addingTimeInterval(86400),
                     dueDate: Date().addingTimeInterval(86400 * 2)
                 ),
                 ProjectTask(
                     title: "完成灯光设计",
                     assignee: "灯光组",
-                    dueDate: Date().addingTimeInterval(86400 * 2)
+                    startDate: Date().addingTimeInterval(86400),
+                    dueDate: Date().addingTimeInterval(86400 * 3)
                 )
             ],
             invoices: [
@@ -1791,6 +1800,7 @@ class ProjectStore: ObservableObject {
                     id: id,
                     title: title,
                     assignee: taskEntity.assignee ?? "",
+                    startDate: taskEntity.startDate ?? dueDate, // 使用startDate，如果为nil则使用dueDate
                     dueDate: dueDate,
                     isCompleted: taskEntity.isCompleted,
                     reminder: taskEntity.reminder != nil ? ProjectTask.TaskReminder(rawValue: taskEntity.reminder!) : nil,
@@ -2079,6 +2089,32 @@ class ProjectStore: ObservableObject {
         }
         
         print("================================")
+    }
+    
+    func createMockTasks() -> [ProjectTask] {
+        return [
+            ProjectTask(
+                title: "完成剧本修改",
+                assignee: "编剧组",
+                startDate: Date().addingTimeInterval(-86400 * 2),
+                dueDate: Date().addingTimeInterval(86400 * 3),
+                isCompleted: false
+            ),
+            ProjectTask(
+                title: "确认演员档期",
+                assignee: "制片组",
+                startDate: Date().addingTimeInterval(-86400),
+                dueDate: Date().addingTimeInterval(86400),
+                isCompleted: true
+            ),
+            ProjectTask(
+                title: "场地踩点",
+                assignee: "场务组",
+                startDate: Date(),
+                dueDate: Date().addingTimeInterval(86400 * 2),
+                isCompleted: false
+            )
+        ]
     }
 }
 

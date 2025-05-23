@@ -7,7 +7,7 @@ struct MainTabView: View {
         TabView {
             FeatureView()
                 .tabItem {
-                    Label("功能", systemImage: "star")
+                    Label("功能", systemImage: "hammer")
                 }
             NavigationStack {
                 OverviewView()

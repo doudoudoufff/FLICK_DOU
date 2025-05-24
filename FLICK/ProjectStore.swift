@@ -429,12 +429,6 @@ class ProjectStore: ObservableObject {
             }
         }
         
-        // 临时：同时保存到 UserDefaults（作为备份）
-        if let encoded = try? JSONEncoder().encode(projects) {
-            UserDefaults.standard.set(encoded, forKey: "savedProjects")
-            print("✓ 已保存备份到 UserDefaults")
-        }
-        
         // 如果启用了 iCloud 同步，则触发同步
         if enableCloudSync {
             print("iCloud 同步已启用，触发自动同步")
@@ -842,12 +836,12 @@ class ProjectStore: ObservableObject {
                 } else if let error = error {
                     print("❌ 任务信息同步到 iCloud 失败: \(error)")
                 }
-            }
-        } catch {
+                }
+            } catch {
             print("❌ 保存失败:")
             print("错误类型: \(type(of: error))")
-            print("错误描述: \(error.localizedDescription)")
-        }
+                print("错误描述: \(error.localizedDescription)")
+            }
         
         print("================================")
     }

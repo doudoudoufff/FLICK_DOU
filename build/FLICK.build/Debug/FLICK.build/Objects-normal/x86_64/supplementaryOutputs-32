@@ -1,0 +1,48 @@
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TaskManagementView.swift":
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskManagementView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskManagementView.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskManagementView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskManagementView.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskManagementView.o"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/SettingsDetailView.swift":
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/SettingsDetailView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/SettingsDetailView.swiftconstvalues"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/SettingsDetailView.o"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/SettingsDetailView.dia"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/SettingsDetailView.swiftdeps"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectsView.swift":
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectsView.d"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectsView.o"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectsView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectsView.dia"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectsView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ReportPreviewView.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ReportPreviewView.o"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ReportPreviewView.swiftdeps"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ReportPreviewView.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ReportPreviewView.dia"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ReportPreviewView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectStore.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectStore.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectStore.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectStore.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectStore.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectStore.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectTask.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectTask.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectTask.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectTask.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectTask.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectTask.d"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ScoutingCameraView.swift":
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ScoutingCameraView.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ScoutingCameraView.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ScoutingCameraView.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ScoutingCameraView.swiftdeps"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ScoutingCameraView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectListView.swift":
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectListView.d"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectListView.o"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectListView.swiftdeps"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectListView.swiftconstvalues"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ProjectListView.dia"

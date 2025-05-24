@@ -34,6 +34,10 @@ struct FLICKApp: App {
     
     // 配置应用程序的各种服务
     private func configureApp() {
+        // 清除可能导致 UserDefaults 存储过多数据的备份
+        UserDefaults.standard.removeObject(forKey: "savedProjects")
+        print("✓ 已清除 UserDefaults 中的项目备份数据")
+        
         // 预先配置通知权限请求，但不在启动时立即执行
         // 因为这可能会触发系统权限弹窗
     }

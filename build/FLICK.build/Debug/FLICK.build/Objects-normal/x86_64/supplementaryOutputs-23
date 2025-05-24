@@ -1,0 +1,48 @@
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditProjectView.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditProjectView.o"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditProjectView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditProjectView.dia"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditProjectView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditProjectView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/FLICKApp.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FLICKApp.swiftconstvalues"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FLICKApp.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FLICKApp.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FLICKApp.o"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FLICKApp.swiftdeps"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ImageCropView.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ImageCropView.swiftdeps"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ImageCropView.swiftconstvalues"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ImageCropView.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ImageCropView.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/ImageCropView.o"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditTaskView.swift":
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTaskView.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTaskView.dia"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTaskView.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTaskView.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTaskView.o"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditTransactionView.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTransactionView.swiftconstvalues"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTransactionView.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTransactionView.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTransactionView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditTransactionView.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/GlobalTransactionFormView.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GlobalTransactionFormView.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GlobalTransactionFormView.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GlobalTransactionFormView.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GlobalTransactionFormView.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GlobalTransactionFormView.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditLocationView.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditLocationView.swiftconstvalues"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditLocationView.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditLocationView.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditLocationView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/EditLocationView.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/FeatureView.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FeatureView.swiftconstvalues"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FeatureView.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FeatureView.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FeatureView.o"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/FeatureView.dia"

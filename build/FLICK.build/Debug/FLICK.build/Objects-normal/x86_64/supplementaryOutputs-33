@@ -1,0 +1,48 @@
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionManagementView.swift":
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionManagementView.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionManagementView.o"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionManagementView.swiftdeps"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionManagementView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionManagementView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Transaction.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/Transaction.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/Transaction.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/Transaction.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/Transaction.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/Transaction.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionFormView.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionFormView.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionFormView.o"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionFormView.dia"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionFormView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionFormView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TaskRow.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskRow.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskRow.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskRow.swiftdeps"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskRow.swiftconstvalues"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TaskRow.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionComponents.swift":
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionComponents.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionComponents.o"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionComponents.swiftconstvalues"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionComponents.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionComponents.swiftdeps"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/DerivedSources/GeneratedAssetSymbols.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GeneratedAssetSymbols.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GeneratedAssetSymbols.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/WeatherManager.swift":
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/WeatherManager.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/WeatherManager.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/WeatherManager.o"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/WeatherManager.dia"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/WeatherManager.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionListView.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionListView.o"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionListView.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionListView.swiftdeps"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionListView.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/x86_64/TransactionListView.dia"

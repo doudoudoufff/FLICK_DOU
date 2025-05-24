@@ -1,0 +1,48 @@
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectDetailView.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.o"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.swiftconstvalues"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.dia"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.d"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/OverviewView.swift":
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.swiftconstvalues"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.d"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PDFReportGenerator.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.dia"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.d"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.o"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PDFPreviewView.swift":
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.o"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.swiftconstvalues"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.dia"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.swiftdeps"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.d"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectCardView.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.swiftdeps"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.swiftconstvalues"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.o"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.dia"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PersistenceController.swift":
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.dia"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.swiftconstvalues"
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.swiftdeps"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.d"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.o"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PDFReportView.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.swiftdeps"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.dia"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.o"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.d"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.swiftconstvalues"
+"/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Project.swift":
+  swift-dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.swiftdeps"
+  object: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.o"
+  const-values: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.swiftconstvalues"
+  dependencies: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.d"
+  diagnostics: "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.dia"

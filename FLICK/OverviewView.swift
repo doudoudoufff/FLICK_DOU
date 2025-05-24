@@ -140,6 +140,7 @@ struct OverviewView: View {
                                 hasTasksOnDate: hasTasksOnDate,
                                 getTasksForCalendar: getAllTasksForCalendar
                             )
+                            .environmentObject(projectStore)
                             .padding(.horizontal, 0) // 去掉内边距，让日历更宽
                     }
                     .background(Color(.systemBackground))

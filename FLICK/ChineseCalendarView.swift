@@ -41,6 +41,29 @@ extension Calendar {
 
 // 农历计算扩展
 
+// 月份可见性监听
+struct MonthVisibilityData: Equatable {
+    let monthOffset: Int
+    let month: Date
+    let frame: CGRect
+    
+    static func == (lhs: MonthVisibilityData, rhs: MonthVisibilityData) -> Bool {
+        return lhs.monthOffset == rhs.monthOffset &&
+               lhs.month == rhs.month &&
+               lhs.frame == rhs.frame
+    }
+}
+
+struct MonthVisibilityPreference: PreferenceKey {
+    static var defaultValue: MonthVisibilityData? = nil
+    
+    static func reduce(value: inout MonthVisibilityData?, nextValue: () -> MonthVisibilityData?) {
+        if let next = nextValue() {
+            value = next
+        }
+    }
+}
+
 struct ChineseCalendarView: View {
     @Binding var selectedDate: Date
     let hasTasksOnDate: (Date) -> Bool
@@ -51,6 +74,9 @@ struct ChineseCalendarView: View {
     @State private var visibleMonth: Date // 添加新的状态变量跟踪当前可见的月份
     @State private var datePickerDate = Date() // 日期选择器的独立状态
     @State private var stableReferenceDate = Date() // 稳定的参考日期，用于月份计算
+    @State private var showingAddTask = false // 控制创建任务界面显示
+    @State private var longPressedDate: Date? // 记录长按的日期
+    @EnvironmentObject private var projectStore: ProjectStore // 添加项目存储环境对象
     
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -70,10 +96,7 @@ struct ChineseCalendarView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            headerView
-            weekdayHeaderView
             scrollableCalendarView
-            taskLegendView
         }
         .frame(maxWidth: .infinity)
         .frame(height: 520)
@@ -87,53 +110,162 @@ struct ChineseCalendarView: View {
         .onAppear {
             // 禁用自动滚动，让用户完全控制
         }
+        .sheet(isPresented: $showingAddTask) {
+            NavigationView {
+                AddTaskView(
+                    isPresented: $showingAddTask,
+                    presetStartDate: longPressedDate,
+                    presetEndDate: longPressedDate
+                )
+                .environmentObject(projectStore)
+            }
+            .presentationDetents([.height(500)])
+        }
     }
     
-    // 分解为更小的视图组件
-    private var headerView: some View {
-        HStack {
+    private var scrollableCalendarView: some View {
+        ScrollViewReader { scrollProxy in
+            VStack(spacing: 0) {
+                // 直接在这里构建headerView，而不是作为函数调用
+            HStack {
+                    // 日期选择器按钮 - 移到左侧
+                    Button(action: {
+                        showDatePicker.toggle()
+                    }) {
+                        HStack(spacing: 6) {
+                            Text(currentMonthYearString)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                            
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .sheet(isPresented: $showDatePicker) {
+                        DatePickerView(
+                            selectedDate: $datePickerDate, 
+                            isPresented: $showDatePicker,
+                            onConfirm: { selectedDate in
+                                // 计算选中日期对应的monthOffset
+                                let monthDiff = calendar.dateComponents([.month], from: stableReferenceDate, to: selectedDate).month ?? 0
+                                
+                                // 滚动到对应的月份
+                                withAnimation(.easeInOut(duration: 0.8)) {
+                                    scrollProxy.scrollTo("month_\(monthDiff)", anchor: UnitPoint.center)
+                                }
+                                
+                                // 更新当前月份和选中日期
+                                withAnimation {
+                                    currentMonth = selectedDate
+                                    self.selectedDate = selectedDate
+                                }
+                            }
+                        )
+                }
+                
                 Spacer()
                 
-            // 日期选择器按钮 - 简化设计
-            Button(action: {
-                showDatePicker.toggle()
-            }) {
-                HStack(spacing: 6) {
-                    Text(currentMonthYearString)
-                        .font(.title3)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                    
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .sheet(isPresented: $showDatePicker) {
-                DatePickerView(
-                    selectedDate: $datePickerDate, 
-                    isPresented: $showDatePicker,
-                    onConfirm: { selectedDate in
-                        // 只有在用户明确确认时才更新currentMonth
-                        currentMonth = selectedDate
-                        // 不自动滚动，让用户保持控制权
-                        print("📅 用户选择了新日期: \(selectedDate)，但不自动滚动")
+                    // 回到今天按钮 - 移到右侧，改为"回到今天"
+                    Button(action: {
+                        let today = Date()
+                        
+                        // 计算今天对应的monthOffset
+                        let monthDiff = calendar.dateComponents([.month], from: stableReferenceDate, to: today).month ?? 0
+                        
+                        // 滚动到对应的月份
+                        withAnimation(.easeInOut(duration: 0.8)) {
+                            scrollProxy.scrollTo("month_\(monthDiff)", anchor: UnitPoint.center)
+                        }
+                        
+                        // 同时更新选中的日期为今天
+                        withAnimation {
+                            selectedDate = today
+                            currentMonth = today
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "calendar.circle")
+                                .font(.system(size: 14, weight: .medium))
+                            Text("回到今天")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(8)
                     }
-                )
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+                .background(Color(.systemBackground))
+                .zIndex(1) // 确保月份选择器始终在顶部
+                
+                weekdayHeaderView
+                GeometryReader { scrollGeometry in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 4) {
+                            // 使用稳定的参考日期计算月份，完全避免因状态变化导致重新渲染
+                            ForEach(-monthsToShow/2..<monthsToShow/2+1, id: \.self) { monthOffset in
+                                let targetMonth = calendar.date(byAdding: .month, value: monthOffset, to: stableReferenceDate)!
+                                MonthView(
+                                    month: targetMonth,
+                                    selectedDate: $selectedDate,
+                                    hasTasksOnDate: hasTasksOnDate,
+                                    getTasksForCalendar: getTasksForCalendar,
+                                    calendar: calendar,
+                                    onLongPress: { longPressedDate in
+                                        // 记录长按的日期
+                                        print("🔥 收到长按回调：\(longPressedDate)")
+                                        self.longPressedDate = longPressedDate
+                                        
+                                        // 触发弹出创建任务界面
+                                        print("🔥 准备弹出创建任务界面")
+                                        withAnimation {
+                                            showingAddTask = true
+                                        }
+                                        print("🔥 showingAddTask = \(showingAddTask)")
+                                    }
+                                )
+                                .id("month_\(monthOffset)") // 简化ID，便于滚动控制
+                                .background(
+                                    // 添加几何读取器来监听可见区域
+                                    GeometryReader { monthGeometry in
+                                        Color.clear.preference(
+                                            key: MonthVisibilityPreference.self,
+                                            value: MonthVisibilityData(
+                                                monthOffset: monthOffset,
+                                                month: targetMonth,
+                                                frame: monthGeometry.frame(in: .named("scroll"))
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.top, 4)
+                        .padding(.bottom, 20)
+                    }
+                    .scrollDisabled(false)
+                    .coordinateSpace(name: "scroll")
+                    .onPreferenceChange(MonthVisibilityPreference.self) { monthData in
+                        updateVisibleMonth(from: monthData, scrollGeometry: scrollGeometry)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .id("scrollView") // 给ScrollView一个ID便于控制
+                taskLegendView
             }
-            
-            Spacer()
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
-        .background(Color(.systemBackground))
-        .zIndex(1) // 确保月份选择器始终在顶部
     }
     
     private var weekdayHeaderView: some View {
@@ -145,7 +277,7 @@ struct ChineseCalendarView: View {
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity)
                     }
-            }
+                }
             .padding(.vertical, 8)
             .padding(.horizontal, 4)
             
@@ -156,34 +288,6 @@ struct ChineseCalendarView: View {
         }
         .background(Color(.systemBackground))
         .zIndex(0.9)
-    }
-    
-    private var scrollableCalendarView: some View {
-        ScrollViewReader { scrollProxy in
-            GeometryReader { scrollGeometry in
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 4) {
-                        // 使用稳定的参考日期计算月份，完全避免因状态变化导致重新渲染
-                        ForEach(-monthsToShow/2..<monthsToShow/2+1, id: \.self) { monthOffset in
-                            let targetMonth = calendar.date(byAdding: .month, value: monthOffset, to: stableReferenceDate)!
-                            MonthView(
-                                month: targetMonth,
-                                selectedDate: $selectedDate,
-                                hasTasksOnDate: hasTasksOnDate,
-                                getTasksForCalendar: getTasksForCalendar,
-                                calendar: calendar
-                            )
-                            .id("month_\(monthOffset)_\(stableReferenceDate.timeIntervalSince1970)") // 使用稳定的ID
-                        }
-                    }
-                    .padding(.top, 4)
-                    .padding(.bottom, 20)
-                }
-                .scrollDisabled(false) // 移除任务创建相关的滚动禁用
-                .coordinateSpace(name: "scroll")
-            }
-            .frame(maxWidth: .infinity)
-        }
     }
     
     private var taskLegendView: some View {
@@ -236,6 +340,7 @@ struct ChineseCalendarView: View {
         let hasTasksOnDate: (Date) -> Bool
         let getTasksForCalendar: () -> [ProjectTask]
         let calendar: Calendar
+        let onLongPress: (Date) -> Void // 添加长按回调参数
         
         var body: some View {
             VStack(spacing: 6) {
@@ -260,7 +365,8 @@ struct ChineseCalendarView: View {
                         calendar: calendar,
                         tasks: getTasksForCalendar().filter { task in
                             isTaskInWeek(task, week: weeksInMonth[weekIndex])
-                        }
+                        },
+                        onLongPress: onLongPress
                     )
                 }
             }
@@ -359,6 +465,28 @@ struct ChineseCalendarView: View {
         formatter.locale = Locale(identifier: "zh_CN")
         return formatter.string(from: currentMonth)
     }
+    
+    // 更新可见月份
+    private func updateVisibleMonth(from monthData: MonthVisibilityData?, scrollGeometry: GeometryProxy) {
+        guard let data = monthData else { return }
+        
+        let scrollViewHeight = scrollGeometry.size.height
+        let scrollViewCenter = scrollViewHeight / 2
+        
+        // 检查月份是否在视口中心附近
+        let monthTop = data.frame.minY
+        let monthBottom = data.frame.maxY
+        let monthCenter = (monthTop + monthBottom) / 2
+        
+        // 如果月份中心在滚动视图中心附近，就更新当前月份
+        if abs(monthCenter - scrollViewCenter) < scrollViewHeight / 4 {
+            DispatchQueue.main.async {
+                if !Calendar.current.isDate(self.currentMonth, equalTo: data.month, toGranularity: .month) {
+                    self.currentMonth = data.month
+                }
+            }
+        }
+    }
 }
 
 // 按周显示的视图组件
@@ -368,6 +496,7 @@ struct WeekView: View {
     let hasTasksOnDate: (Date) -> Bool
     let calendar: Calendar
     let tasks: [ProjectTask]
+    let onLongPress: (Date) -> Void // 添加长按回调参数
     
     var body: some View {
         VStack(spacing: 0) {
@@ -381,7 +510,8 @@ struct WeekView: View {
                                 isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
                                 isToday: calendar.isDateInToday(date),
                                 hasTasks: hasTasksOnDate(date),
-                                selectedDate: $selectedDate
+                                selectedDate: $selectedDate,
+                                onLongPress: onLongPress
                             )
                             .frame(maxWidth: .infinity) // 确保与星期标题宽度一致
                         } else {
@@ -620,57 +750,96 @@ struct DayCell: View {
     let isToday: Bool
     let hasTasks: Bool
     @Binding var selectedDate: Date
+    let onLongPress: (Date) -> Void // 添加长按回调
+    @State private var isLongPressing = false // 添加长按状态
     
     private let calendar = Calendar.current
     
     var body: some View {
-        Button(action: {
-            withAnimation {
-                selectedDate = date
-            }
-        }) {
-            VStack(spacing: 2) {
+        VStack(spacing: 2) {
             ZStack {
                 // 背景圆圈
                 Group {
-                if isSelected {
-                            // 选中样式：简洁的圆形背景
-                    Circle()
-                                .fill(Color.blue)
-                                .frame(width: 32, height: 32)
-                                .scaleEffect(isSelected ? 1.0 : 0.8)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-                } else if isToday {
-                            // 今天的样式：细边框圆形
-                            Circle()
-                                .stroke(Color.blue, lineWidth: 2)
-                                .frame(width: 32, height: 32)
-                                .background(
-                    Circle()
-                                        .fill(Color.blue.opacity(0.1))
-                                        .frame(width: 32, height: 32)
-                                )
-                        }
+                    if isLongPressing {
+                        // 长按状态：红色背景
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 36, height: 36)
+                            .scaleEffect(1.1)
+                    } else if isSelected {
+                        // 选中样式：简洁的圆形背景
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 32, height: 32)
+                            .scaleEffect(isSelected ? 1.0 : 0.8)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+                    } else if isToday {
+                        // 今天的样式：细边框圆形
+                        Circle()
+                            .stroke(Color.blue, lineWidth: 2)
+                            .frame(width: 32, height: 32)
+                            .background(
+                                Circle()
+                                    .fill(Color.blue.opacity(0.1))
+                                    .frame(width: 32, height: 32)
+                            )
                     }
-                    
-                    // 日期数字 - 居中显示
-                    Text("\(calendar.component(.day, from: date))")
-                        .font(.system(size: 18, design: .rounded))
-                        .fontWeight(isToday || isSelected ? .bold : .regular)
-                        .foregroundColor(isSelected ? .white : (isToday ? Color.blue : .primary))
                 }
                 
-                // 农历显示
-                Text(calendar.chineseLunarMonthAndDay(for: date))
-                    .font(.system(size: 9, weight: .light))
-                    .foregroundColor(isSelected ? .blue : .secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                // 日期数字 - 居中显示
+                Text("\(calendar.component(.day, from: date))")
+                    .font(.system(size: 18, design: .rounded))
+                    .fontWeight(isToday || isSelected ? .bold : .regular)
+                    .foregroundColor(isLongPressing ? .white : (isSelected ? .white : (isToday ? Color.blue : .primary)))
             }
-            .frame(height: 54) // 增加高度以适应农历
-            .frame(maxWidth: .infinity) // 占满可用宽度
+            
+            // 农历显示
+            Text(calendar.chineseLunarMonthAndDay(for: date))
+                .font(.system(size: 9, weight: .light))
+                .foregroundColor(isSelected ? .blue : .secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .buttonStyle(PlainButtonStyle())
+        .frame(height: 54) // 增加高度以适应农历
+        .frame(maxWidth: .infinity) // 占满可用宽度
+        .contentShape(Rectangle()) // 确保整个区域可以接收手势
+        .scaleEffect(isLongPressing ? 1.05 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isLongPressing)
+        .onTapGesture {
+            // 短按：选择日期
+            print("🔥 短按日期：\(date)")
+            withAnimation {
+                selectedDate = date
+            }
+        }
+        .onLongPressGesture(minimumDuration: 0.2, perform: {
+            // 长按完成
+            print("🔥🔥🔥 长按完成：\(date)")
+            
+            // 添加"ti ta"震动反馈
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.prepare()
+            impactFeedback.impactOccurred()
+            
+            // 稍微延迟后再次震动，营造"ti ta"效果
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                let secondImpact = UIImpactFeedbackGenerator(style: .light)
+                secondImpact.prepare()
+                secondImpact.impactOccurred()
+                print("🔥🔥🔥 震动反馈完成")
+            }
+            
+            // 调用长按回调
+            print("🔥🔥🔥 准备调用长按回调")
+            onLongPress(date)
+            
+            // 重置长按状态
+            isLongPressing = false
+        }, onPressingChanged: { pressing in
+            // 长按状态变化
+            print("🔥 长按状态变化：\(pressing ? "开始" : "结束")")
+            isLongPressing = pressing
+        })
     }
 }
 

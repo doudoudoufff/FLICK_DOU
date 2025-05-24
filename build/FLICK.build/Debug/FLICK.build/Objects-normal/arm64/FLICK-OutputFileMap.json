@@ -1,0 +1,848 @@
+{
+  "" : {
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICK-master.dia",
+    "emit-module-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICK-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICK-master-emit-module.dia",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICK-master.swiftdeps"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/AccountEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/AccountEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/AttachmentEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/AttachmentEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AttachmentEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Account.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Account~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AccountDetailView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountDetailView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AccountListView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountListView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AccountManagementView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AccountManagementView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AddAccountView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddAccountView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AddInvoiceView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddInvoiceView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AddLocationView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddLocationView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AddProjectView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddProjectView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AddTaskView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTaskView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/AddTransactionView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/AddTransactionView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/BaiBaiView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/BaiBaiView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ChineseCalendarView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ChineseCalendarView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Color+Hex.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Color+Hex~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ColorPickerView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ColorPickerView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ContentView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/CustomTagsSettingsView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/CustomTagsSettingsView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/DailyPhotosView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/DailyPhotosView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Date+Extensions.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Date+Extensions~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditAccountView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditAccountView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditInvoiceView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditInvoiceView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditLocationView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditLocationView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditProjectView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditProjectView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditTaskView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTaskView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/EditTransactionView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/EditTransactionView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/FLICKApp.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FLICKApp~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/FeatureView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/FeatureView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/GlobalTransactionFormView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GlobalTransactionFormView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ImageCropView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImageCropView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ImagePicker.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ImagePicker~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Invoice.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Invoice~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/InvoiceDetailView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceDetailView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/InvoiceListView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceListView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/InvoiceManagementView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceManagementView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/InvoiceRow.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceRow~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/LocationDetailView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationDetailView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/LocationModels.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationModels~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/LocationPhotoViews.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoViews~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/LocationScoutingView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationScoutingView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/LocationTypeManagementView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationTypeManagementView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/LocationViews.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationViews~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/MainTabView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MainTabView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/MotionManager.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/MotionManager~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/NotificationManager.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/NotificationManager~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/OnboardingView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OnboardingView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/OverviewView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/OverviewView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PDFPreviewView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFPreviewView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PDFReportGenerator.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportGenerator~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PDFReportView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PDFReportView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/PersistenceController.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/PersistenceController~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Project.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Project~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectCardView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectCardView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectDetailView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectDetailView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectListView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectListView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectStore.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectStore~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectTask.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectTask~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ProjectsView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectsView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ReportPreviewView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ReportPreviewView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/ScoutingCameraView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ScoutingCameraView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/SettingsDetailView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/SettingsDetailView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TaskManagementView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskManagementView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TaskRow.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskRow~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/Transaction.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/Transaction~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionComponents.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionComponents~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionFormView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionFormView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionListView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionListView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/TransactionManagementView.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionManagementView~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/FLICK/WeatherManager.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/WeatherManager~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/InvoiceEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/InvoiceEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/InvoiceEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/LocationEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/LocationEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/LocationPhotoEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/LocationPhotoEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/LocationPhotoEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/ProjectEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/ProjectEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/ProjectEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/TaskEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/TaskEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TaskEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/TransactionEntity+CoreDataClass.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataClass~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/TransactionEntity+CoreDataProperties.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/TransactionEntity+CoreDataProperties~partial.swiftmodule"
+  },
+  "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/douzi/Documents/GitHub/FLICK_DOU/build/FLICK.build/Debug/FLICK.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

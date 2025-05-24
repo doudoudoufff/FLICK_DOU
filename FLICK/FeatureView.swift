@@ -111,6 +111,9 @@ struct BaiBaiCompactCard: View {
     @StateObject private var motionManager = MotionManager.shared
     @State private var isLoading = false
     @State private var isMotionMode = false // 是否启用陀螺仪模式
+    @State private var sparkleAnimation = false
+    @State private var pulseAnimation = false
+    @State private var rotateAnimation = false
     
     private let blessings = [
         "今天拍摄一切顺利",
@@ -138,6 +141,41 @@ struct BaiBaiCompactCard: View {
     var body: some View {
         VStack(spacing: 24) {
             ZStack {
+                // 背景光环效果 - 调整大小和间距
+                ForEach(0..<3, id: \.self) { index in
+                    Circle()
+                        .stroke(projectColor.opacity(0.2), lineWidth: 1.5)
+                        .frame(width: 130 + CGFloat(index * 15), height: 130 + CGFloat(index * 15))
+                        .scaleEffect(pulseAnimation ? 1.05 : 0.98)
+                        .opacity(pulseAnimation ? 0.4 : 0.7)
+                        .animation(
+                            .easeInOut(duration: 3.0)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.5),
+                            value: pulseAnimation
+                        )
+                }
+                
+                // 闪烁星星效果 - 调整位置和大小
+                ForEach(0..<6, id: \.self) { index in
+                    Image(systemName: "sparkle")
+                        .font(.system(size: 8))
+                        .foregroundColor(projectColor.opacity(0.6))
+                        .offset(
+                            x: cos(Double(index) * .pi / 3) * 100,
+                            y: sin(Double(index) * .pi / 3) * 100
+                        )
+                        .rotationEffect(.degrees(rotateAnimation ? 360 : 0))
+                        .scaleEffect(sparkleAnimation ? 1.0 : 0.3)
+                        .opacity(sparkleAnimation ? 0.8 : 0.3)
+                        .animation(
+                            .easeInOut(duration: 2.0)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.3),
+                            value: sparkleAnimation
+                        )
+                }
+                
                 // 拜拜按钮
             Button {
                     if isMotionMode {
@@ -149,30 +187,64 @@ struct BaiBaiCompactCard: View {
                 }
             } label: {
                 ZStack {
+                    // 外层光晕
                     Circle()
-                        .fill(projectColor.opacity(0.18))
-                        .frame(width: 140, height: 140)
-                        .blur(radius: 16)
+                        .fill(
+                            RadialGradient(
+                                colors: [projectColor.opacity(0.2), Color.clear],
+                                center: .center,
+                                startRadius: 10,
+                                endRadius: 60
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+                        .blur(radius: 6)
+                    
+                    // 主按钮
                     Circle()
-                        .fill(projectColor.gradient)
-                        .frame(width: 110, height: 110)
-                        .shadow(color: projectColor.opacity(0.25), radius: 18, x: 0, y: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [projectColor, projectColor.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 100, height: 100)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+                                .frame(width: 100, height: 100)
+                        )
+                        .shadow(color: projectColor.opacity(0.3), radius: 15, x: 0, y: 8)
                         
                         if isMotionMode {
                             // 陀螺仪模式下显示指引
-                            VStack {
+                            VStack(spacing: 6) {
                                 Image(systemName: "iphone.gen3")
-                                    .font(.system(size: 32))
+                                    .font(.system(size: 24, weight: .medium))
                                     .rotationEffect(.degrees(motionManager.bowProgress * 30))
                                 Text("鞠躬 \(motionManager.bowCount)/3")
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: 11, weight: .semibold))
                             }
                             .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                         } else {
-                            // 普通模式下显示"拜拜"文字
-                    Text("拜拜")
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundStyle(.white)
+                            // 普通模式下显示"拜拜"文字和装饰
+                            VStack(spacing: 3) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "hands.sparkles")
+                                        .font(.system(size: 16, weight: .medium))
+                                    Text("拜拜")
+                                        .font(.system(size: 24, weight: .bold))
+                                    Image(systemName: "hands.sparkles")
+                                        .font(.system(size: 16, weight: .medium))
+                                }
+                                Text("祈福")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .opacity(0.9)
+                            }
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                         }
                 }
                 .rotation3DEffect(
@@ -180,19 +252,8 @@ struct BaiBaiCompactCard: View {
                     axis: (x: 1, y: 0, z: 0)
                 )
             }
-                
-                // 长按开启陀螺仪模式提示
-                if !isMotionMode {
-                    Text("长按开启陀螺仪模式")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(6)
-                        .background(Color(.systemBackground).opacity(0.7))
-                        .cornerRadius(4)
-                        .offset(y: 65)
-                        .opacity(0.7)
-                }
             }
+            .frame(height: 220) // 固定高度，给动画元素足够空间
             .contextMenu {
                 Button {
                     toggleMotionMode()
@@ -204,28 +265,86 @@ struct BaiBaiCompactCard: View {
             .onLongPressGesture {
                 toggleMotionMode()
             }
-            
-            // 祝福语显示
-            if showingBlessing, let blessing = currentBlessing {
-                Text(blessing)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(projectColor)
-                    .padding(.horizontal, 24)
+            .onAppear {
+                // 启动环形动画
+                pulseAnimation = true
+                sparkleAnimation = true
+                withAnimation(.linear(duration: 30).repeatForever(autoreverses: false)) {
+                    rotateAnimation = true
+                }
             }
             
-            // 提示文本
-            Text(isMotionMode ? "手持设备，自然鞠躬三次" : "点击按钮获取今日祈福")
-                .font(.footnote)
+            // 提示文本 - 移到按钮下方
+            if !isMotionMode {
+                VStack(spacing: 4) {
+                    Text("长按开启陀螺仪模式")
+                        .font(.caption)
+                    Text("或点击获取祈福")
+                        .font(.caption)
+                }
                 .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.systemGray6).opacity(0.8))
+                .cornerRadius(8)
+            } else {
+                Text("手持设备，自然鞠躬三次")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6).opacity(0.8))
+                    .cornerRadius(8)
+            }
+            
+            // 祝福语显示 - 增强样式
+            if showingBlessing, let blessing = currentBlessing {
+                VStack(spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                    }
+                    .font(.system(size: 12))
+                    
+                    Text(blessing)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(projectColor)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(projectColor.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(projectColor.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                    
+                    HStack(spacing: 8) {
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                    }
+                    .font(.system(size: 12))
+                }
+                .transition(.scale.combined(with: .opacity))
+            }
             
             // 天气信息
             if let weather = weatherManager.weatherInfo {
-                HStack(spacing: 24) {
+                HStack(spacing: 20) {
                     Image(systemName: weather.symbolName.isEmpty ? "sun.max.fill" : weather.symbolName)
                         .symbolRenderingMode(.multicolor)
-                        .font(.title)
+                        .font(.title2)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(weather.condition == "Cloudy" ? "多云" : weather.condition)
                             .font(.headline)
@@ -235,28 +354,40 @@ struct BaiBaiCompactCard: View {
                     }
                     Spacer()
                     VStack(alignment: .leading, spacing: 2) {
-                        HStack {
+                        HStack(spacing: 4) {
                             Image(systemName: "wind")
                             Text("\(weather.windDirection) \(String(format: "%.1f", weather.windSpeed))m/s")
                         }.font(.caption)
-                        HStack {
+                        HStack(spacing: 4) {
                             Image(systemName: "humidity")
                             Text("\(String(format: "%.0f", weather.humidity * 100))%")
                         }.font(.caption)
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 12)
-                .background(Color(.systemGray6).opacity(0.5))
-                .cornerRadius(16)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemGray6).opacity(0.6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color(.systemGray4).opacity(0.3), lineWidth: 1)
+                        )
+                )
             }
         }
-        .padding(.vertical, 32)
+        .padding(.vertical, 28)
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity)
-        .background(Color(.systemBackground).opacity(0.95))
-        .cornerRadius(32)
-        .shadow(color: Color.black.opacity(0.10), radius: 18, x: 0, y: 8)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.95))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(projectColor.opacity(0.15), lineWidth: 1)
+                )
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 6)
         .padding(.horizontal)
         .onAppear {
             weatherManager.fetchWeatherData()

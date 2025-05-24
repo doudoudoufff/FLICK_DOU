@@ -9,6 +9,7 @@ struct OverviewView: View {
     @State private var selectedProject: Project?
     @State private var showingBaiBai = false
     @State private var taskFilter: TaskFilter = .all // 添加任务筛选状态
+    @State private var isExternalScrollLocked = false // 添加外部滑动锁定状态
     
     // 计算属性来获取selectedDate，避免每次重新初始化
     private var selectedDate: Date {
@@ -138,7 +139,11 @@ struct OverviewView: View {
                             ChineseCalendarView(
                                 selectedDate: selectedDateBinding, 
                                 hasTasksOnDate: hasTasksOnDate,
-                                getTasksForCalendar: getAllTasksForCalendar
+                                getTasksForCalendar: getAllTasksForCalendar,
+                                onExternalScrollLockChanged: { isLocked in
+                                    isExternalScrollLocked = isLocked
+                                    print("🔥 OverviewView: 外部滑动锁定状态变更为 \(isLocked)")
+                                }
                             )
                             .environmentObject(projectStore)
                             .padding(.horizontal, 0) // 去掉内边距，让日历更宽
@@ -210,9 +215,21 @@ struct OverviewView: View {
                                     }
                                     showingAddTask = true
                                 }) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.accentColor)
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "plus")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                        Text("添加任务")
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.accentColor)
+                                    .clipShape(Capsule())
                                 }
+                                .buttonStyle(PlainButtonStyle())
                             }
                             .padding(.horizontal)
                             
@@ -288,6 +305,7 @@ struct OverviewView: View {
                 .padding(.vertical)
                 }
             }
+            .scrollDisabled(isExternalScrollLocked) // 根据外部滑动锁定状态控制滑动
             .background(Color(.systemGroupedBackground))
             .onAppear {
                 weatherManager.fetchWeatherData()

@@ -8,6 +8,27 @@ struct FeatureView: View {
     
     var body: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+                // 顶部标题
+                ZStack {
+                    Text("功能")
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .frame(maxWidth: .infinity)
+                    
+                    HStack {
+                        Spacer()
+                        NavigationLink(destination: SettingsDetailView()) {
+                            Image(systemName: "gearshape")
+                                .imageScale(.large)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(Color(.systemGroupedBackground))
+                
             ScrollView {
                 VStack(spacing: 32) {
                     BaiBaiCompactCard(projectColor: .blue)
@@ -36,14 +57,6 @@ struct FeatureView: View {
                     .padding(.horizontal)
                             }
                         }
-            .navigationTitle("功能")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: SettingsDetailView()) {
-                        Image(systemName: "gearshape")
-                            .imageScale(.large)
-                        }
-                    }
             }
             .sheet(isPresented: $showingAddTask) {
                 NavigationView {

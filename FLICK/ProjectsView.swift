@@ -4,12 +4,59 @@ struct ProjectsView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
     @State private var searchText = ""
-    @State private var selectedStatus: Project.Status = .preProduction
+    @State private var selectedStatus: Project.Status = .production
     @State private var projectToDelete: Project? = nil
     @State private var isRefreshing = false
     
     var body: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+                // 顶部标题
+                ZStack {
+                    Text("项目")
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .frame(maxWidth: .infinity)
+                    
+                    HStack {
+                        Spacer()
+                        Button(action: { showingAddProject = true }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                Text("添加项目")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.accentColor)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(Color(.systemGroupedBackground))
+                
+                // 搜索框
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("搜索项目", text: $searchText)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                .background(Color(.systemGroupedBackground))
+                
             ZStack {
                 Color(.systemGroupedBackground).edgesIgnoringSafeArea(.all)
                 
@@ -83,16 +130,6 @@ struct ProjectsView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "搜索项目")
-            .navigationTitle("项目")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showingAddProject = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(.accentColor)
-                            .imageScale(.large)
-                    }
-                }
             }
             .sheet(isPresented: $showingAddProject) {
                 AddProjectView(isPresented: $showingAddProject)
@@ -146,11 +183,10 @@ struct ProjectsView: View {
     private func statusTitle(for status: Project.Status) -> String {
         switch status {
         case .all: return ""
-        case .preProduction: return "前期"
-        case .production: return "拍摄"
-        case .postProduction: return "后期"
-        case .completed: return "完成"
+        case .production: return "进行中"
+        case .completed: return "已完成"
         case .cancelled: return "已取消"
+        default: return ""
         }
     }
     
@@ -158,11 +194,14 @@ struct ProjectsView: View {
         projectStore.projects.filter { project in
             switch selectedStatus {
             case .all: return true
-            case .preProduction: return project.status == .preProduction
-            case .production: return project.status == .production
-            case .postProduction: return project.status == .postProduction
+            case .production: 
+                // "进行中"包含前期、拍摄、后期状态
+                return project.status == .preProduction || 
+                       project.status == .production || 
+                       project.status == .postProduction
             case .completed: return project.status == .completed
             case .cancelled: return project.status == .cancelled
+            default: return true
             }
         }
     }
@@ -182,18 +221,16 @@ struct StatusTabBar: View {
     @Binding var selectedStatus: Project.Status
     @Namespace private var animation
     
-    // 定义状态选项
+    // 定义状态选项 - 简化为两个状态
     private let statusOptions: [Project.Status] = [
-        .preProduction, .production, .postProduction, .completed
+        .production, .completed  // 使用 .production 代表"进行中"，.completed 代表"已完成"
     ]
     
     // 获取状态显示名称
     private func getStatusName(_ status: Project.Status) -> String {
         switch status {
-        case .preProduction: return "前期"
-        case .production: return "拍摄"
-        case .postProduction: return "后期"
-        case .completed: return "完成"
+        case .production: return "进行中"  // 包含前期、拍摄、后期
+        case .completed: return "已完成"
         default: return ""
         }
     }
@@ -201,9 +238,7 @@ struct StatusTabBar: View {
     // 获取状态对应图标
     private func getStatusIcon(_ status: Project.Status) -> String {
         switch status {
-        case .preProduction: return "doc.text"
-        case .production: return "camera"
-        case .postProduction: return "slider.horizontal.3"
+        case .production: return "play.circle"  // 改为播放图标表示进行中
         case .completed: return "checkmark.circle"
         default: return ""
         }
@@ -212,11 +247,9 @@ struct StatusTabBar: View {
     // 获取状态对应颜色
     private func getStatusColor(_ status: Project.Status) -> Color {
         switch status {
-        case .preProduction: return .orange
-        case .production: return .green
-        case .postProduction: return .purple
-        case .completed: return .gray
-        default: return .blue
+        case .production: return .blue  // 改为蓝色表示进行中
+        case .completed: return .green  // 改为绿色表示已完成
+        default: return .gray
         }
     }
     

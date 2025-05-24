@@ -104,8 +104,8 @@ class TagManager {
     private let defaultExpenseTypes = [
         "交通", "餐饮", "杂支", "差旅", "住宿", "器材", "场地", "演员费用", "后期制作", "其他"
     ]
-    
-    // 默认组别类型
+
+// 默认组别类型
     private let defaultGroupTypes = [
         "制片组", "摄影组", "灯光组", "场务组", "道具组", "演员组", "美术组", "后期组", "导演组", "其他"
     ]

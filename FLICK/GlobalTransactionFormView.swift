@@ -130,8 +130,8 @@ struct GlobalTransactionFormView: View {
                 Section(header: Text("选择项目")) {
                     if projectStore.projects.isEmpty {
                         HStack {
-                            Text("暂无项目")
-                                .foregroundColor(.secondary)
+                        Text("暂无项目")
+                            .foregroundColor(.secondary)
                             
                             Spacer()
                             
@@ -147,7 +147,7 @@ struct GlobalTransactionFormView: View {
                                     Button(action: {
                                         selectedProjectId = proj.id
                                         // 切换项目时更新费用类型和组别
-                                        updateExpenseTypeAndGroup()
+                            updateExpenseTypeAndGroup()
                                     }) {
                                         Text(proj.name)
                                             .font(.system(size: 14))

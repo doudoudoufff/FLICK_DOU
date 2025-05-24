@@ -109,7 +109,7 @@ struct ScoutingArchiveSheet: View {
                         
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                ForEach(projectStore.projects) { project in
+                            ForEach(projectStore.projects) { project in
                                     Button(action: {
                                         selectedProject = project
                                         // 重置场景选择
@@ -123,8 +123,8 @@ struct ScoutingArchiveSheet: View {
                                             .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
                                             .cornerRadius(16)
                                     }
-                                }
                             }
+                        }
                             .padding(.vertical, 4)
                         }
                     }
@@ -146,7 +146,7 @@ struct ScoutingArchiveSheet: View {
                             } else {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 8) {
-                                        ForEach(project.locations) { location in
+                                ForEach(project.locations) { location in
                                             Button(action: {
                                                 selectedLocation = location
                                             }) {

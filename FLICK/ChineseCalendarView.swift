@@ -39,19 +39,7 @@ extension Calendar {
     }
 }
 
-// 月份位置preference key
-struct MonthPositionPreference: PreferenceKey {
-    static var defaultValue: [MonthPosition] = []
-    
-    static func reduce(value: inout [MonthPosition], nextValue: () -> [MonthPosition]) {
-        value.append(contentsOf: nextValue())
-    }
-}
-
-struct MonthPosition: Equatable {
-    let month: Date
-    let frame: CGRect
-}
+// 农历计算扩展
 
 struct ChineseCalendarView: View {
     @Binding var selectedDate: Date
@@ -61,6 +49,8 @@ struct ChineseCalendarView: View {
     @State private var scrollViewHeight: CGFloat = 420 // 可滚动区域的默认高度
     @State private var showDatePicker = false // 日期选择器显示状态
     @State private var visibleMonth: Date // 添加新的状态变量跟踪当前可见的月份
+    @State private var datePickerDate = Date() // 日期选择器的独立状态
+    @State private var stableReferenceDate = Date() // 稳定的参考日期，用于月份计算
     
     private let calendar = Calendar.current
     private let columns = Array(repeating: GridItem(.flexible()), count: 7)
@@ -70,8 +60,10 @@ struct ChineseCalendarView: View {
     
     init(selectedDate: Binding<Date>, hasTasksOnDate: @escaping (Date) -> Bool, getTasksForCalendar: @escaping () -> [ProjectTask]) {
         self._selectedDate = selectedDate
-        self._currentMonth = State(initialValue: selectedDate.wrappedValue)
-        self._visibleMonth = State(initialValue: selectedDate.wrappedValue) // 初始化可见月份
+        let now = Date()
+        self._currentMonth = State(initialValue: now)
+        self._visibleMonth = State(initialValue: now) // 初始化为当前真实日期
+        self._stableReferenceDate = State(initialValue: now) // 设置稳定的参考日期
         self.hasTasksOnDate = hasTasksOnDate
         self.getTasksForCalendar = getTasksForCalendar
     }
@@ -89,19 +81,25 @@ struct ChineseCalendarView: View {
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .padding(.horizontal, 0) // 去掉内边距，让日历更宽
+        .onDisappear {
+            // 视图消失时重置状态 - 移除所有调试信息
+        }
+        .onAppear {
+            // 禁用自动滚动，让用户完全控制
+        }
     }
     
     // 分解为更小的视图组件
     private var headerView: some View {
         HStack {
-            Spacer()
-            
+                Spacer()
+                
             // 日期选择器按钮 - 简化设计
             Button(action: {
                 showDatePicker.toggle()
             }) {
                 HStack(spacing: 6) {
-                    Text(visibleMonthYearString)
+                    Text(currentMonthYearString)
                         .font(.title3)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
@@ -117,7 +115,16 @@ struct ChineseCalendarView: View {
             }
             .buttonStyle(PlainButtonStyle())
             .sheet(isPresented: $showDatePicker) {
-                DatePickerView(selectedDate: $currentMonth, isPresented: $showDatePicker)
+                DatePickerView(
+                    selectedDate: $datePickerDate, 
+                    isPresented: $showDatePicker,
+                    onConfirm: { selectedDate in
+                        // 只有在用户明确确认时才更新currentMonth
+                        currentMonth = selectedDate
+                        // 不自动滚动，让用户保持控制权
+                        print("📅 用户选择了新日期: \(selectedDate)，但不自动滚动")
+                    }
+                )
             }
             
             Spacer()
@@ -132,12 +139,12 @@ struct ChineseCalendarView: View {
     private var weekdayHeaderView: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(weekdays, id: \.self) { weekday in
-                    Text(weekday)
+                    ForEach(weekdays, id: \.self) { weekday in
+                        Text(weekday)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity)
-                }
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 4)
@@ -156,9 +163,9 @@ struct ChineseCalendarView: View {
             GeometryReader { scrollGeometry in
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 4) {
-                        // 生成多个月的视图以支持滚动
+                        // 使用稳定的参考日期计算月份，完全避免因状态变化导致重新渲染
                         ForEach(-monthsToShow/2..<monthsToShow/2+1, id: \.self) { monthOffset in
-                            let targetMonth = calendar.date(byAdding: .month, value: monthOffset, to: currentMonth)!
+                            let targetMonth = calendar.date(byAdding: .month, value: monthOffset, to: stableReferenceDate)!
                             MonthView(
                                 month: targetMonth,
                                 selectedDate: $selectedDate,
@@ -166,58 +173,16 @@ struct ChineseCalendarView: View {
                                 getTasksForCalendar: getTasksForCalendar,
                                 calendar: calendar
                             )
-                            .id(monthOffset) // 使用月份偏移作为ID，确保月份变化时视图更新
-                            .background(
-                                GeometryReader { monthGeometry in
-                                    Color.clear
-                                        .preference(
-                                            key: MonthPositionPreference.self,
-                                            value: [MonthPosition(
-                                                month: targetMonth,
-                                                frame: monthGeometry.frame(in: .named("scroll"))
-                                            )]
-                                        )
-                                }
-                            )
+                            .id("month_\(monthOffset)_\(stableReferenceDate.timeIntervalSince1970)") // 使用稳定的ID
                         }
                     }
                     .padding(.top, 4)
                     .padding(.bottom, 20)
                 }
+                .scrollDisabled(false) // 移除任务创建相关的滚动禁用
                 .coordinateSpace(name: "scroll")
-                .onPreferenceChange(MonthPositionPreference.self) { positions in
-                    // 找到最接近屏幕中心的月份
-                    let scrollCenter = scrollGeometry.size.height / 2
-                    
-                    if let closestMonth = positions.min(by: { position1, position2 in
-                        let distance1 = abs(position1.frame.midY - scrollCenter)
-                        let distance2 = abs(position2.frame.midY - scrollCenter)
-                        return distance1 < distance2
-                    }) {
-                        if !calendar.isDate(visibleMonth, equalTo: closestMonth.month, toGranularity: .month) {
-                            visibleMonth = closestMonth.month
-                        }
-                    }
-                }
             }
             .frame(maxWidth: .infinity)
-            .onAppear {
-                // 应用启动时自动滚动到当前月
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation {
-                        scrollProxy.scrollTo(0, anchor: .top) // 滚动到当前月
-                    }
-                }
-            }
-            .onChange(of: currentMonth) { newValue in
-                // 当通过日期选择器改变月份时，滚动到相应位置并更新可见月份
-                visibleMonth = newValue
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation {
-                        scrollProxy.scrollTo(0, anchor: .top) // 滚动到当前选择的月
-                    }
-                }
-            }
         }
     }
     
@@ -305,9 +270,9 @@ struct ChineseCalendarView: View {
         }
         
         private var monthString: String {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy年M月"
-            formatter.locale = Locale(identifier: "zh_CN")
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy年M月"
+        formatter.locale = Locale(identifier: "zh_CN")
             return formatter.string(from: month)
         }
         
@@ -338,26 +303,26 @@ struct ChineseCalendarView: View {
         }
         
         // 该月的所有日期
-        private var daysInMonth: [Date?] {
+    private var daysInMonth: [Date?] {
             let range = calendar.range(of: .day, in: .month, for: month)!
             let firstDay = calendar.date(from: calendar.dateComponents([.year, .month], from: month))!
-            let firstWeekday = calendar.component(.weekday, from: firstDay)
-            
-            var days: [Date?] = Array(repeating: nil, count: firstWeekday - 1)
-            
-            for day in 1...range.count {
-                if let date = calendar.date(byAdding: .day, value: day - 1, to: firstDay) {
-                    days.append(date)
-                }
+        let firstWeekday = calendar.component(.weekday, from: firstDay)
+        
+        var days: [Date?] = Array(repeating: nil, count: firstWeekday - 1)
+        
+        for day in 1...range.count {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: firstDay) {
+                days.append(date)
             }
-            
-            while days.count % 7 != 0 {
-                days.append(nil)
-            }
-            
-            return days
         }
         
+        while days.count % 7 != 0 {
+            days.append(nil)
+        }
+        
+        return days
+    }
+    
         // 检查任务是否在本周内
         private func isTaskInWeek(_ task: ProjectTask, week: [Date?]) -> Bool {
             let weekDates = week.compactMap { $0 }
@@ -388,11 +353,11 @@ struct ChineseCalendarView: View {
         }
     }
     
-    private var visibleMonthYearString: String {
+    private var currentMonthYearString: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年M月"
         formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: visibleMonth)
+        return formatter.string(from: currentMonth)
     }
 }
 
@@ -404,43 +369,40 @@ struct WeekView: View {
     let calendar: Calendar
     let tasks: [ProjectTask]
     
-    // 修改为检查是否有任何任务（包括单天任务）
-    private var hasAnyTasks: Bool {
-        return !tasks.isEmpty
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             // 日期行
-            HStack(spacing: 0) {
-                ForEach(0..<7) { index in
-                    if let date = week[index] {
-                        DayCell(
-                            date: date,
-                            isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
-                            isToday: calendar.isDateInToday(date),
-                            hasTasks: hasTasksOnDate(date)
-                        ) {
-                            withAnimation {
-                                selectedDate = date
-                            }
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    ForEach(Array(0..<7), id: \.self) { index in
+                        if let date = week[index] {
+                            DayCell(
+                                date: date,
+                                isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
+                                isToday: calendar.isDateInToday(date),
+                                hasTasks: hasTasksOnDate(date),
+                                selectedDate: $selectedDate
+                            )
+                            .frame(maxWidth: .infinity) // 确保与星期标题宽度一致
+                        } else {
+                            Color.clear
+                                .frame(height: 54) // 与DayCell高度保持一致
+                                .frame(maxWidth: .infinity) // 确保空白区域也占用相同宽度
                         }
-                        .frame(maxWidth: .infinity) // 确保与星期标题宽度一致
-                    } else {
-                        Color.clear
-                            .frame(height: 54) // 与DayCell高度保持一致
-                            .frame(maxWidth: .infinity) // 确保空白区域也占用相同宽度
                     }
                 }
             }
+            .frame(height: 54) // 固定GeometryReader的高度
+            .coordinateSpace(name: "weekView")
             
-            // 任务时间线区域 - 显示所有任务
-            if hasAnyTasks {
-                // 计算所有任务的高度需求
-                let allTasksCount = min(4, tasks.count) // 最多显示4个任务
-                let dynamicHeight = CGFloat(16 + allTasksCount * 20)
-                
-                ZStack(alignment: .top) {
+            // 任务时间线区域 - 显示所有任务 + 临时创建的任务条
+            ZStack(alignment: .top) {
+                // 原有任务
+                if !tasks.isEmpty {
+                    // 计算所有任务的高度需求
+                    let allTasksCount = min(4, tasks.count) // 最多显示4个任务
+                    let dynamicHeight = CGFloat(16 + allTasksCount * 20)
+                    
                     Rectangle()
                         .fill(Color.clear)
                         .frame(height: dynamicHeight)
@@ -450,8 +412,8 @@ struct WeekView: View {
                         tasks: tasks,
                         calendar: calendar
                     )
+                    .padding(.top, 6)
                 }
-                .padding(.top, 6)
             }
             
             // 添加淡色分隔线
@@ -657,30 +619,34 @@ struct DayCell: View {
     let isSelected: Bool
     let isToday: Bool
     let hasTasks: Bool
-    let action: () -> Void
+    @Binding var selectedDate: Date
     
     private let calendar = Calendar.current
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            withAnimation {
+                selectedDate = date
+            }
+        }) {
             VStack(spacing: 2) {
-                ZStack {
-                    // 背景圆圈
-                    Group {
-                        if isSelected {
+            ZStack {
+                // 背景圆圈
+                Group {
+                if isSelected {
                             // 选中样式：简洁的圆形背景
-                            Circle()
+                    Circle()
                                 .fill(Color.blue)
                                 .frame(width: 32, height: 32)
                                 .scaleEffect(isSelected ? 1.0 : 0.8)
                                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-                        } else if isToday {
+                } else if isToday {
                             // 今天的样式：细边框圆形
                             Circle()
                                 .stroke(Color.blue, lineWidth: 2)
                                 .frame(width: 32, height: 32)
                                 .background(
-                                    Circle()
+                    Circle()
                                         .fill(Color.blue.opacity(0.1))
                                         .frame(width: 32, height: 32)
                                 )
@@ -713,11 +679,13 @@ struct DatePickerView: View {
     @Binding var selectedDate: Date
     @Binding var isPresented: Bool
     @State private var tempDate: Date
+    let onConfirm: (Date) -> Void
     
-    init(selectedDate: Binding<Date>, isPresented: Binding<Bool>) {
+    init(selectedDate: Binding<Date>, isPresented: Binding<Bool>, onConfirm: @escaping (Date) -> Void) {
         self._selectedDate = selectedDate
         self._isPresented = isPresented
         self._tempDate = State(initialValue: selectedDate.wrappedValue)
+        self.onConfirm = onConfirm
     }
     
     var body: some View {
@@ -730,6 +698,7 @@ struct DatePickerView: View {
                 Button(action: {
                     selectedDate = tempDate
                     isPresented = false
+                    onConfirm(tempDate)
                 }) {
                     Text("确定")
                         .font(.headline)

@@ -3,11 +3,30 @@ import SwiftUI
 struct OverviewView: View {
     @EnvironmentObject private var projectStore: ProjectStore
     @StateObject private var weatherManager = WeatherManager.shared
-    @State private var selectedDate = Date()
+    // 使用@AppStorage来保持selectedDate在页面切换时的稳定性
+    @AppStorage("overview_selected_date") private var selectedDateTimeInterval: Double = Date().timeIntervalSince1970
     @State private var showingAddTask = false
     @State private var selectedProject: Project?
     @State private var showingBaiBai = false
     @State private var taskFilter: TaskFilter = .all // 添加任务筛选状态
+    
+    // 计算属性来获取selectedDate，避免每次重新初始化
+    private var selectedDate: Date {
+        get { Date(timeIntervalSince1970: selectedDateTimeInterval) }
+    }
+    
+    // 修改selectedDate的方法
+    private mutating func setSelectedDate(_ newDate: Date) {
+        selectedDateTimeInterval = newDate.timeIntervalSince1970
+    }
+    
+    // 创建Binding
+    private var selectedDateBinding: Binding<Date> {
+        Binding(
+            get: { selectedDate },
+            set: { self.selectedDateTimeInterval = $0.timeIntervalSince1970 }
+        )
+    }
     
     // 任务筛选枚举
     enum TaskFilter {
@@ -112,90 +131,90 @@ struct OverviewView: View {
                     .padding(.bottom, 8)
                     .background(Color(.systemGroupedBackground))
                 
-                ScrollView {
-                    VStack(spacing: 20) {
+            ScrollView {
+                VStack(spacing: 20) {
                         // 日历卡片 - 获得更多空间
-                        VStack(spacing: 0) {
+                    VStack(spacing: 0) {
                             ChineseCalendarView(
-                                selectedDate: $selectedDate, 
+                                selectedDate: selectedDateBinding, 
                                 hasTasksOnDate: hasTasksOnDate,
                                 getTasksForCalendar: getAllTasksForCalendar
                             )
                             .padding(.horizontal, 0) // 去掉内边距，让日历更宽
-                        }
-                        .background(Color(.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
+                    }
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
                         .padding(.horizontal, 16) // 增加水平边距，让卡片看起来更独立
-                        
+                    
                         // 拜拜卡片已隐藏 
                         // NavigationLink(destination: BaiBaiView(projectColor: .orange)) { ... }
                         
+                    
+                    // 功能卡片网格
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: 16) {
+                        // 可以在这里添加其他功能卡片...
+                    }
+                    .padding(.horizontal)
+                    
+                    // 任务统计 - 改为可点击筛选的卡片
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        FilterStatisticCard(
+                            title: "今日任务",
+                            value: "\(allTasksCount)",
+                            icon: "calendar",
+                            color: .blue,
+                            isSelected: taskFilter == .all,
+                            action: { taskFilter = .all }
+                        )
                         
-                        // 功能卡片网格
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 16) {
-                            // 可以在这里添加其他功能卡片...
-                        }
-                        .padding(.horizontal)
+                        FilterStatisticCard(
+                            title: "待完成",
+                            value: "\(pendingTasksCount)",
+                            icon: "clock",
+                            color: .orange,
+                            isSelected: taskFilter == .pending,
+                            action: { taskFilter = .pending }
+                        )
                         
-                        // 任务统计 - 改为可点击筛选的卡片
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                            FilterStatisticCard(
-                                title: "今日任务",
-                                value: "\(allTasksCount)",
-                                icon: "calendar",
-                                color: .blue,
-                                isSelected: taskFilter == .all,
-                                action: { taskFilter = .all }
-                            )
-                            
-                            FilterStatisticCard(
-                                title: "待完成",
-                                value: "\(pendingTasksCount)",
-                                icon: "clock",
-                                color: .orange,
-                                isSelected: taskFilter == .pending,
-                                action: { taskFilter = .pending }
-                            )
-                            
-                            FilterStatisticCard(
-                                title: "已完成",
-                                value: "\(completedTasksCount)",
-                                icon: "checkmark.circle",
-                                color: .green,
-                                isSelected: taskFilter == .completed,
-                                action: { taskFilter = .completed }
-                            )
-                        }
-                        .padding(.horizontal)
-                        
+                        FilterStatisticCard(
+                            title: "已完成",
+                            value: "\(completedTasksCount)",
+                            icon: "checkmark.circle",
+                            color: .green,
+                            isSelected: taskFilter == .completed,
+                            action: { taskFilter = .completed }
+                        )
+                    }
+                    .padding(.horizontal)
+                    
                         // 任务列表 - 未完成和已完成分开显示
                         if !pendingTasks.isEmpty || !completedTasks.isEmpty {
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
-                                    // 动态显示标题，根据筛选条件变化
-                                    Text(taskFilter == .all ? "今日任务" : 
-                                        (taskFilter == .pending ? "待完成任务" : "已完成任务"))
-                                        .font(.headline)
-                                    
-                                    Spacer()
-                                    
-                                    Button(action: {
-                                        // 如果没有选中项目，默认选择第一个项目
-                                        if selectedProject == nil && !projectStore.projects.isEmpty {
-                                            selectedProject = projectStore.projects[0]
-                                        }
-                                        showingAddTask = true
-                                    }) {
-                                        Image(systemName: "plus.circle.fill")
-                                            .foregroundColor(.accentColor)
-                                    }
-                                }
-                                .padding(.horizontal)
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                // 动态显示标题，根据筛选条件变化
+                                Text(taskFilter == .all ? "今日任务" : 
+                                    (taskFilter == .pending ? "待完成任务" : "已完成任务"))
+                                    .font(.headline)
                                 
+                                Spacer()
+                                
+                                Button(action: {
+                                    // 如果没有选中项目，默认选择第一个项目
+                                    if selectedProject == nil && !projectStore.projects.isEmpty {
+                                        selectedProject = projectStore.projects[0]
+                                    }
+                                    showingAddTask = true
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+                            .padding(.horizontal)
+                            
                                 // 根据筛选条件显示相应任务
                                 if taskFilter == .all || taskFilter == .pending {
                                     // 未完成任务
@@ -229,8 +248,8 @@ struct OverviewView: View {
                                         
                                         VStack(spacing: 12) {
                                             ForEach(completedTasks) { taskWithProject in
-                                                DailyTaskRow(taskWithProject: taskWithProject) {
-                                                    toggleTaskCompletion(taskWithProject)
+                                    DailyTaskRow(taskWithProject: taskWithProject) {
+                                        toggleTaskCompletion(taskWithProject)
                                                 }
                                                 .transition(.opacity)
                                             }
@@ -239,33 +258,33 @@ struct OverviewView: View {
                                     }
                                     .padding(.horizontal)
                                 }
-                            }
-                        } else {
-                            VStack(spacing: 12) {
-                                Image(systemName: "checkmark.circle")
-                                    .font(.system(size: 48))
-                                    .foregroundColor(.secondary)
-                                
-                                Text(emptyStateMessage)
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                
-                                Button(action: {
-                                    // 如果没有选中项目，默认选择第一个项目
-                                    if selectedProject == nil && !projectStore.projects.isEmpty {
-                                        selectedProject = projectStore.projects[0]
-                                    }
-                                    showingAddTask = true
-                                }) {
-                                    Text("添加任务")
-                                        .foregroundColor(.accentColor)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 40)
                         }
+                    } else {
+                        VStack(spacing: 12) {
+                            Image(systemName: "checkmark.circle")
+                                .font(.system(size: 48))
+                                .foregroundColor(.secondary)
+                            
+                            Text(emptyStateMessage)
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            Button(action: {
+                                // 如果没有选中项目，默认选择第一个项目
+                                if selectedProject == nil && !projectStore.projects.isEmpty {
+                                    selectedProject = projectStore.projects[0]
+                                }
+                                showingAddTask = true
+                            }) {
+                                Text("添加任务")
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
                     }
-                    .padding(.vertical)
+                }
+                .padding(.vertical)
                 }
             }
             .background(Color(.systemGroupedBackground))
@@ -389,7 +408,7 @@ struct DailyTaskRow: View {
                     if taskWithProject.task.isCrossDays {
                         Text("\(taskWithProject.task.startDate.chineseStyleShortString())-\(taskWithProject.task.dueDate.chineseStyleShortString())")
                     } else {
-                        Text(taskWithProject.task.dueDate.formatted(date: .omitted, time: .shortened))
+                    Text(taskWithProject.task.dueDate.formatted(date: .omitted, time: .shortened))
                     }
                 }
                 .font(.subheadline)

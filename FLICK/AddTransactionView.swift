@@ -401,8 +401,8 @@ struct AddTransactionView: View {
 }
 
 #Preview {
-    NavigationStack {
+        NavigationStack {
         AddTransactionView(project: .constant(Project(name: "测试项目")), isPresented: .constant(true))
-            .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
+                .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
     }
 } 

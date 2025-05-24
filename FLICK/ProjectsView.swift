@@ -13,7 +13,7 @@ struct ProjectsView: View {
             ZStack {
                 Color(.systemGroupedBackground).edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
                     // 简化版状态筛选器
                     StatusTabBar(selectedStatus: $selectedStatus)
                         .padding(.top, 10)
@@ -68,18 +68,18 @@ struct ProjectsView: View {
                         }
                         .padding()
                     } else {
-                        // 项目列表
-                        List {
-                            ForEach(searchedProjects) { project in
-                                ProjectListRow(project: project)
-                                    .listRowSeparator(.hidden)
+                    // 项目列表
+                List {
+                    ForEach(searchedProjects) { project in
+                        ProjectListRow(project: project)
+                            .listRowSeparator(.hidden)
                                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                                    .listRowBackground(Color.clear)
-                            }
-                        }
-                        .listStyle(.plain)
+                            .listRowBackground(Color.clear)
+                    }
+                                }
+                .listStyle(.plain)
                         .background(Color.clear)
-                        .scrollContentBackground(.hidden)
+                .scrollContentBackground(.hidden)
                     }
                 }
             }
@@ -117,7 +117,7 @@ struct ProjectsView: View {
                             
                             // 在主线程上调用删除方法
                             await MainActor.run {
-                                projectStore.deleteProject(project)
+                            projectStore.deleteProject(project)
                             }
                         }
                     }

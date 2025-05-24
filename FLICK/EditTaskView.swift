@@ -68,8 +68,8 @@ struct EditTaskView: View {
                             .environment(\.locale, Locale(identifier: "zh_CN"))
                     } else {
                         // 如果不是跨天任务，只显示截止日期选择器
-                        DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
-                            .environment(\.locale, Locale(identifier: "zh_CN"))
+                    DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
+                        .environment(\.locale, Locale(identifier: "zh_CN"))
                             .onChange(of: dueDate) { newValue in
                                 // 保持开始日期与截止日期同步
                                 startDate = newValue
@@ -86,17 +86,17 @@ struct EditTaskView: View {
                     }
                     
                     if reminder != nil {
-                        HStack {
-                            Text("提醒时间")
-                            Spacer()
-                            Text("\(Int(reminderHour)):00")
-                                .foregroundColor(.secondary)
-                        }
+                            HStack {
+                                Text("提醒时间")
+                                Spacer()
+                                Text("\(Int(reminderHour)):00")
+                                    .foregroundColor(.secondary)
+                            }
                         
                         Slider(value: $reminderHour, in: 0...23, step: 1)
                     }
                 }
-                
+
                 Section(header: HStack {
                     Text("所属项目")
                     Text("*")
@@ -190,7 +190,7 @@ struct EditTaskView: View {
                     // 尝试找到任务所属的项目
                     for project in projectStore.projects {
                         if project.tasks.contains(where: { $0.id == task.id }) {
-                            selectedProject = project
+                        selectedProject = project
                             break
                         }
                     }

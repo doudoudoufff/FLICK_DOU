@@ -837,17 +837,17 @@ class ProjectStore: ObservableObject {
                 if success {
                     print("✓ 任务信息同步到 iCloud 成功")
                     
-                    // 同步成功后重新加载项目
-                    self.loadProjects()
+                    // 移除重新加载项目的调用，避免影响其他视图（如日历）
+                    // self.loadProjects()
                 } else if let error = error {
                     print("❌ 任务信息同步到 iCloud 失败: \(error)")
                 }
-                }
-            } catch {
+            }
+        } catch {
             print("❌ 保存失败:")
             print("错误类型: \(type(of: error))")
-                print("错误描述: \(error.localizedDescription)")
-            }
+            print("错误描述: \(error.localizedDescription)")
+        }
         
         print("================================")
     }

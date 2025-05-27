@@ -9,12 +9,16 @@ import SwiftUI
 import CoreData
 import WeatherKit
 import CloudKit
+import Combine
 
 @main
 struct FLICKApp: App {
     let persistenceController: PersistenceController
     @StateObject private var projectStore: ProjectStore
     @Environment(\.scenePhase) private var scenePhase
+    
+    // 添加通知处理器
+    @StateObject private var notificationHandler = AppNotificationHandler()
     
     init() {
         // 确保 PersistenceController 完全初始化
@@ -46,6 +50,7 @@ struct FLICKApp: App {
         WindowGroup {
             ContentView(context: self.persistenceController.container.viewContext)
                 .environmentObject(projectStore)
+                .environmentObject(notificationHandler)
                 .onAppear {
                     // 应用启动后，异步请求通知权限，避免阻塞UI
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -128,5 +133,25 @@ struct FLICKApp: App {
         let isCloudSyncEnabled = UserDefaults.standard.bool(forKey: "enableCloudSync")
         print("保存应用状态：iCloud同步设置为 \(isCloudSyncEnabled ? "已启用" : "已禁用")")
         UserDefaults.standard.synchronize()
+    }
+}
+
+// 应用通知处理器
+class AppNotificationHandler: ObservableObject {
+    @Published var showAddAccountView = false
+    @Published var selectedProjectId: UUID?
+    
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        // 监听打开添加账户视图的通知
+        NotificationCenter.default.publisher(for: NSNotification.Name("ShowAddAccountView"))
+            .sink { [weak self] notification in
+                if let projectId = notification.userInfo?["projectId"] as? UUID {
+                    self?.selectedProjectId = projectId
+                    self?.showAddAccountView = true
+                }
+            }
+            .store(in: &cancellables)
     }
 }

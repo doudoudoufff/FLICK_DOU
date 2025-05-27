@@ -23,6 +23,7 @@ extension CommonInfoEntity {
     @NSManaged public var tag: String?
     @NSManaged public var title: String?
     @NSManaged public var type: String?
+    @NSManaged public var userData: Data?
 
 }
 

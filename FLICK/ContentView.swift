@@ -10,7 +10,10 @@ import CoreData
 
 struct ContentView: View {
     @EnvironmentObject private var projectStore: ProjectStore
+    @EnvironmentObject private var notificationHandler: AppNotificationHandler
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @State private var selectedProject: Project?
+    @State private var isAddAccountPresented = false
     
     init(context: NSManagedObjectContext) {
         // 注意：ProjectStore将从FLICKApp通过environmentObject传入，
@@ -23,8 +26,28 @@ struct ContentView: View {
                 OnboardingView()
                     .presentationDetents([.fraction(0.75), .large])
             }
+            .sheet(isPresented: $isAddAccountPresented) {
+                if let project = selectedProject {
+                    AddAccountView(isPresented: $isAddAccountPresented, project: .constant(project))
+                        .environmentObject(projectStore)
+                }
+            }
             .onAppear {
                 print("ContentView已加载，项目数: \(projectStore.projects.count)")
+            }
+            .onChange(of: notificationHandler.showAddAccountView) { show in
+                if show {
+                    // 找到选中的项目
+                    if let projectId = notificationHandler.selectedProjectId,
+                       let project = projectStore.projects.first(where: { $0.id == projectId }) {
+                        selectedProject = project
+                        isAddAccountPresented = true
+                        // 重置通知处理器状态
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            notificationHandler.showAddAccountView = false
+                        }
+                    }
+                }
             }
     }
 }

@@ -14,10 +14,8 @@ struct EditTaskView: View {
     @State private var reminder: ProjectTask.TaskReminder?
     @State private var reminderHour: Double
     @State private var selectedProject: Project?
-    @State private var showingCreateProjectSheet = false
     @State private var showingTaskUpdatedAlert = false
     @State private var updatedTaskProjectName = ""
-    @State private var showingProjectRequiredAlert = false
     
     init(isPresented: Binding<Bool>, task: Binding<ProjectTask>) {
         self._isPresented = isPresented
@@ -34,6 +32,31 @@ struct EditTaskView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // 将所属项目section移到最上方，改为只显示模式
+                Section(header: Text("所属项目")) {
+                    HStack {
+                        Circle()
+                            .fill(selectedProject?.color ?? .gray)
+                            .frame(width: 24, height: 24)
+                            .overlay(
+                                Image(systemName: "folder.fill")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.white)
+                            )
+                        
+                        Text(selectedProject?.name ?? "未分配项目")
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 16))
+                    }
+                    .padding(.vertical, 4)
+                }
+
                 Section(header: Text("任务信息")) {
                     HStack {
                         Text("任务内容")
@@ -96,46 +119,6 @@ struct EditTaskView: View {
                         Slider(value: $reminderHour, in: 0...23, step: 1)
                     }
                 }
-
-                Section(header: HStack {
-                    Text("所属项目")
-                    Text("*")
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("选择项目")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Button(action: { showingCreateProjectSheet = true }) {
-                                Text("＋ 新建项目")
-                                    .font(.caption)
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(projectStore.projects) { project in
-                                    Button(action: {
-                                        selectedProject = project
-                                    }) {
-                                        Text(project.name)
-                                            .font(.system(size: 14))
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
-                                            .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
-                                            .cornerRadius(16)
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
             }
             .navigationTitle("编辑任务")
             .navigationBarTitleDisplayMode(.inline)
@@ -150,12 +133,11 @@ struct EditTaskView: View {
                             return
                         }
                         
-                        if selectedProject == nil {
-                            showingProjectRequiredAlert = true
+                        guard let project = selectedProject else { 
+                            // 如果没有找到项目，可能是数据同步问题，直接返回
+                            print("错误：无法找到任务所属的项目")
                             return
                         }
-                        
-                        guard let project = selectedProject else { return }
                         
                         // 创建一个更新后的任务对象
                         var updatedTask = task
@@ -180,10 +162,6 @@ struct EditTaskView: View {
                     }
                     .disabled(title.isEmpty)
                 }
-            }
-            .sheet(isPresented: $showingCreateProjectSheet) {
-                AddProjectView(isPresented: $showingCreateProjectSheet)
-                    .environmentObject(projectStore)
             }
             .onAppear {
                 if selectedProject == nil {
@@ -211,11 +189,6 @@ struct EditTaskView: View {
                     }
                 }
             )
-            .alert("请选择项目", isPresented: $showingProjectRequiredAlert) {
-                Button("确定", role: .cancel) { }
-            } message: {
-                Text("请选择一个项目来保存任务。")
-            }
         }
     }
 } 

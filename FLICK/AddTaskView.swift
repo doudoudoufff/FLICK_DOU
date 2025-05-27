@@ -24,7 +24,54 @@ struct AddTaskView: View {
     
     var body: some View {
         NavigationStack {
-        Form {
+            Form {
+                // 将所属项目section移到最上方
+                Section(header: HStack {
+                    Text("所属项目")
+                    Text("*")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }) {
+                    if projectStore.projects.isEmpty {
+                        Button("创建项目") {
+                            showingCreateProjectSheet = true
+                        }
+                    } else {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("选择项目")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button(action: { showingCreateProjectSheet = true }) {
+                                    Text("＋ 新建项目")
+                                        .font(.caption)
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(projectStore.projects) { project in
+                                        Button(action: {
+                                            selectedProject = project
+                                        }) {
+                                            Text(project.name)
+                                                .font(.system(size: 14))
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
+                                                .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
+                                                .cornerRadius(16)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                    }
+                }
+
                 Section(header: Text("任务信息")) {
                     HStack {
                         Text("任务内容")
@@ -59,8 +106,8 @@ struct AddTaskView: View {
                             .environment(\.locale, Locale(identifier: "zh_CN"))
                     } else {
                         // 如果不是跨天任务，只显示截止日期选择器
-                    DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
-                        .environment(\.locale, Locale(identifier: "zh_CN"))
+                        DatePicker("截止时间", selection: $dueDate, displayedComponents: .date)
+                            .environment(\.locale, Locale(identifier: "zh_CN"))
                             .onChange(of: dueDate) { newValue in
                                 // 保持开始日期与截止日期同步
                                 startDate = newValue
@@ -77,76 +124,30 @@ struct AddTaskView: View {
                     }
                     
                     if reminder != nil {
-                    HStack {
-                                Text("提醒时间")
-                        Spacer()
-                                Text("\(Int(reminderHour)):00")
-                                    .foregroundColor(.secondary)
-                    }
+                        HStack {
+                            Text("提醒时间")
+                            Spacer()
+                            Text("\(Int(reminderHour)):00")
+                                .foregroundColor(.secondary)
+                        }
                         
                         Slider(value: $reminderHour, in: 0...23, step: 1)
-                        }
-                    }
-                
-                Section(header: HStack {
-                    Text("所属项目")
-                    Text("*")
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }) {
-                    if projectStore.projects.isEmpty {
-                        Button("创建项目") {
-                            showingCreateProjectSheet = true
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                                Text("选择项目")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                        Button(action: { showingCreateProjectSheet = true }) {
-                            Text("＋ 新建项目")
-                                        .font(.caption)
-                                .foregroundColor(.accentColor)
-                                }
-                            }
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(projectStore.projects) { project in
-                                        Button(action: {
-                                            selectedProject = project
-                                        }) {
-                                            Text(project.name)
-                                                .font(.system(size: 14))
-                                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                                .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
-                                                .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
-                                                .cornerRadius(16)
-                }
-            }
-        }
-                                .padding(.vertical, 4)
-                            }
-                        }
                     }
                 }
             }
-        .toolbar {
+            .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("取消") {
-                            dismiss()
-                        }
+                        dismiss()
+                    }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("添加") {
                         addTask()
-                }
+                    }
                     .disabled(title.isEmpty || selectedProject == nil)
-            }
+                }
         }
             .navigationTitle("添加任务")
             .navigationBarTitleDisplayMode(.inline)
@@ -202,8 +203,8 @@ struct AddTaskView: View {
         projectStore.addTask(task, to: project)
         addedTaskProjectName = project.name
         showingTaskAddedAlert = true
-            }
-        }
+    }
+}
 
 struct EmptyProjectSection: View {
     @Binding var showingCreateProjectAlert: Bool

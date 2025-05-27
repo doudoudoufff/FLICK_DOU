@@ -1,10 +1,16 @@
 import SwiftUI
 import CloudKit
+import CoreData
 
 struct FeatureView: View {
     @State private var showSettingsDetail = false
     @State private var showingAddTask = false
     @EnvironmentObject private var projectStore: ProjectStore
+    
+    // 直接从PersistenceController获取上下文
+    private var persistenceContext: NSManagedObjectContext {
+        return PersistenceController.shared.container.viewContext
+    }
     
     var body: some View {
         NavigationStack {
@@ -53,6 +59,28 @@ struct FeatureView: View {
                             UIApplication.shared.windows.first?.rootViewController?
                                 .present(formVC, animated: true)
                         }
+                        
+                        // 新增场地管理入口
+                        NavigationLink(destination: {
+                            // 在这里创建视图，确保上下文是最新的
+                            let context = PersistenceController.shared.container.viewContext
+                            print("FeatureView创建VenueListView，使用上下文: \(context)")
+                            return VenueListView(context: context)
+                        }) {
+                            VStack(spacing: 12) {
+                                Image(systemName: "building.2.fill")
+                                    .font(.system(size: 34, weight: .bold))
+                                    .foregroundColor(Color.blue.opacity(0.85))
+                                Text("收藏场地管理")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color(.systemBackground).opacity(0.95))
+                            .cornerRadius(22)
+                            .shadow(color: Color.blue.opacity(0.10), radius: 8, x: 0, y: 4)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     .padding(.horizontal)
                             }

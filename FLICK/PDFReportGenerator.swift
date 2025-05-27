@@ -32,10 +32,21 @@ class PDFReportGenerator {
     private let footerHeight: CGFloat = 40    // 页脚高度
     private let noteSpacing: CGFloat = 20     // 备注区域与页脚之间的间距
     
-    // 颜色和样式
+    // 美化相关的新属性
+    private let cardCornerRadius: CGFloat = 12      // 照片卡片圆角
+    private let cardShadowRadius: CGFloat = 8       // 卡片阴影半径
+    private let cardShadowOpacity: Float = 0.15     // 阴影透明度
+    private let cardShadowOffset: CGSize = CGSize(width: 0, height: 4)  // 阴影偏移
+    private let gradientHeight: CGFloat = 120       // 渐变背景高度
+    
+    // 颜色和样式 - 升级配色方案
     private let primaryColor: UIColor
     private let secondaryColor: UIColor
-    private let backgroundColor: UIColor = UIColor(white: 0.97, alpha: 1.0)
+    private let accentColor: UIColor
+    private let backgroundColor: UIColor = UIColor(red: 0.98, green: 0.98, blue: 1.0, alpha: 1.0)  // 淡蓝白色
+    private let cardBackgroundColor: UIColor = UIColor.white
+    private let textColor: UIColor = UIColor(white: 0.2, alpha: 1.0)  // 深灰色文字
+    private let subtleTextColor: UIColor = UIColor(white: 0.5, alpha: 1.0)  // 浅灰色次要文字
     
     // MARK: - 初始化
     init(project: Project, location: Location, logoImage: UIImage? = nil) {
@@ -47,18 +58,24 @@ class PDFReportGenerator {
         self.contentWidth = pageWidth - (margin * 2)
         self.logoImage = logoImage
         
-        // 使用项目颜色作为主题色
+        // 使用项目颜色作为主题色，并创建配色方案
         if let cgColor = project.color.cgColor {
             self.primaryColor = UIColor(cgColor: cgColor)
         } else {
             self.primaryColor = .systemBlue
         }
         
-        // 设置次要颜色
-        self.secondaryColor = UIColor(red: primaryColor.cgColor.components?[0] ?? 0.0,
-                                     green: primaryColor.cgColor.components?[1] ?? 0.0,
-                                     blue: primaryColor.cgColor.components?[2] ?? 0.0,
-                                     alpha: 0.6)
+        // 创建更丰富的配色方案
+        let components = primaryColor.cgColor.components ?? [0.0, 0.0, 1.0, 1.0]
+        let red = components[0]
+        let green = components[1] 
+        let blue = components[2]
+        
+        // 辅助色：主色的淡化版本
+        self.secondaryColor = UIColor(red: red, green: green, blue: blue, alpha: 0.3)
+        
+        // 强调色：主色的饱和版本或互补色
+        self.accentColor = UIColor(red: min(red * 1.2, 1.0), green: min(green * 1.1, 1.0), blue: min(blue * 0.9, 1.0), alpha: 1.0)
     }
     
     // 添加支持多个场景照片的初始化方法
@@ -71,18 +88,24 @@ class PDFReportGenerator {
         self.contentWidth = pageWidth - (margin * 2)
         self.logoImage = logoImage
         
-        // 使用项目颜色作为主题色
+        // 使用项目颜色作为主题色，并创建配色方案
         if let cgColor = project.color.cgColor {
             self.primaryColor = UIColor(cgColor: cgColor)
         } else {
             self.primaryColor = .systemBlue
         }
         
-        // 设置次要颜色
-        self.secondaryColor = UIColor(red: primaryColor.cgColor.components?[0] ?? 0.0,
-                                     green: primaryColor.cgColor.components?[1] ?? 0.0,
-                                     blue: primaryColor.cgColor.components?[2] ?? 0.0,
-                                     alpha: 0.6)
+        // 创建更丰富的配色方案
+        let components = primaryColor.cgColor.components ?? [0.0, 0.0, 1.0, 1.0]
+        let red = components[0]
+        let green = components[1] 
+        let blue = components[2]
+        
+        // 辅助色：主色的淡化版本
+        self.secondaryColor = UIColor(red: red, green: green, blue: blue, alpha: 0.3)
+        
+        // 强调色：主色的饱和版本或互补色
+        self.accentColor = UIColor(red: min(red * 1.2, 1.0), green: min(green * 1.1, 1.0), blue: min(blue * 0.9, 1.0), alpha: 1.0)
     }
     
     // MARK: - 生成 PDF
@@ -391,9 +414,15 @@ class PDFReportGenerator {
                                 yOffset = 0
                             }
                             
-                            // 绘制照片背景
-                            context.cgContext.setFillColor(UIColor.white.cgColor)
-                            context.cgContext.fill(photoRect)
+                            // 绘制照片背景 - 简单的白色背景
+                            let cgContext = context.cgContext
+                            cgContext.setFillColor(UIColor.white.cgColor)
+                            cgContext.fill(photoRect)
+                            
+                            // 绘制淡色边框
+                            cgContext.setStrokeColor(secondaryColor.cgColor)
+                            cgContext.setLineWidth(1.0)
+                            cgContext.stroke(photoRect)
                             
                             // 绘制照片
                             if let compressedImage = compressImage(image, quality: compressionQuality) {
@@ -433,7 +462,7 @@ class PDFReportGenerator {
                                 
                                 let noteAttributes = [
                                     NSAttributedString.Key.font: noteFont,
-                                    NSAttributedString.Key.foregroundColor: UIColor.darkGray,
+                                    NSAttributedString.Key.foregroundColor: textColor,
                                     NSAttributedString.Key.paragraphStyle: noteParagraphStyle
                                 ]
                                 
@@ -448,7 +477,6 @@ class PDFReportGenerator {
                                 noteText.draw(in: noteRect, withAttributes: noteAttributes)
                             } else {
                                 // 如果没有备注，只显示时间和编号
-                                let indexText = "\(photoIndex + 1). \(timeText)"
                                 indexText.draw(
                                     at: CGPoint(x: x + 5, y: y + photoHeight + 15),
                                     withAttributes: indexAttributes
@@ -462,6 +490,93 @@ class PDFReportGenerator {
                 addFooter(to: context, pageNumber: pageIndex + 1, totalPages: pageCount)
             }
         }
+    }
+    
+    // MARK: - 美化辅助方法
+    
+    // 绘制带阴影的圆角卡片背景
+    private func drawCardBackground(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
+        let cgContext = context.cgContext
+        
+        // 创建卡片路径
+        let cardPath = UIBezierPath(roundedRect: rect, cornerRadius: cardCornerRadius)
+        
+        // 绘制阴影
+        cgContext.saveGState()
+        cgContext.setShadow(offset: cardShadowOffset, blur: cardShadowRadius, color: UIColor.black.withAlphaComponent(CGFloat(cardShadowOpacity)).cgColor)
+        
+        // 绘制卡片背景
+        cgContext.setFillColor(cardBackgroundColor.cgColor)
+        cgContext.addPath(cardPath.cgPath)
+        cgContext.fillPath()
+        
+        cgContext.restoreGState()
+        
+        // 绘制卡片边框
+        cgContext.setStrokeColor(secondaryColor.cgColor)
+        cgContext.setLineWidth(1.0)
+        cgContext.addPath(cardPath.cgPath)
+        cgContext.strokePath()
+    }
+    
+    // 绘制渐变背景
+    private func drawGradientBackground(in context: UIGraphicsPDFRendererContext, rect: CGRect, startColor: UIColor, endColor: UIColor) {
+        let cgContext = context.cgContext
+        
+        // 创建渐变
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let colors = [startColor.cgColor, endColor.cgColor] as CFArray
+        let gradient = CGGradient(colorsSpace: colorSpace, colors: colors, locations: [0.0, 1.0])!
+        
+        cgContext.saveGState()
+        cgContext.clip(to: rect)
+        cgContext.drawLinearGradient(gradient, start: CGPoint(x: rect.midX, y: rect.minY), end: CGPoint(x: rect.midX, y: rect.maxY), options: [])
+        cgContext.restoreGState()
+    }
+    
+    // 绘制装饰性分割线
+    private func drawDecorativeLine(in context: UIGraphicsPDFRendererContext, startPoint: CGPoint, endPoint: CGPoint, color: UIColor = UIColor.lightGray, lineWidth: CGFloat = 1.0) {
+        let cgContext = context.cgContext
+        
+        cgContext.saveGState()
+        cgContext.setStrokeColor(color.cgColor)
+        cgContext.setLineWidth(lineWidth)
+        cgContext.move(to: startPoint)
+        cgContext.addLine(to: endPoint)
+        cgContext.strokePath()
+        cgContext.restoreGState()
+    }
+    
+    // 绘制装饰性圆点
+    private func drawDecorativeDot(in context: UIGraphicsPDFRendererContext, center: CGPoint, radius: CGFloat, color: UIColor) {
+        let cgContext = context.cgContext
+        
+        cgContext.saveGState()
+        cgContext.setFillColor(color.cgColor)
+        cgContext.addEllipse(in: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2))
+        cgContext.fillPath()
+        cgContext.restoreGState()
+    }
+    
+    // 绘制带图标的文字标签
+    private func drawIconLabel(in context: UIGraphicsPDFRendererContext, text: String, icon: String, rect: CGRect, font: UIFont, textColor: UIColor, iconColor: UIColor) {
+        // 这里可以绘制SF Symbols图标，不过PDF中比较复杂，我们用简单的图形代替
+        let iconSize: CGFloat = font.pointSize
+        let iconRect = CGRect(x: rect.minX, y: rect.minY, width: iconSize, height: iconSize)
+        
+        // 绘制简单的圆形图标
+        let cgContext = context.cgContext
+        cgContext.setFillColor(iconColor.cgColor)
+        cgContext.addEllipse(in: iconRect)
+        cgContext.fillPath()
+        
+        // 绘制文字
+        let textRect = CGRect(x: rect.minX + iconSize + 8, y: rect.minY, width: rect.width - iconSize - 8, height: rect.height)
+        let attributes = [
+            NSAttributedString.Key.font: font,
+            NSAttributedString.Key.foregroundColor: textColor
+        ]
+        text.draw(in: textRect, withAttributes: attributes)
     }
     
     // MARK: - 工具方法
@@ -506,48 +621,58 @@ class PDFReportGenerator {
         // 在PDF上下文中进行绘制
         context.beginPage()
         
-        // 背景 - 使用context的CGContext进行绘制
         let cgContext = context.cgContext
-        cgContext.setFillColor(UIColor.white.cgColor)
+        
+        // 简单的背景色
+        cgContext.setFillColor(backgroundColor.cgColor)
         cgContext.fill(CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
         
-        // 绘制顶部横幅
+        // 顶部简洁横幅
+        let bannerRect = CGRect(x: 0, y: 0, width: pageWidth, height: 80)
         cgContext.setFillColor(primaryColor.cgColor)
-        cgContext.fill(CGRect(x: 0, y: 0, width: pageWidth, height: 60))
+        cgContext.fill(bannerRect)
         
-        // 标题
+        // 主标题
         let titleText = title
-        let titleFont = UIFont.boldSystemFont(ofSize: 34)
-        let titleAttributes = [
+        let titleFont = UIFont.boldSystemFont(ofSize: 36)
+        let titleAttributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key.font: titleFont,
-            NSAttributedString.Key.foregroundColor: UIColor.black
+            NSAttributedString.Key.foregroundColor: textColor
         ]
         
         let titleSize = titleText.size(withAttributes: titleAttributes)
         let titleRect = CGRect(
             x: margin,
-            y: 100,
+            y: 120,
             width: contentWidth,
             height: titleSize.height
         )
         
         titleText.draw(in: titleRect, withAttributes: titleAttributes)
         
+        // 简单分割线
+        let lineY = 120 + titleSize.height + 15
+        cgContext.setStrokeColor(primaryColor.cgColor)
+        cgContext.setLineWidth(2)
+        cgContext.move(to: CGPoint(x: margin, y: lineY))
+        cgContext.addLine(to: CGPoint(x: margin + 250, y: lineY))
+        cgContext.strokePath()
+        
         // 日期
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "zh_CN")
         dateFormatter.dateFormat = "yyyy年M月d日 HH:mm"
-        let dateText = dateFormatter.string(from: Date())
-        let dateFont = UIFont.systemFont(ofSize: 20)
+        let dateText = "生成时间：\(dateFormatter.string(from: Date()))"
+        let dateFont = UIFont.systemFont(ofSize: 16)
         let dateAttributes = [
             NSAttributedString.Key.font: dateFont,
-            NSAttributedString.Key.foregroundColor: UIColor.darkGray
+            NSAttributedString.Key.foregroundColor: subtleTextColor
         ]
         
         let dateSize = dateText.size(withAttributes: dateAttributes)
         let dateRect = CGRect(
             x: margin,
-            y: 100 + titleSize.height + 20,
+            y: lineY + 25,
             width: contentWidth,
             height: dateSize.height
         )
@@ -555,7 +680,7 @@ class PDFReportGenerator {
         dateText.draw(in: dateRect, withAttributes: dateAttributes)
         
         // 项目信息
-        let infoY = 100 + titleSize.height + dateSize.height + 60
+        let infoY = lineY + 70
         let infoTitleText = "项目信息"
         let infoTitleFont = UIFont.boldSystemFont(ofSize: 20)
         let infoTitleAttributes = [
@@ -583,7 +708,7 @@ class PDFReportGenerator {
         let infoFont = UIFont.systemFont(ofSize: 16)
         let infoAttributes = [
             NSAttributedString.Key.font: infoFont,
-            NSAttributedString.Key.foregroundColor: UIColor.black
+            NSAttributedString.Key.foregroundColor: textColor
         ]
         
         var itemY = infoY + 40
@@ -602,7 +727,7 @@ class PDFReportGenerator {
         
         // 如果是单个场景报告，添加场景信息
         if let location = location {
-            let locationY = itemY + 20
+            let locationY = itemY + 30
             let locationTitleText = "场景信息"
             
             let locationTitleRect = CGRect(
@@ -643,6 +768,7 @@ class PDFReportGenerator {
             width: logoSize,
             height: logoSize
         )
+        
         if let logo = logoImage, let cgImage = logo.cgImage {
             context.cgContext.saveGState()
             // 平移到logo中心
@@ -654,6 +780,22 @@ class PDFReportGenerator {
             // 绘制logo
             context.cgContext.draw(cgImage, in: logoRect)
             context.cgContext.restoreGState()
+        } else {
+            // 默认LOGO
+            let logoText = "FLICK"
+            let logoFont = UIFont.boldSystemFont(ofSize: 24)
+            let logoAttributes = [
+                NSAttributedString.Key.font: logoFont,
+                NSAttributedString.Key.foregroundColor: primaryColor
+            ]
+            let logoTextSize = logoText.size(withAttributes: logoAttributes)
+            let logoTextRect = CGRect(
+                x: logoRect.midX - logoTextSize.width / 2,
+                y: logoRect.midY - logoTextSize.height / 2,
+                width: logoTextSize.width,
+                height: logoTextSize.height
+            )
+            logoText.draw(in: logoTextRect, withAttributes: logoAttributes)
         }
     }
     
@@ -716,32 +858,32 @@ class PDFReportGenerator {
         // 获取CGContext
         let cgContext = context.cgContext
         
-        // 绘制顶部头部区域
+        // 绘制页眉背景
         cgContext.setFillColor(primaryColor.withAlphaComponent(0.1).cgColor)
-        cgContext.fill(CGRect(x: 0, y: 0, width: pageWidth, height: 60))
+        cgContext.fill(CGRect(x: 0, y: 0, width: pageWidth, height: headerHeight))
         
         // 绘制页眉文本
-        let headerFont = UIFont.boldSystemFont(ofSize: 16)
+        let headerFont = UIFont.systemFont(ofSize: 18, weight: .medium)
         let headerAttributes = [
             NSAttributedString.Key.font: headerFont,
-            NSAttributedString.Key.foregroundColor: UIColor.black
+            NSAttributedString.Key.foregroundColor: textColor
         ]
         
         let headerTextSize = text.size(withAttributes: headerAttributes)
         let headerTextRect = CGRect(
             x: margin,
-            y: (60 - headerTextSize.height) / 2,
+            y: (headerHeight - headerTextSize.height) / 2,
             width: contentWidth - 100, // 为LOGO留出空间
             height: headerTextSize.height
         )
         
         text.draw(in: headerTextRect, withAttributes: headerAttributes)
         
-        // 绘制小型LOGO（正方形，直接旋转180度）
+        // 绘制小型LOGO
         let logoSize: CGFloat = 30
         let logoRect = CGRect(
             x: pageWidth - margin - logoSize - 10,
-            y: 15,
+            y: (headerHeight - logoSize) / 2,
             width: logoSize,
             height: logoSize
         )
@@ -757,11 +899,27 @@ class PDFReportGenerator {
             // 绘制旋转后的logo
             context.cgContext.draw(cgImage, in: logoRect)
             context.cgContext.restoreGState()
+        } else {
+            // 默认LOGO文字
+            let logoText = "FLICK"
+            let logoFont = UIFont.boldSystemFont(ofSize: 12)
+            let logoAttributes = [
+                NSAttributedString.Key.font: logoFont,
+                NSAttributedString.Key.foregroundColor: primaryColor
+            ]
+            let logoTextSize = logoText.size(withAttributes: logoAttributes)
+            let logoTextRect = CGRect(
+                x: logoRect.midX - logoTextSize.width / 2,
+                y: logoRect.midY - logoTextSize.height / 2,
+                width: logoTextSize.width,
+                height: logoTextSize.height
+            )
+            logoText.draw(in: logoTextRect, withAttributes: logoAttributes)
         }
     }
     
     private func addFooter(to context: UIGraphicsPDFRendererContext, pageNumber: Int, totalPages: Int) {
-        // 绘制底部页脚区域
+        // 绘制页脚背景
         context.cgContext.setFillColor(primaryColor.withAlphaComponent(0.1).cgColor)
         context.cgContext.fill(CGRect(x: 0, y: pageHeight - footerHeight, width: pageWidth, height: footerHeight))
         
@@ -770,7 +928,7 @@ class PDFReportGenerator {
         let footerFont = UIFont.systemFont(ofSize: 12)
         let footerAttributes = [
             NSAttributedString.Key.font: footerFont,
-            NSAttributedString.Key.foregroundColor: UIColor.black
+            NSAttributedString.Key.foregroundColor: textColor
         ]
         
         let footerTextSize = footerText.size(withAttributes: footerAttributes)
@@ -784,3 +942,5 @@ class PDFReportGenerator {
         footerText.draw(in: footerTextRect, withAttributes: footerAttributes)
     }
 } 
+
+

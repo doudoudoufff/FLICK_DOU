@@ -43,9 +43,22 @@ struct FeatureView: View {
                         FeatureCardButton(icon: "checklist", title: "提醒我做") {
                             showingAddTask = true
                                     }
-                        FeatureCardButton(icon: "creditcard.circle.fill", title: "添加账户") {
-                            // TODO: 跳转到账户页面
+                        
+                        NavigationLink(destination: CommonInfoManagementView()) {
+                            VStack(spacing: 12) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.system(size: 34, weight: .bold))
+                                    .foregroundColor(Color.blue.opacity(0.85))
+                                Text("常用信息")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .background(Color(.systemBackground).opacity(0.95))
+                            .cornerRadius(22)
+                            .shadow(color: Color.blue.opacity(0.10), radius: 8, x: 0, y: 4)
                         }
+                        .buttonStyle(PlainButtonStyle())
                         
                         // 使用独立的堪景相机视图
                         ScoutingCameraView()

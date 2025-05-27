@@ -20,6 +20,15 @@
         <relationship name="invoice" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="InvoiceEntity" inverseName="attachments" inverseEntity="InvoiceEntity"/>
         <relationship name="transaction" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TransactionEntity" inverseName="attachments" inverseEntity="TransactionEntity"/>
     </entity>
+    <entity name="CommonInfoEntity" representedClassName=".CommonInfoEntity" syncable="YES">
+        <attribute name="content" optional="YES" attributeType="String"/>
+        <attribute name="dateAdded" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isFavorite" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="tag" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+    </entity>
     <entity name="InvoiceEntity" representedClassName=".InvoiceEntity" syncable="YES">
         <attribute name="amount" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="bankAccount" optional="YES" attributeType="String"/>

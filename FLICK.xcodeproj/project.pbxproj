@@ -11,6 +11,8 @@
 		9E1036902DE5EB8200156AB4 /* VenueEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368E2DE5EB8200156AB4 /* VenueEntity+CoreDataProperties.swift */; };
 		9E1036912DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368C2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataProperties.swift */; };
 		9E1036922DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368B2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataClass.swift */; };
+		9E1037502DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10374E2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift */; };
+		9E1037512DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10374F2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift */; };
 		9E3F082C2D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08252D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift */; };
 		9E3F082D2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F082A2D6AE23400E2EC1B /* TaskEntity+CoreDataClass.swift */; };
 		9E3F082E2D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3F08262D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift */; };
@@ -55,6 +57,8 @@
 		9E10368C2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VenueAttachmentEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9E10368D2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VenueEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9E10368E2DE5EB8200156AB4 /* VenueEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VenueEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9E10374E2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CommonInfoEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		9E10374F2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CommonInfoEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9E3F08242D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccountEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9E3F08252D6AE23400E2EC1B /* AccountEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AccountEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9E3F08262D6AE23400E2EC1B /* InvoiceEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InvoiceEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
@@ -133,6 +137,8 @@
 		0FE011092D3F8916007A7B5B = {
 			isa = PBXGroup;
 			children = (
+				9E10374E2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift */,
+				9E10374F2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift */,
 				9E10368B2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataClass.swift */,
 				9E10368C2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataProperties.swift */,
 				9E10368D2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift */,
@@ -328,6 +334,8 @@
 				9E3F08322D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift in Sources */,
 				9E5E41B32DDB992B0003A6EB /* TransactionEntity+CoreDataProperties.swift in Sources */,
 				9E5E41B42DDB992B0003A6EB /* TransactionEntity+CoreDataClass.swift in Sources */,
+				9E1037502DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift in Sources */,
+				9E1037512DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift in Sources */,
 				9E5E3F0C2DBFCF930003A6EB /* AttachmentEntity+CoreDataProperties.swift in Sources */,
 				9E5E3F0D2DBFCF930003A6EB /* AttachmentEntity+CoreDataClass.swift in Sources */,
 				9E3F08332D6AE23400E2EC1B /* ProjectEntity+CoreDataClass.swift in Sources */,

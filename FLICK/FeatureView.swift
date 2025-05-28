@@ -60,11 +60,11 @@ struct FeatureView: View {
                             
                             // 第二排：常用信息+收藏地址（左侧），堪景（右侧）
                             HStack(spacing: 20) {
-                                // 左侧：常用信息和收藏地址的垂直布局
-                                VStack(spacing: 12) {
+                                // 左侧：常用信息和收藏地址的水平布局
+                                HStack(spacing: 12) {
                                     // 常用信息（小按钮）
                                     NavigationLink(destination: CommonInfoManagementView()) {
-                                        HStack(spacing: 8) {
+                                        VStack(spacing: 8) {
                                             Image(systemName: "doc.text.magnifyingglass")
                                                 .font(.system(size: 20, weight: .bold))
                                                 .foregroundColor(Color.blue.opacity(0.85))
@@ -72,11 +72,9 @@ struct FeatureView: View {
                                                 .font(.subheadline)
                                                 .fontWeight(.semibold)
                                                 .foregroundColor(.primary)
-                                            Spacer()
                                         }
                                         .frame(maxWidth: .infinity)
-                                        .frame(height: 44)
-                                        .padding(.horizontal, 16)
+                                        .frame(height: 100)
                                         .background(Color(.systemBackground).opacity(0.95))
                                         .cornerRadius(16)
                                         .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
@@ -88,7 +86,7 @@ struct FeatureView: View {
                                         let context = PersistenceController.shared.container.viewContext
                                         return VenueListView(context: context)
                                     }) {
-                                        HStack(spacing: 8) {
+                                        VStack(spacing: 8) {
                                             Image(systemName: "building.2.fill")
                                                 .font(.system(size: 20, weight: .bold))
                                                 .foregroundColor(Color.blue.opacity(0.85))
@@ -96,11 +94,9 @@ struct FeatureView: View {
                                                 .font(.subheadline)
                                                 .fontWeight(.semibold)
                                                 .foregroundColor(.primary)
-                                            Spacer()
                                         }
                                         .frame(maxWidth: .infinity)
-                                        .frame(height: 44)
-                                        .padding(.horizontal, 16)
+                                        .frame(height: 100)
                                         .background(Color(.systemBackground).opacity(0.95))
                                         .cornerRadius(16)
                                         .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)

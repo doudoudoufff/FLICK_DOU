@@ -35,77 +35,94 @@ struct FeatureView: View {
                 .padding(.bottom, 8)
                 .background(Color(.systemGroupedBackground))
                 
-            ScrollView {
-                VStack(spacing: 32) {
-                    BaiBaiCompactCard(projectColor: .blue)
-                        .padding(.top, 8)
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 28) {
-                        FeatureCardButton(icon: "checklist", title: "提醒我做") {
-                            showingAddTask = true
+                ScrollView {
+                    VStack(spacing: 32) {
+                        BaiBaiCompactCard(projectColor: .blue)
+                            .padding(.top, 8)
+                        
+                        VStack(spacing: 20) {
+                            // 第一排：提醒我做、记一笔账
+                            HStack(spacing: 20) {
+                                FeatureCardButton(icon: "checklist", title: "提醒我做") {
+                                    showingAddTask = true
+                                }
+                                
+                                FeatureCardButton(icon: "creditcard.fill", title: "记一笔账") {
+                                    // 直接打开记账表单
+                                    let formVC = UIHostingController(rootView: 
+                                        GlobalTransactionFormView()
+                                            .environmentObject(projectStore)
+                                    )
+                                    UIApplication.shared.windows.first?.rootViewController?
+                                        .present(formVC, animated: true)
+                                }
+                            }
+                            
+                            // 第二排：常用信息+收藏地址（左侧），堪景（右侧）
+                            HStack(spacing: 20) {
+                                // 左侧：常用信息和收藏地址的垂直布局
+                                VStack(spacing: 12) {
+                                    // 常用信息（小按钮）
+                                    NavigationLink(destination: CommonInfoManagementView()) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "doc.text.magnifyingglass")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundColor(Color.blue.opacity(0.85))
+                                            Text("常用信息")
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.primary)
+                                            Spacer()
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 44)
+                                        .padding(.horizontal, 16)
+                                        .background(Color(.systemBackground).opacity(0.95))
+                                        .cornerRadius(16)
+                                        .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
                                     }
-                        
-                        NavigationLink(destination: CommonInfoManagementView()) {
-                            VStack(spacing: 12) {
-                                Image(systemName: "doc.text.magnifyingglass")
-                                    .font(.system(size: 34, weight: .bold))
-                                    .foregroundColor(Color.blue.opacity(0.85))
-                                Text("常用信息")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
+                                    .buttonStyle(PlainButtonStyle())
+                                    
+                                    // 收藏场地管理（小按钮）
+                                    NavigationLink(destination: {
+                                        let context = PersistenceController.shared.container.viewContext
+                                        return VenueListView(context: context)
+                                    }) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "building.2.fill")
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundColor(Color.blue.opacity(0.85))
+                                            Text("收藏场地")
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.primary)
+                                            Spacer()
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 44)
+                                        .padding(.horizontal, 16)
+                                        .background(Color(.systemBackground).opacity(0.95))
+                                        .cornerRadius(16)
+                                        .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                                
+                                // 右侧：堪景（大按钮）
+                                ScoutingCameraView()
                             }
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .background(Color(.systemBackground).opacity(0.95))
-                            .cornerRadius(22)
-                            .shadow(color: Color.blue.opacity(0.10), radius: 8, x: 0, y: 4)
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        // 使用独立的堪景相机视图
-                        ScoutingCameraView()
-                        
-                        FeatureCardButton(icon: "creditcard.fill", title: "记一笔账") {
-                            // 直接打开记账表单
-                            let formVC = UIHostingController(rootView: 
-                                GlobalTransactionFormView()
-                                    .environmentObject(projectStore)
-                            )
-                            UIApplication.shared.windows.first?.rootViewController?
-                                .present(formVC, animated: true)
-                        }
-                        
-                        // 新增场地管理入口
-                        NavigationLink(destination: {
-                            // 在这里创建视图，确保上下文是最新的
-                            let context = PersistenceController.shared.container.viewContext
-                            print("FeatureView创建VenueListView，使用上下文: \(context)")
-                            return VenueListView(context: context)
-                        }) {
-                            VStack(spacing: 12) {
-                                Image(systemName: "building.2.fill")
-                                    .font(.system(size: 34, weight: .bold))
-                                    .foregroundColor(Color.blue.opacity(0.85))
-                                Text("收藏场地管理")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                            }
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .background(Color(.systemBackground).opacity(0.95))
-                            .cornerRadius(22)
-                            .shadow(color: Color.blue.opacity(0.10), radius: 8, x: 0, y: 4)
-                        }
-                        .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
-                            }
-                        }
+                }
             }
             .sheet(isPresented: $showingAddTask) {
                 NavigationView {
                     AddTaskView(isPresented: $showingAddTask)
                         .environmentObject(projectStore)
-                        }
+                }
                 .presentationDetents([.height(500)])
-                    }
+            }
         }
     }
 }
@@ -117,6 +134,7 @@ struct FeatureCardButton: View {
     let color: Color = Color.blue.opacity(0.85) // 统一主色
     let action: () -> Void
     @State private var pressed = false
+    
     var body: some View {
         Button(action: action) {
             VStack(spacing: 12) {
@@ -126,13 +144,13 @@ struct FeatureCardButton: View {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(.primary)
-    }
+            }
             .frame(maxWidth: .infinity, minHeight: 100)
             .background(Color(.systemBackground).opacity(0.95))
             .cornerRadius(22)
             .shadow(color: color.opacity(0.10), radius: 8, x: 0, y: 4)
             .scaleEffect(pressed ? 0.96 : 1.0)
-            }
+        }
         .buttonStyle(.plain)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
@@ -218,45 +236,45 @@ struct BaiBaiCompactCard: View {
                 }
                 
                 // 拜拜按钮
-            Button {
+                Button {
                     if isMotionMode {
                         // 陀螺仪模式下，按钮只用于切换回普通模式
                         stopMotionMode()
                     } else {
                         // 普通模式下，点击按钮触发拜拜动画
                         performTraditionalBowing()
-                }
-            } label: {
-                ZStack {
-                    // 外层光晕
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [projectColor.opacity(0.2), Color.clear],
-                                center: .center,
-                                startRadius: 10,
-                                endRadius: 60
+                    }
+                } label: {
+                    ZStack {
+                        // 外层光晕
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [projectColor.opacity(0.2), Color.clear],
+                                    center: .center,
+                                    startRadius: 10,
+                                    endRadius: 60
+                                )
                             )
-                        )
-                        .frame(width: 120, height: 120)
-                        .blur(radius: 6)
-                    
-                    // 主按钮
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [projectColor, projectColor.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                            .frame(width: 120, height: 120)
+                            .blur(radius: 6)
+                        
+                        // 主按钮
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [projectColor, projectColor.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
                             )
-                        )
-                        .frame(width: 100, height: 100)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
-                                .frame(width: 100, height: 100)
-                        )
-                        .shadow(color: projectColor.opacity(0.3), radius: 15, x: 0, y: 8)
+                            .frame(width: 100, height: 100)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+                                    .frame(width: 100, height: 100)
+                            )
+                            .shadow(color: projectColor.opacity(0.3), radius: 15, x: 0, y: 8)
                         
                         if isMotionMode {
                             // 陀螺仪模式下显示指引
@@ -287,12 +305,12 @@ struct BaiBaiCompactCard: View {
                             .foregroundStyle(.white)
                             .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                         }
-                }
-                .rotation3DEffect(
+                    }
+                    .rotation3DEffect(
                         .degrees(isMotionMode ? (motionManager.bowProgress * 30) : bowAngle),
-                    axis: (x: 1, y: 0, z: 0)
-                )
-            }
+                        axis: (x: 1, y: 0, z: 0)
+                    )
+                }
             }
             .frame(height: 220) // 固定高度，给动画元素足够空间
             .contextMenu {

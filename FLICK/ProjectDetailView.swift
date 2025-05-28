@@ -123,6 +123,25 @@ struct ProjectDetailView: View {
     }
 }
 
+// 功能模块枚举
+enum ProjectModule: String, CaseIterable {
+    case tasks = "提醒我做"
+    case finance = "账目管理"
+    case scouting = "堪景"
+    case invoices = "开票信息"
+    case accounts = "账户信息"
+    
+    var icon: String {
+        switch self {
+        case .tasks: return "checklist"
+        case .finance: return "chart.line.uptrend.xyaxis"
+        case .scouting: return "camera.viewfinder"
+        case .invoices: return "doc.text"
+        case .accounts: return "creditcard"
+        }
+    }
+}
+
 struct ProjectDetailMainContent: View {
     @Binding var project: Project
     var projectStore: ProjectStore
@@ -133,25 +152,94 @@ struct ProjectDetailMainContent: View {
     @Binding var editingTask: ProjectTask?
     @Binding var refreshID: UUID
     @Binding var invoiceToDelete: (invoice: Invoice, project: Project)?
+    
+    @State private var selectedModule: ProjectModule = .tasks
 
     var body: some View {
         VStack(spacing: 16) {
+            // 项目信息卡片（始终显示）
             ProjectInfoCard(project: $project)
+            
+            // 功能模块选择器
+            moduleSelector
+            
+            // 根据选择的模块显示对应内容
+            selectedModuleContent
+        }
+        .padding(.horizontal)
+        .padding(.vertical)
+    }
+    
+    // MARK: - 模块选择器
+    private var moduleSelector: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 8) {
+                ForEach(ProjectModule.allCases, id: \.self) { module in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedModule = module
+                        }
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: module.icon)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(selectedModule == module ? .white : project.color)
+                            
+                            Text(module.rawValue)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(selectedModule == module ? .white : project.color)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 55)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(selectedModule == module ? project.color : project.color.opacity(0.1))
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+    }
+    
+    // MARK: - 选中模块的内容
+    @ViewBuilder
+    private var selectedModuleContent: some View {
+        switch selectedModule {
+        case .tasks:
             TaskListCard(
                 project: $project,
                 showingAddTask: $showingAddTask,
                 editingTask: $editingTask
             )
+            .transition(.opacity.combined(with: .move(edge: .trailing)))
+            
+        case .finance:
             TransactionSummaryCard(project: $project, projectStore: projectStore)
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
+            
+        case .scouting:
             LocationScoutingCard(project: $project)
                 .environmentObject(projectStore)
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
+            
+        case .invoices:
             InvoiceListView(project: $project)
                 .environmentObject(projectStore)
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
+            
+        case .accounts:
             AccountListView(project: $project, showManagement: true)
                 .environmentObject(projectStore)
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
         }
-        .padding(.horizontal)
-        .padding(.vertical)
     }
 }
 

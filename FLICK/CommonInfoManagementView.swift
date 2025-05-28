@@ -634,90 +634,24 @@ struct ProjectAccountDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // 标题和标签
-                HStack {
-                    Text(account.name ?? "未命名账户")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                    
-                    Text(account.type ?? "其他")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(tagColor(for: account.type ?? "其他").opacity(0.15))
-                        .foregroundColor(tagColor(for: account.type ?? "其他"))
-                        .cornerRadius(12)
-                }
-                
-                if let projectName = account.project?.name {
-                    Text("所属项目: \(projectName)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Divider()
-                
-                // 内容
-                VStack(alignment: .leading, spacing: 12) {
-                    AccountInfoRow(title: "开户行", value: account.bankName ?? "")
-                    AccountInfoRow(title: "支行", value: account.bankBranch ?? "")
-                    AccountInfoRow(title: "账号", value: account.bankAccount ?? "")
-                    AccountInfoRow(title: "联系人", value: account.contactName ?? "")
-                    AccountInfoRow(title: "联系电话", value: account.contactPhone ?? "")
-                    
-                    if let idNumber = account.idNumber, !idNumber.isEmpty {
-                        AccountInfoRow(title: "身份证号", value: idNumber)
-                    }
-                    
-                    if let notes = account.notes, !notes.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("备注")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            
-                            Text(notes)
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6).opacity(0.5))
-                .cornerRadius(12)
+            VStack(spacing: 20) {
+                // 主要信息卡片
+                mainInfoCard
                 
                 // 操作按钮
-                VStack(spacing: 12) {
-                    Button(action: copyAllInfo) {
-                        HStack {
-                            Image(systemName: "doc.on.doc")
-                            Text("复制所有信息")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                }
-                .padding(.top, 16)
+                actionButtons
+                
+                Spacer(minLength: 20)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("账户详情")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: toggleFavorite) {
-                    Image(systemName: isFavorite ? "star.fill" : "star")
-                        .foregroundColor(isFavorite ? .yellow : .gray)
-                }
+                favoriteButton
             }
         }
         .alert("已复制", isPresented: $showingCopiedAlert) {
@@ -730,15 +664,249 @@ struct ProjectAccountDetailView: View {
         }
     }
     
+    // MARK: - 主要信息卡片
+    private var mainInfoCard: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // 标题区域
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(account.name ?? "未命名账户")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        if let projectName = account.project?.name {
+                            Text("所属项目: \(projectName)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // 类型标签
+                    Text(account.type ?? "其他")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(tagColor(for: account.type ?? "").opacity(0.15))
+                        )
+                        .foregroundColor(tagColor(for: account.type ?? ""))
+                        .overlay(
+                            Capsule()
+                                .stroke(tagColor(for: account.type ?? "").opacity(0.3), lineWidth: 1)
+                        )
+                }
+            }
+            
+            Divider()
+            
+            // 所有信息统一排列
+            VStack(alignment: .leading, spacing: 16) {
+                // 银行信息
+                infoSection(title: "银行信息", icon: "building.columns", color: .blue) {
+                    VStack(spacing: 12) {
+                        infoRow(label: "开户行", value: account.bankName ?? "", icon: "building.2")
+                        infoRow(label: "支行", value: account.bankBranch ?? "", icon: "mappin.and.ellipse")
+                        infoRow(label: "账号", value: account.bankAccount ?? "", icon: "creditcard", isCopyable: true)
+                        
+                        if let idNumber = account.idNumber, !idNumber.isEmpty {
+                            infoRow(label: "身份证号", value: idNumber, icon: "person.text.rectangle", isCopyable: true)
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                // 联系信息
+                infoSection(title: "联系信息", icon: "person.circle", color: .green) {
+                    VStack(spacing: 12) {
+                        infoRow(label: "联系人", value: account.contactName ?? "", icon: "person")
+                        infoRow(label: "联系电话", value: account.contactPhone ?? "", icon: "phone", isCopyable: true, isPhoneNumber: true)
+                    }
+                }
+                
+                // 备注信息（如果有）
+                if let notes = account.notes, !notes.isEmpty {
+                    Divider()
+                    
+                    infoSection(title: "备注信息", icon: "note.text", color: .orange) {
+                        Text(notes)
+                            .font(.body)
+                            .foregroundColor(.primary)
+                            .lineSpacing(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(.systemGray6).opacity(0.5))
+                            )
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
+    }
+    
+    // MARK: - 信息分组
+    private func infoSection<Content: View>(
+        title: String,
+        icon: String,
+        color: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(color)
+                
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            
+            content()
+        }
+    }
+    
+    // MARK: - 信息行
+    private func infoRow(
+        label: String,
+        value: String,
+        icon: String,
+        isCopyable: Bool = false,
+        isPhoneNumber: Bool = false
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                if value.isEmpty {
+                    Text("未设置")
+                        .font(.body)
+                        .foregroundColor(.secondary.opacity(0.7))
+                        .italic()
+                } else {
+                    Text(value)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                }
+            }
+            
+            Spacer()
+            
+            // 操作按钮
+            HStack(spacing: 8) {
+                if isCopyable && !value.isEmpty {
+                    Button(action: { copyText(value) }) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                }
+                
+                if isPhoneNumber && !value.isEmpty {
+                    Button(action: { callPhoneNumber(value) }) {
+                        Image(systemName: "phone.fill")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+    
+    // MARK: - 操作按钮
+    private var actionButtons: some View {
+        HStack(spacing: 12) {
+            // 复制所有信息
+            Button(action: copyAllInfo) {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.on.doc")
+                        .font(.system(size: 16, weight: .medium))
+                    Text("复制信息")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue)
+                )
+                .foregroundColor(.white)
+            }
+            
+            // 拨打电话（如果有电话号码）
+            if let phone = account.contactPhone, !phone.isEmpty {
+                Button(action: { callPhoneNumber(phone) }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "phone")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("拨打电话")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.green)
+                    )
+                    .foregroundColor(.white)
+                }
+            }
+        }
+    }
+    
+    // MARK: - 收藏按钮
+    private var favoriteButton: some View {
+        Button(action: toggleFavorite) {
+            Image(systemName: isFavorite ? "star.fill" : "star")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(isFavorite ? .yellow : .gray)
+                .scaleEffect(isFavorite ? 1.1 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFavorite)
+        }
+    }
+    
+    // MARK: - 辅助方法
     private func copyAllInfo() {
         let content = """
         账户名称: \(account.name ?? "")
+        账户类型: \(account.type ?? "")
+        所属项目: \(account.project?.name ?? "")
+        
+        银行信息:
         开户行: \(account.bankName ?? "")
         支行: \(account.bankBranch ?? "")
         账号: \(account.bankAccount ?? "")
+        身份证号: \(account.idNumber ?? "")
+        
+        联系信息:
         联系人: \(account.contactName ?? "")
         联系电话: \(account.contactPhone ?? "")
-        身份证号: \(account.idNumber ?? "")
+        
         备注: \(account.notes ?? "")
         """
         
@@ -747,9 +915,28 @@ struct ProjectAccountDetailView: View {
         showingCopiedAlert = true
     }
     
+    private func copyText(_ text: String) {
+        UIPasteboard.general.string = text
+        copiedMessage = "已复制: \(text)"
+        showingCopiedAlert = true
+    }
+    
+    private func callPhoneNumber(_ phoneNumber: String) {
+        let cleanedNumber = phoneNumber.replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "-", with: "")
+        
+        if let url = URL(string: "tel://\(cleanedNumber)") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
+    
     private func toggleFavorite() {
-        if manager.toggleFavoriteProjectAccount(account) {
-            isFavorite.toggle()
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            if manager.toggleFavoriteProjectAccount(account) {
+                isFavorite.toggle()
+            }
         }
     }
     
@@ -910,83 +1097,24 @@ struct CommonInfoDetailView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // 标题和标签
-                HStack {
-                    Text(info.title ?? "")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Spacer()
-                    
-                    Text(info.tag ?? "")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(tagColor(for: info.tag ?? "").opacity(0.15))
-                        .foregroundColor(tagColor(for: info.tag ?? ""))
-                        .cornerRadius(12)
-                }
-                
-                Divider()
-                
-                // 内容
-                Text(info.content ?? "")
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
+            VStack(spacing: 20) {
+                // 主要信息卡片
+                mainInfoCard
                 
                 // 操作按钮
-                VStack(spacing: 12) {
-                    Button(action: copyAllInfo) {
-                        HStack {
-                            Image(systemName: "doc.on.doc")
-                            Text("复制所有信息")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                    
-                    Button(action: { showingEditSheet = true }) {
-                        HStack {
-                            Image(systemName: "pencil")
-                            Text("编辑")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(.systemGray5))
-                        .foregroundColor(.primary)
-                        .cornerRadius(8)
-                    }
-                    
-                    Button(action: { showingDeleteAlert = true }) {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("删除")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(.systemRed).opacity(0.1))
-                        .foregroundColor(.red)
-                        .cornerRadius(8)
-                    }
-                }
-                .padding(.top, 16)
+                actionButtons
+                
+                Spacer(minLength: 20)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("详情")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: toggleFavorite) {
-                    Image(systemName: isFavorite ? "star.fill" : "star")
-                        .foregroundColor(isFavorite ? .yellow : .gray)
-                }
+                favoriteButton
             }
         }
         .alert("已复制", isPresented: $showingCopiedAlert) {
@@ -1012,14 +1140,251 @@ struct CommonInfoDetailView: View {
         }
     }
     
+    // MARK: - 主要信息卡片
+    private var mainInfoCard: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // 标题区域
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(info.title ?? "未命名")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        HStack(spacing: 8) {
+                            Image(systemName: typeIcon(for: info.type ?? ""))
+                                .font(.caption)
+                                .foregroundColor(tagColor(for: info.tag ?? ""))
+                            
+                            Text(info.type ?? "未分类")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // 标签胶囊
+                    Text(info.tag ?? "其他")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(tagColor(for: info.tag ?? "").opacity(0.15))
+                        )
+                        .foregroundColor(tagColor(for: info.tag ?? ""))
+                        .overlay(
+                            Capsule()
+                                .stroke(tagColor(for: info.tag ?? "").opacity(0.3), lineWidth: 1)
+                        )
+                }
+            }
+            
+            Divider()
+            
+            // 详细信息
+            VStack(alignment: .leading, spacing: 16) {
+                // 内容信息
+                infoSection(title: "详细信息", icon: "doc.text", color: tagColor(for: info.tag ?? "")) {
+                    if let content = info.content, !content.isEmpty {
+                        Text(content)
+                            .font(.body)
+                            .foregroundColor(.primary)
+                            .lineSpacing(4)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6).opacity(0.5))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(.systemGray4).opacity(0.3), lineWidth: 1)
+                            )
+                    } else {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(.orange)
+                            Text("暂无详细信息")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemOrange).opacity(0.1))
+                        )
+                    }
+                }
+                
+                Divider()
+                
+                // 信息详情
+                infoSection(title: "信息详情", icon: "info.circle", color: .secondary) {
+                    VStack(spacing: 12) {
+                        infoRow(label: "创建时间", value: formattedDate(info.dateAdded ?? Date()), icon: "calendar")
+                        infoRow(label: "收藏状态", value: isFavorite ? "已收藏" : "未收藏", icon: isFavorite ? "star.fill" : "star")
+                        infoRow(label: "标签分类", value: info.tag ?? "未分类", icon: "tag")
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
+    }
+    
+    // MARK: - 信息分组
+    private func infoSection<Content: View>(
+        title: String,
+        icon: String,
+        color: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(color)
+                
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            
+            content()
+        }
+    }
+    
+    // MARK: - 信息行
+    private func infoRow(label: String, value: String, icon: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(value)
+                    .font(.body)
+                    .foregroundColor(.primary)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 2)
+    }
+    
+    // MARK: - 操作按钮
+    private var actionButtons: some View {
+        VStack(spacing: 12) {
+            // 主要操作按钮
+            HStack(spacing: 12) {
+                // 复制按钮
+                Button(action: copyAllInfo) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("复制信息")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.blue)
+                    )
+                    .foregroundColor(.white)
+                }
+                
+                // 编辑按钮
+                Button(action: { showingEditSheet = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("编辑")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray5))
+                    )
+                    .foregroundColor(.primary)
+                }
+            }
+            
+            // 删除按钮
+            Button(action: { showingDeleteAlert = true }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 16, weight: .medium))
+                    Text("删除信息")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemRed).opacity(0.1))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(.systemRed).opacity(0.3), lineWidth: 1)
+                        )
+                )
+                .foregroundColor(.red)
+            }
+        }
+    }
+    
+    // MARK: - 收藏按钮
+    private var favoriteButton: some View {
+        Button(action: toggleFavorite) {
+            Image(systemName: isFavorite ? "star.fill" : "star")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(isFavorite ? .yellow : .gray)
+                .scaleEffect(isFavorite ? 1.1 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isFavorite)
+        }
+    }
+    
+    // MARK: - 辅助方法
     private func copyAllInfo() {
-        UIPasteboard.general.string = "\(info.title ?? "")\n\n\(info.content ?? "")"
+        let content = """
+        \(info.title ?? "")
+        
+        类型：\(info.type ?? "")
+        标签：\(info.tag ?? "")
+        创建时间：\(formattedDate(info.dateAdded ?? Date()))
+        
+        详细信息：
+        \(info.content ?? "")
+        """
+        
+        UIPasteboard.general.string = content
         copiedMessage = "信息已复制到剪贴板"
         showingCopiedAlert = true
     }
     
     private func toggleFavorite() {
-        isFavorite.toggle()
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            isFavorite.toggle()
+        }
         if manager.toggleFavorite(info) {
             // 切换成功
         }
@@ -1028,6 +1393,29 @@ struct CommonInfoDetailView: View {
     private func deleteInfo() {
         if manager.deleteInfo(info) {
             // 删除成功
+        }
+    }
+    
+    // 格式化日期
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: date)
+    }
+    
+    // 根据类型返回图标
+    private func typeIcon(for type: String) -> String {
+        switch type {
+        case "公司账户":
+            return "building.2"
+        case "个人账户":
+            return "person.circle"
+        case "项目账户":
+            return "folder"
+        default:
+            return "doc.text"
         }
     }
     

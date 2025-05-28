@@ -270,23 +270,51 @@ struct LocationToolbarContent: View {
     @Binding var showingAddLocation: Bool
     
     var body: some View {
-        HStack {
-            Button {
-                showingExportOptions = true
+        HStack(spacing: 16) {
+            // 主菜单按钮
+            Menu {
+                Button {
+                    showingExportOptions = true
+                } label: {
+                    Label("导出报告", systemImage: "square.and.arrow.up")
+                }
+                
+                NavigationLink {
+                    DailyPhotosView(project: $project)
+                } label: {
+                    Label("查看时间线", systemImage: "clock.fill")
+                }
+                
+                Divider()
+                
+                Button {
+                    showingAddLocation = true
+                } label: {
+                    Label("添加场地", systemImage: "plus.circle")
+                }
             } label: {
-                Image(systemName: "square.and.arrow.up")
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.primary)
             }
             
-            NavigationLink {
-                DailyPhotosView(project: $project)
-            } label: {
-                Image(systemName: "clock.fill")
-            }
-            
+            // 快速添加按钮（突出显示）
             Button {
                 showingAddLocation = true
             } label: {
-                Image(systemName: "plus.circle.fill")
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        Circle()
+                            .fill(LinearGradient(
+                                colors: [project.color, project.color.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                    )
+                    .shadow(color: project.color.opacity(0.3), radius: 4, x: 0, y: 2)
             }
         }
     }

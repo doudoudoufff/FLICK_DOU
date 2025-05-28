@@ -47,27 +47,35 @@ struct EditLocationView: View {
                     ))
                     
                     // 场地类型选择器
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text("场地类型")
                             Spacer()
                             NavigationLink(destination: LocationTypeManagementView()) {
                                 Text("管理类型")
                                     .font(.caption)
-                                    .foregroundColor(Color.blue)
+                                    .foregroundColor(project.color)
                             }
                         }
                         
-                        Picker("", selection: Binding(
-                            get: { editedLocation.type },
-                            set: { editedLocation.type = $0 }
-                        )) {
-                            ForEach(LocationType.allCases, id: \.rawValue) { type in
-                            Text(type.rawValue).tag(type)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(LocationType.allCases, id: \.self) { locationType in
+                                    Button(action: {
+                                        editedLocation.type = locationType
+                                    }) {
+                                        Text(locationType.rawValue)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(editedLocation.type == locationType ? project.color : Color(.systemGray5))
+                                            .foregroundColor(editedLocation.type == locationType ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
                             }
+                            .padding(.vertical, 4)
                         }
-                        .pickerStyle(WheelPickerStyle())
-                        .frame(height: 100)
                     }
                     
                     TextField("详细地址", text: Binding(
@@ -295,7 +303,7 @@ struct EditLocationView: View {
                                         }
                                     }
                                     
-                                    Text("提示：长按地图任意位置可直接选取坐标")
+                                    Text("提示：点击地图任意位置可直接选取坐标")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -320,28 +328,9 @@ struct EditLocationView: View {
                             }
                             
                             // 长按选择位置
-                            .onTapGesture(count: 1) { location in
-                                // 转换 tap 位置为坐标
-                                Task {
-                                    let tapPoint = location
-                                    // 需要实现将tap点转换为坐标的方法
-                                }
+                            .onTapGesture { location in
+                                getCoordinateFromTapLocation(location)
                             }
-                            .gesture(
-                                LongPressGesture(minimumDuration: 0.5)
-                                    .sequenced(before: DragGesture(minimumDistance: 0))
-                                    .onEnded { value in
-                                        switch value {
-                                        case .second(true, let drag):
-                                            if let drag = drag {
-                                                let location = drag.location
-                                                getCoordinateFromPoint(location)
-                                            }
-                                        default:
-                                            break
-                                        }
-                                    }
-                            )
                         }
                         
                         Spacer()
@@ -422,28 +411,47 @@ struct EditLocationView: View {
         }
     }
     
-    private func getCoordinateFromPoint(_ point: CGPoint) {
-        // 在实际应用中，你需要将屏幕坐标转换为地图坐标
-        // 这通常需要使用UIKit中的转换方法
-        // 以下是一个模拟实现
+    private func getCoordinateFromTapLocation(_ tapLocation: CGPoint) {
+        // 由于SwiftUI的Map组件限制，我们需要使用一个近似的方法
+        // 在实际应用中，可以考虑使用MapKit的MKMapView来获得更精确的坐标转换
         
-        // 获取当前地图的中心点作为示例
-        let coordinate = region.center
+        // 获取当前地图的可见区域
+        let mapCenter = region.center
+        let mapSpan = region.span
+        
+        // 假设地图视图的大小（这里需要根据实际情况调整）
+        let mapViewSize = CGSize(width: UIScreen.main.bounds.width - 40, height: 400) // 减去padding
+        
+        // 计算点击位置相对于地图中心的偏移
+        let centerX = mapViewSize.width / 2
+        let centerY = mapViewSize.height / 2
+        
+        let offsetX = tapLocation.x - centerX
+        let offsetY = tapLocation.y - centerY
+        
+        // 将像素偏移转换为经纬度偏移
+        let latitudeOffset = -(offsetY / mapViewSize.height) * mapSpan.latitudeDelta
+        let longitudeOffset = (offsetX / mapViewSize.width) * mapSpan.longitudeDelta
+        
+        // 计算实际坐标
+        let actualLatitude = mapCenter.latitude + latitudeOffset
+        let actualLongitude = mapCenter.longitude + longitudeOffset
         
         // 更新场地信息
-        editedLocation.latitude = coordinate.latitude
-        editedLocation.longitude = coordinate.longitude
+        editedLocation.latitude = actualLatitude
+        editedLocation.longitude = actualLongitude
         
-        // 打印调试信息
-        print("长按地图设置位置: 纬度 \(coordinate.latitude), 经度 \(coordinate.longitude)")
+        print("用户点击位置: 屏幕坐标(\(tapLocation.x), \(tapLocation.y))")
+        print("转换后的地图坐标: 纬度 \(actualLatitude), 经度 \(actualLongitude)")
         print("editedLocation.hasCoordinates = \(editedLocation.hasCoordinates)")
         
         // 反向地理编码获取地址
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let location = CLLocation(latitude: actualLatitude, longitude: actualLongitude)
         let geocoder = CLGeocoder()
         
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
             guard let placemark = placemarks?.first, error == nil else {
+                print("反向地理编码失败: \(error?.localizedDescription ?? "未知错误")")
                 return
             }
             
@@ -457,11 +465,13 @@ struct EditLocationView: View {
             if let city = placemark.administrativeArea { addressComponents.append(city) }
             if let country = placemark.country { addressComponents.append(country) }
             
-            let address = addressComponents.joined(separator: ", ")
+            let formattedAddress = addressComponents.joined(separator: ", ")
             
-            if !address.isEmpty {
-                editedLocation.address = address
-                print("长按地图更新地址: \(address)")
+            DispatchQueue.main.async {
+                if !formattedAddress.isEmpty {
+                    self.editedLocation.address = formattedAddress
+                    print("获取到地址: \(formattedAddress)")
+                }
             }
         }
     }
@@ -558,40 +568,5 @@ struct EditLocationView: View {
         
         if components.isEmpty { return nil }
         return components.joined(separator: ", ")
-    }
-}
-
-// 定位管理器
-class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
-    @Published var location: CLLocation?
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    func requestLocation() {
-        locationManager.requestLocation()
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        self.location = location
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("定位错误: \(error.localizedDescription)")
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        self.authorizationStatus = status
-        
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
-            locationManager.requestLocation()
-        }
     }
 } 

@@ -12,6 +12,10 @@ struct SettingsDetailView: View {
     @AppStorage("lastSyncTime") private var lastSyncTime: Double = 0
     @AppStorage("appTheme") private var appTheme: String = "system"
     
+    // 引导相关的状态
+    @AppStorage("hasSeenFeatureTutorial") private var hasSeenFeatureTutorial = true
+    @State private var showingTutorialResetAlert = false
+    
     var body: some View {
         NavigationStack {
             List {
@@ -225,6 +229,24 @@ struct SettingsDetailView: View {
                     Text("通知设置")
                 }
                 
+                // 添加功能引导部分
+                Section {
+                    Button {
+                        showingTutorialResetAlert = true
+                    } label: {
+                        Label {
+                            Text("重新查看功能引导")
+                        } icon: {
+                            Image(systemName: "questionmark.circle.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
+                } header: {
+                    Text("功能引导")
+                } footer: {
+                    Text("重置功能引导状态，下次进入相应页面时将重新显示引导")
+                }
+                
                 // 法律条款
                 Section {
                     NavigationLink {
@@ -308,8 +330,25 @@ struct SettingsDetailView: View {
                         .foregroundColor(isError ? .red : .primary)
                 }
             }
+            .alert("重置功能引导", isPresented: $showingTutorialResetAlert) {
+                Button("取消", role: .cancel) {}
+                Button("重置", role: .destructive) {
+                    resetTutorials()
+                }
+            } message: {
+                Text("这将重置所有功能页面的引导状态，下次进入相应页面时将重新显示引导。")
+            }
         }
         .preferredColorScheme(colorScheme)
+    }
+    
+    // 重置所有引导状态
+    private func resetTutorials() {
+        // 重置功能页引导状态
+        hasSeenFeatureTutorial = false
+        
+        // 这里可以添加其他页面的引导状态重置
+        // @AppStorage("hasSeenXXXTutorial") = false
     }
     
     // 主题设置

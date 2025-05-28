@@ -7,6 +7,19 @@ struct FeatureView: View {
     @State private var showingAddTask = false
     @EnvironmentObject private var projectStore: ProjectStore
     
+    // 引导相关状态
+    @AppStorage("hasSeenFeatureTutorial") private var hasSeenFeatureTutorial = false
+    @State private var showTutorial = false
+    @State private var tutorialRefreshTrigger = UUID() // 引导刷新触发器
+    
+    // 功能元素的框架位置
+    @State private var baiBaiCardFrame: CGRect = .zero
+    @State private var remindMeFrame: CGRect = .zero
+    @State private var recordExpenseFrame: CGRect = .zero
+    @State private var commonInfoFrame: CGRect = .zero
+    @State private var favoriteVenueFrame: CGRect = .zero
+    @State private var scoutingFrame: CGRect = .zero
+    
     // 直接从PersistenceController获取上下文
     private var persistenceContext: NSManagedObjectContext {
         return PersistenceController.shared.container.viewContext
@@ -39,6 +52,7 @@ struct FeatureView: View {
                     VStack(spacing: 32) {
                         BaiBaiCompactCard(projectColor: .blue)
                             .padding(.top, 8)
+                            .getFrame($baiBaiCardFrame)
                         
                         VStack(spacing: 20) {
                             // 第一排：提醒我做、记一笔账
@@ -46,6 +60,7 @@ struct FeatureView: View {
                                 FeatureCardButton(icon: "checklist", title: "提醒我做") {
                                     showingAddTask = true
                                 }
+                                .getFrame($remindMeFrame)
                                 
                                 FeatureCardButton(icon: "creditcard.fill", title: "记一笔账") {
                                     // 直接打开记账表单
@@ -56,6 +71,7 @@ struct FeatureView: View {
                                     UIApplication.shared.windows.first?.rootViewController?
                                         .present(formVC, animated: true)
                                 }
+                                .getFrame($recordExpenseFrame)
                             }
                             
                             // 第二排：常用信息+收藏地址（左侧），堪景（右侧）
@@ -80,6 +96,7 @@ struct FeatureView: View {
                                         .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
                                     }
                                     .buttonStyle(PlainButtonStyle())
+                                    .getFrame($commonInfoFrame)
                                     
                                     // 收藏场地管理（小按钮）
                                     NavigationLink(destination: {
@@ -102,10 +119,12 @@ struct FeatureView: View {
                                         .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
                                     }
                                     .buttonStyle(PlainButtonStyle())
+                                    .getFrame($favoriteVenueFrame)
                                 }
                                 
                                 // 右侧：堪景（大按钮）
                                 ScoutingCameraView()
+                                    .getFrame($scoutingFrame)
                             }
                         }
                         .padding(.horizontal)
@@ -119,6 +138,136 @@ struct FeatureView: View {
                 }
                 .presentationDetents([.height(500)])
             }
+            .onAppear {
+                checkAndShowTutorial()
+            }
+            // 监听任意框架位置变化
+            .onChange(of: baiBaiCardFrame) { _ in updateTutorialIfShowing() }
+            .onChange(of: remindMeFrame) { _ in updateTutorialIfShowing() }
+            .onChange(of: recordExpenseFrame) { _ in updateTutorialIfShowing() }
+            .onChange(of: commonInfoFrame) { _ in updateTutorialIfShowing() }
+            .onChange(of: favoriteVenueFrame) { _ in updateTutorialIfShowing() }
+            .onChange(of: scoutingFrame) { _ in updateTutorialIfShowing() }
+            .overlay(
+                ZStack {
+                    if showTutorial {
+                        TutorialOverlayView(
+                            isPresented: $showTutorial,
+                            tutorialSteps: featureTutorialSteps,
+                            onComplete: {
+                                hasSeenFeatureTutorial = true
+                            }
+                        )
+                        .id(tutorialRefreshTrigger) // 使用ID触发刷新
+                    }
+                }
+            )
+        }
+    }
+    
+    // 检查并显示教程
+    private func checkAndShowTutorial() {
+        // 延迟确保视图已完全加载并正确获取位置
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if !hasSeenFeatureTutorial {
+                withAnimation {
+                    showTutorial = true
+                }
+            }
+        }
+    }
+    
+    // 功能页的教程步骤
+    private var featureTutorialSteps: [TutorialStep] {
+        var steps: [TutorialStep] = []
+        
+        // 欢迎步骤
+        steps.append(
+            TutorialStep(
+                title: "欢迎使用 FLICK",
+                description: "这是功能页，您可以在这里快速访问App的核心功能。点击屏幕继续浏览。",
+                frame: nil
+            )
+        )
+        
+        // 只有当框架位置有效时添加对应步骤
+        if baiBaiCardFrame != .zero {
+            steps.append(
+                TutorialStep(
+                    title: "拜拜祈福",
+                    description: "拍摄前点击此处进行祈福，为拍摄顺利祈求好运。支持传统点击和陀螺仪感应两种模式。",
+                    frame: baiBaiCardFrame
+                )
+            )
+        }
+        
+        if remindMeFrame != .zero {
+            steps.append(
+                TutorialStep(
+                    title: "提醒我做",
+                    description: "快速添加待办事项和提醒，帮助您管理拍摄中的各项任务。",
+                    frame: remindMeFrame
+                )
+            )
+        }
+        
+        if recordExpenseFrame != .zero {
+            steps.append(
+                TutorialStep(
+                    title: "记一笔账",
+                    description: "随时记录项目支出，管理资金流向，支持多种分类和标签。",
+                    frame: recordExpenseFrame
+                )
+            )
+        }
+        
+        if commonInfoFrame != .zero {
+            steps.append(
+                TutorialStep(
+                    title: "常用信息",
+                    description: "存储和管理常用联系人、账号等信息，随时查阅。",
+                    frame: commonInfoFrame
+                )
+            )
+        }
+        
+        if favoriteVenueFrame != .zero {
+            steps.append(
+                TutorialStep(
+                    title: "收藏场地",
+                    description: "保存和管理您收藏的拍摄场地信息，包括地址、联系方式等。",
+                    frame: favoriteVenueFrame
+                )
+            )
+        }
+        
+        if scoutingFrame != .zero {
+            steps.append(
+                TutorialStep(
+                    title: "堪景",
+                    description: "拍摄场地时使用此功能，可以记录照片、视频、笔记和位置信息。",
+                    frame: scoutingFrame
+                )
+            )
+        }
+        
+        // 结束步骤
+        steps.append(
+            TutorialStep(
+                title: "探索更多",
+                description: "现在您已了解功能页的基本功能，开始使用FLICK管理您的项目吧！",
+                frame: nil
+            )
+        )
+        
+        return steps
+    }
+    
+    // 当框架位置变化时更新引导视图
+    private func updateTutorialIfShowing() {
+        if showTutorial {
+            // 通过改变触发器ID来强制刷新引导视图
+            tutorialRefreshTrigger = UUID()
         }
     }
 }

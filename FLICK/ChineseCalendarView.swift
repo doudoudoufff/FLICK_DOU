@@ -128,7 +128,12 @@ struct ChineseCalendarView: View {
             // 视图消失时重置状态 - 移除所有调试信息
         }
         .onAppear {
-            // 禁用自动滚动，让用户完全控制
+            // 在视图出现时滚动到当前月份
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                let today = Date()
+                // 发送通知到ScrollViewReader
+                NotificationCenter.default.post(name: Notification.Name("ScrollToCurrentMonth"), object: nil)
+            }
         }
         .onChange(of: calendarState.isExternalScrollLocked) { newValue in
             // 通知父组件外部滑动锁定状态变化
@@ -411,6 +416,34 @@ struct ChineseCalendarView: View {
                 .id("scrollView") // 给ScrollView一个ID便于控制
                 .environmentObject(calendarState) // 传递拖拽状态给子视图
                 taskLegendView
+            }
+            .onAppear {
+                // 设置通知监听，当收到滚动到当前月份的通知时执行
+                let nc = NotificationCenter.default
+                let observer = nc.addObserver(forName: Notification.Name("ScrollToCurrentMonth"), object: nil, queue: .main) { _ in
+                    let today = Date()
+                    let monthDiff = calendar.dateComponents([.month], from: stableReferenceDate, to: today).month ?? 0
+                    
+                    // 滚动到当前月份，使用延迟确保视图已完全加载
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            scrollProxy.scrollTo("month_\(monthDiff)", anchor: .center)
+                            
+                            // 更新当前月份和选中日期
+                            currentMonth = today
+                        }
+                    }
+                }
+                
+                // 立即触发滚动到当前月份
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    let today = Date()
+                    let monthDiff = calendar.dateComponents([.month], from: stableReferenceDate, to: today).month ?? 0
+                    
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        scrollProxy.scrollTo("month_\(monthDiff)", anchor: .center)
+                    }
+                }
             }
         }
     }

@@ -306,7 +306,7 @@ class ProjectStore: ObservableObject {
                     if let existingTask = results.first {
                         print("✓ 找到现有任务实体，进行更新")
                         existingTask.title = task.title
-                        existingTask.assignee = task.assignee
+                        existingTask.assignee = task.assignee ?? ""
                         existingTask.dueDate = task.dueDate
                         existingTask.isCompleted = task.isCompleted
                         existingTask.reminder = task.reminder?.rawValue
@@ -527,88 +527,131 @@ class ProjectStore: ObservableObject {
         // 保持数据引用，避免在处理过程中其他地方修改数据
         let projectId = project.id
         
-        // 使用主线程处理所有数据变更，避免并发问题
-        DispatchQueue.main.async {
         // 从 CoreData 中删除
-            let fetchRequest = ProjectEntity.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "id == %@", projectId as CVarArg)
-            
-            do {
-                let results = try self.context.fetch(fetchRequest)
-                print("找到匹配的项目实体数量: \(results.count)")
-                
-                if let projectEntity = results.first {
-                    print("✓ 找到项目实体，正在删除")
-                    
-                    // 手动删除相关实体，确保级联删除生效
-                    
-                    // 删除所有任务
-                    if let tasks = projectEntity.tasks?.allObjects as? [TaskEntity], !tasks.isEmpty {
-                        print("- 删除\(tasks.count)个关联任务")
-                        for task in tasks {
-                            self.context.delete(task)
-                        }
-                    }
-                    
-                    // 删除所有场景及其照片
-                    if let locations = projectEntity.locations?.allObjects as? [LocationEntity], !locations.isEmpty {
-                        print("- 删除\(locations.count)个关联场景")
-                        for location in locations {
-                            // 删除场景下的所有照片
-                            if let photos = location.photos?.allObjects as? [LocationPhotoEntity], !photos.isEmpty {
-                                print("  - 删除\(photos.count)个照片")
-                                for photo in photos {
-                                    self.context.delete(photo)
-                                }
-                            }
-                            self.context.delete(location)
-                        }
-                    }
-                    
-                    // 删除所有账户
-                    if let accounts = projectEntity.accounts?.allObjects as? [AccountEntity], !accounts.isEmpty {
-                        print("- 删除\(accounts.count)个关联账户")
-                        for account in accounts {
-                            self.context.delete(account)
-                        }
-        }
+        let fetchRequest = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", projectId as CVarArg)
         
-                    // 删除所有发票
-                    if let invoices = projectEntity.invoices?.allObjects as? [InvoiceEntity], !invoices.isEmpty {
-                        print("- 删除\(invoices.count)个关联发票")
-                        for invoice in invoices {
-                            self.context.delete(invoice)
-                        }
-                    }
-                    
-                    // 最后删除项目实体本身
-                    self.context.delete(projectEntity)
-                    
-                    // 立即保存上下文
-                    try self.context.save()
-                    print("✓ CoreData 删除成功")
-                    
-                    // 触发 CloudKit 同步
-                    PersistenceController.shared.save()
-                    print("✓ 已触发CloudKit同步")
-                    
-                    // 重新加载项目列表以获取最新数据
-                    // 这里不单独更新内存中的数据，而是直接从数据库重新加载所有项目
-                    self.loadProjects()
-                    print("✓ 已重新加载项目列表")
-                } else {
-                    print("❌ 未找到项目实体")
-                }
-            } catch {
-                print("❌ 删除项目失败: \(error)")
-                print("错误描述: \(error.localizedDescription)")
+        do {
+            let results = try self.context.fetch(fetchRequest)
+            print("找到匹配的项目实体数量: \(results.count)")
+            
+            if let projectEntity = results.first {
+                print("✓ 找到项目实体，正在删除")
                 
-                // 恢复内存中的项目数据
-                self.loadProjects()
+                // 手动删除相关实体，确保级联删除生效
+                
+                // 删除所有任务
+                if let tasks = projectEntity.tasks?.allObjects as? [TaskEntity], !tasks.isEmpty {
+                    print("- 删除\(tasks.count)个关联任务")
+                    for task in tasks {
+                        // 删除任务提醒
+                        NotificationManager.shared.removeTaskReminders(for: ProjectTask(
+                            id: task.id ?? UUID(),
+                            title: task.title ?? "",
+                            assignee: task.assignee ?? "",
+                            startDate: task.startDate,
+                            dueDate: task.dueDate ?? Date(),
+                            isCompleted: task.isCompleted,
+                            reminder: task.reminder.flatMap { ProjectTask.TaskReminder(rawValue: $0) },
+                            reminderHour: Int(task.reminderHour)
+                        ))
+                        self.context.delete(task)
+                    }
+                }
+                
+                // 删除所有场景及其照片
+                if let locations = projectEntity.locations?.allObjects as? [LocationEntity], !locations.isEmpty {
+                    print("- 删除\(locations.count)个关联场景")
+                    for location in locations {
+                        // 删除场景下的所有照片
+                        if let photos = location.photos?.allObjects as? [LocationPhotoEntity], !photos.isEmpty {
+                            print("  - 删除\(photos.count)个照片")
+                            for photo in photos {
+                                self.context.delete(photo)
+                            }
+                        }
+                        self.context.delete(location)
+                    }
+                }
+                
+                // 删除所有账户
+                if let accounts = projectEntity.accounts?.allObjects as? [AccountEntity], !accounts.isEmpty {
+                    print("- 删除\(accounts.count)个关联账户")
+                    for account in accounts {
+                        self.context.delete(account)
+                    }
+                }
+    
+                // 删除所有发票
+                if let invoices = projectEntity.invoices?.allObjects as? [InvoiceEntity], !invoices.isEmpty {
+                    print("- 删除\(invoices.count)个关联发票")
+                    for invoice in invoices {
+                        self.context.delete(invoice)
+                    }
+                }
+                
+                // 删除所有交易记录
+                if let transactions = projectEntity.transactions?.allObjects as? [TransactionEntity], !transactions.isEmpty {
+                    print("- 删除\(transactions.count)个关联交易记录")
+                    for transaction in transactions {
+                        // 删除交易记录的附件
+                        if let attachments = transaction.attachments?.allObjects as? [AttachmentEntity], !attachments.isEmpty {
+                            print("  - 删除\(attachments.count)个交易附件")
+                            for attachment in attachments {
+                                self.context.delete(attachment)
+                            }
+                        }
+                        self.context.delete(transaction)
+                    }
+                }
+                
+                // 最后删除项目实体本身
+                self.context.delete(projectEntity)
+                
+                // 立即保存上下文
+                try self.context.save()
+                print("✓ CoreData 删除成功")
+                
+                // 从内存中移除项目
+                self.projects.removeAll { $0.id == projectId }
+                
+                // 通知UI更新
+                DispatchQueue.main.async {
+                    self.objectWillChange.send()
+                    
+                    // 发送项目删除完成通知
+                    NotificationCenter.default.post(
+                        name: Notification.Name("ProjectDeleted"),
+                        object: nil,
+                        userInfo: ["projectId": projectId]
+                    )
+                }
+                
+                // 触发 CloudKit 同步
+                PersistenceController.shared.save()
+                print("✓ 已触发CloudKit同步")
+                
+                print("✓ 项目删除完成")
+            } else {
+                print("❌ 未找到项目实体")
+            }
+        } catch {
+            print("❌ 删除项目失败: \(error)")
+            print("错误描述: \(error.localizedDescription)")
+            
+            // 详细错误信息
+            if let nsError = error as NSError? {
+                print("错误代码: \(nsError.code), 域: \(nsError.domain)")
+                for (key, value) in nsError.userInfo {
+                    print("- \(key): \(value)")
+                }
             }
             
-            print("================================")
+            // 恢复内存中的项目数据
+            self.loadProjects()
         }
+        
+        print("================================")
     }
     
     // 更新项目
@@ -760,7 +803,7 @@ class ProjectStore: ObservableObject {
                 
                 // 更新任务实体的属性
                 taskEntity.title = task.title
-                taskEntity.assignee = task.assignee
+                taskEntity.assignee = task.assignee ?? ""
                 taskEntity.startDate = task.startDate
                 taskEntity.dueDate = task.dueDate
                 taskEntity.isCompleted = task.isCompleted
@@ -774,7 +817,7 @@ class ProjectStore: ObservableObject {
                 if task.isCompleted {
                     NotificationManager.shared.removeTaskReminders(for: task)
                     print("✓ 已移除任务提醒")
-                } else if let reminder = task.reminder {
+                } else if task.reminder != nil {
                     NotificationManager.shared.scheduleTaskReminder(for: task, in: project)
                     print("✓ 已更新任务提醒")
                 }
@@ -793,7 +836,7 @@ class ProjectStore: ObservableObject {
         print("========== 开始添加任务 ==========")
         print("任务信息:")
         print("- 标题: \(task.title)")
-        print("- 负责人: \(task.assignee ?? "")")
+        print("- 负责人: \(task.assignee)")
         print("- 开始时间: \(task.startDate)")
         print("- 截止时间: \(task.dueDate)")
         
@@ -806,7 +849,7 @@ class ProjectStore: ObservableObject {
         let taskEntity = TaskEntity(context: context)
         taskEntity.id = task.id
         taskEntity.title = task.title
-        taskEntity.assignee = task.assignee
+        taskEntity.assignee = task.assignee ?? ""
         taskEntity.startDate = task.startDate
         taskEntity.dueDate = task.dueDate
         taskEntity.isCompleted = task.isCompleted
@@ -1742,7 +1785,7 @@ class ProjectStore: ObservableObject {
             if updatedTask.isCompleted {
                 NotificationManager.shared.removeTaskReminders(for: task)
                 print("✓ 已移除任务提醒")
-            } else if let reminder = task.reminder {
+            } else if task.reminder != nil {
                 NotificationManager.shared.scheduleTaskReminder(for: task, in: project)
                 print("✓ 已重新设置任务提醒")
             }
@@ -2116,12 +2159,27 @@ class ProjectStore: ObservableObject {
 extension ProjectStore {
     func binding(for projectId: UUID) -> Binding<Project>? {
         guard let index = projects.firstIndex(where: { $0.id == projectId }) else {
+            print("⚠️ 无法找到项目 ID: \(projectId)，可能已被删除")
             return nil
         }
         
         return Binding(
-            get: { self.projects[index] },
-            set: { self.projects[index] = $0 }
+            get: { 
+                // 再次检查索引是否有效，防止并发删除导致的问题
+                guard index < self.projects.count && self.projects[index].id == projectId else {
+                    print("⚠️ 项目索引无效或项目已被删除")
+                    return Project.placeholder() // 返回一个占位项目
+                }
+                return self.projects[index] 
+            },
+            set: { newValue in
+                // 检查索引是否仍然有效
+                guard index < self.projects.count && self.projects[index].id == projectId else {
+                    print("⚠️ 无法更新项目，项目可能已被删除")
+                    return
+                }
+                self.projects[index] = newValue
+            }
         )
     }
 } 

@@ -434,6 +434,9 @@ struct ProjectListRow: View {
             NavigationLink(destination: {
                 if let binding = projectStore.binding(for: project.id) {
                     ProjectDetailView(project: binding)
+                } else {
+                    // 如果项目不存在，显示错误页面
+                    ProjectNotFoundView()
                 }
             }) {
                 EmptyView()
@@ -448,30 +451,59 @@ struct ProjectListRow: View {
                 guard !isDeleting else { return }
                 
                 // 设置状态防止重复操作
-                isDeleting = true
-                
-                // 使用Task包装删除操作
-                Task {
-                    // 先在UI上延迟一下，让滑动动画完成
-                    try? await Task.sleep(nanoseconds: 300_000_000) // 等待300毫秒
-                    
-                    // 发送删除通知
-                    await MainActor.run {
-                        NotificationCenter.default.post(
-                            name: Notification.Name("DeleteProject"),
-                            object: nil,
-                            userInfo: ["project": project]
-                        )
-                    }
-                    
-                    // 重置状态
-                    isDeleting = false
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isDeleting = true
                 }
+                
+                // 直接发送删除通知，不使用异步延迟
+                NotificationCenter.default.post(
+                    name: Notification.Name("DeleteProject"),
+                    object: nil,
+                    userInfo: ["project": project]
+                )
             } label: {
                 Label("删除", systemImage: "trash")
             }
             .tint(.red)
         }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ProjectDeleted"))) { notification in
+            // 监听项目删除完成通知，重置状态
+            if let deletedProjectId = notification.userInfo?["projectId"] as? UUID,
+               deletedProjectId == project.id {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isDeleting = false
+                }
+            }
+        }
+    }
+}
+
+// 项目未找到视图
+struct ProjectNotFoundView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 60))
+                .foregroundColor(.orange)
+            
+            Text("项目不存在")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text("该项目可能已被删除")
+                .font(.body)
+                .foregroundColor(.secondary)
+            
+            Button("返回") {
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .navigationTitle("错误")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

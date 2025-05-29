@@ -208,6 +208,27 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         request.fetchLimit = 1
         return try? context.fetch(request).first
     }
+    
+    // 创建一个占位项目，用于处理已删除项目的情况
+    static func placeholder() -> Project {
+        return Project(
+            id: UUID(),
+            name: "项目已删除",
+            director: "",
+            producer: "",
+            startDate: Date(),
+            status: .cancelled,
+            color: .gray,
+            tasks: [],
+            invoices: [],
+            locations: [],
+            accounts: [],
+            transactions: [],
+            isLocationScoutingEnabled: false,
+            logoData: nil,
+            budget: 0.0
+        )
+    }
 }
 
 // 添加 Color 扩展来支持十六进制转换

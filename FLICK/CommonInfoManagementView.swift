@@ -1546,7 +1546,12 @@ struct UnifiedAddInfoView: View {
                 
                 if selectedProject != nil {
                     // 账户基本信息
-                    Section(header: Text("基本信息")) {
+                    Section(header: HStack {
+                        Text("基本信息")
+                        Text("*")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }) {
                         TextField("收款方名称", text: $accountName)
                         
                         Picker("账户类型", selection: $accountType) {
@@ -1557,24 +1562,24 @@ struct UnifiedAddInfoView: View {
                     }
                     
                     // 银行信息
-                    Section(header: Text("银行信息")) {
-                        TextField("开户行", text: $bankName)
-                        TextField("支行", text: $bankBranch)
-                        TextField("账号", text: $bankAccount)
+                    Section(header: Text("银行信息（选填）")) {
+                        TextField("开户行（选填）", text: $bankName)
+                        TextField("支行（选填）", text: $bankBranch)
+                        TextField("账号（选填）", text: $bankAccount)
                             .keyboardType(.numberPad)
                         TextField("身份证号（选填）", text: $idNumber)
                             .textInputAutocapitalization(.never)
                     }
                     
                     // 联系方式
-                    Section(header: Text("联系方式")) {
-                        TextField("联系人", text: $contactName)
-                        TextField("联系电话", text: $contactPhone)
+                    Section(header: Text("联系方式（选填）")) {
+                        TextField("联系人（选填）", text: $contactName)
+                        TextField("联系电话（选填）", text: $contactPhone)
                             .keyboardType(.phonePad)
                     }
                     
                     // 备注
-                    Section(header: Text("备注")) {
+                    Section(header: Text("备注（选填）")) {
                         TextEditor(text: $notes)
                             .frame(height: 100)
                     }
@@ -1637,12 +1642,7 @@ struct UnifiedAddInfoView: View {
     private var isValid: Bool {
         if selectedType == .project {
             return selectedProject != nil && 
-                   !accountName.isEmpty &&
-                   !bankName.isEmpty &&
-                   !bankBranch.isEmpty &&
-                   !bankAccount.isEmpty &&
-                   !contactName.isEmpty &&
-                   !contactPhone.isEmpty
+                   !accountName.isEmpty  // 只要求收款方名称是必填项
         } else {
             return !title.isEmpty && !content.isEmpty
         }
@@ -1675,12 +1675,12 @@ struct UnifiedAddInfoView: View {
         accountEntity.id = UUID()
         accountEntity.name = accountName
         accountEntity.type = accountType
-        accountEntity.bankName = bankName
-        accountEntity.bankBranch = bankBranch
-        accountEntity.bankAccount = bankAccount
+        accountEntity.bankName = bankName.isEmpty ? nil : bankName
+        accountEntity.bankBranch = bankBranch.isEmpty ? nil : bankBranch
+        accountEntity.bankAccount = bankAccount.isEmpty ? nil : bankAccount
         accountEntity.idNumber = idNumber.isEmpty ? nil : idNumber
-        accountEntity.contactName = contactName
-        accountEntity.contactPhone = contactPhone
+        accountEntity.contactName = contactName.isEmpty ? nil : contactName
+        accountEntity.contactPhone = contactPhone.isEmpty ? nil : contactPhone
         accountEntity.notes = notes.isEmpty ? nil : notes
         
         // 关联到项目
@@ -1691,8 +1691,20 @@ struct UnifiedAddInfoView: View {
             try context.save()
             print("✓ 成功添加账户")
             
-            // 刷新数据
+            // 刷新常用信息数据
             manager.fetchAllInfos()
+            
+            // 发送通知给ProjectStore，让它重新加载项目数据
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ProjectDataChanged"),
+                object: nil,
+                userInfo: ["projectId": project.id?.uuidString ?? ""]
+            )
+            
+            // 触发 CoreData 同步
+            PersistenceController.shared.save()
+            
+            print("✓ 已通知ProjectStore更新数据")
         } catch {
             print("❌ 添加账户失败: \(error.localizedDescription)")
         }

@@ -55,6 +55,7 @@ class ProjectStore: ObservableObject {
     
     // 添加同步监控设置
     private func setupSyncMonitoring() {
+        // 监听 CloudKit 同步事件
         syncObserver = NotificationCenter.default.addObserver(
             forName: NSPersistentCloudKitContainer.eventChangedNotification,
             object: nil,
@@ -80,6 +81,16 @@ class ProjectStore: ObservableObject {
             if let error = cloudEvent.error {
                 self.syncStatus = .error(error)
             }
+        }
+        
+        // 监听项目数据变更通知（来自CommonInfoManager等）
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ProjectDataChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            print("收到ProjectDataChanged通知，重新加载项目数据")
+            self?.loadProjects()
         }
     }
     
@@ -111,9 +122,11 @@ class ProjectStore: ObservableObject {
     }
     
     deinit {
+        // 移除所有通知观察者
         if let observer = syncObserver {
             NotificationCenter.default.removeObserver(observer)
         }
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("ProjectDataChanged"), object: nil)
     }
     
     func loadProjects() {

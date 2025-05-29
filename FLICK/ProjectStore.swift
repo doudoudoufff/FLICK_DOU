@@ -92,6 +92,48 @@ class ProjectStore: ObservableObject {
             print("收到ProjectDataChanged通知，重新加载项目数据")
             self?.loadProjects()
         }
+        
+        // 监听交易记录添加通知
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("TransactionAdded"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            print("收到TransactionAdded通知")
+            guard let self = self,
+                  let projectId = notification.userInfo?["projectId"] as? UUID else { return }
+            
+            // 找到对应的项目并通知UI更新
+            if let index = self.projects.firstIndex(where: { $0.id == projectId }) {
+                DispatchQueue.main.async {
+                    // 触发UI更新
+                    self.objectWillChange.send()
+                    // 通知项目对象更新
+                    self.projects[index].objectWillChange.send()
+                }
+            }
+        }
+        
+        // 监听交易记录更新通知
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("TransactionUpdated"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            print("收到TransactionUpdated通知")
+            guard let self = self,
+                  let projectId = notification.userInfo?["projectId"] as? UUID else { return }
+            
+            // 找到对应的项目并通知UI更新
+            if let index = self.projects.firstIndex(where: { $0.id == projectId }) {
+                DispatchQueue.main.async {
+                    // 触发UI更新
+                    self.objectWillChange.send()
+                    // 通知项目对象更新
+                    self.projects[index].objectWillChange.send()
+                }
+            }
+        }
     }
     
     // 修改 ProjectStore 类中的 sync 方法
@@ -2028,13 +2070,25 @@ class ProjectStore: ObservableObject {
         // 关联到项目
         transactionEntity.project = projectEntity
         
-        // 添加到内存中的项目模型
-        project.transactions.append(transaction)
+        do {
+            try context.save()
+            print("✓ 交易记录保存成功")
+            
+            // 更新内存中的项目数据
+            if let index = projects.firstIndex(where: { $0.id == project.id }) {
+                // 直接添加到内存中的交易记录数组
+                projects[index].transactions.append(transaction)
+                // 通知视图更新
+                objectWillChange.send()
+                print("✓ 内存数据更新成功")
+            }
+            
+            // 触发 CoreData 同步
+            PersistenceController.shared.save()
+        } catch {
+            print("❌ 保存交易记录失败: \(error)")
+        }
         
-        // 保存上下文
-        saveContext()
-        
-        print("✓ 成功添加交易记录")
         print("================================")
     }
     
@@ -2044,7 +2098,18 @@ class ProjectStore: ObservableObject {
         print("项目: \(project.name)")
         print("交易ID: \(transaction.id)")
         
-        // 获取交易实体
+        // 1. 先更新内存中的数据
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+           let transactionIndex = projects[projectIndex].transactions.firstIndex(where: { $0.id == transaction.id }) {
+            projects[projectIndex].transactions[transactionIndex] = transaction
+            objectWillChange.send()
+            print("✓ 内存数据更新成功")
+        } else {
+            print("❌ 未找到对应的项目或交易记录")
+            return
+        }
+        
+        // 2. 获取交易实体
         let request = TransactionEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", transaction.id as CVarArg, project.id as CVarArg)
         
@@ -2089,13 +2154,11 @@ class ProjectStore: ObservableObject {
                     }
                 }
                 
-                // 保存上下文
-                saveContext()
+                try context.save()
+                print("✓ CoreData 保存成功")
                 
-                // 更新内存中的交易记录
-                if let index = project.transactions.firstIndex(where: { $0.id == transaction.id }) {
-                    project.transactions[index] = transaction
-                }
+                // 触发 CoreData 同步
+                PersistenceController.shared.save()
                 
                 print("✓ 成功更新交易记录")
             } else {

@@ -84,6 +84,7 @@ struct EditTransactionView: View {
                         .foregroundColor(transactionType == .expense ? .white : .primary)
                         .cornerRadius(10)
                     }
+                    .buttonStyle(.plain)
                     
                     Spacer()
                         .frame(width: 10)
@@ -110,6 +111,7 @@ struct EditTransactionView: View {
                         .foregroundColor(transactionType == .income ? .white : .primary)
                         .cornerRadius(10)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, 6)
             }
@@ -403,23 +405,43 @@ struct EditTransactionView: View {
         // 显示保存中状态
         isSaving = true
         
-        // 更新交易记录
-        transaction.name = name
-        // 根据交易类型设置金额的正负
-        transaction.amount = transactionType == .expense ? -abs(amountValue) : abs(amountValue)
-        transaction.date = date
-        transaction.transactionDescription = description
-        transaction.expenseType = expenseType
-        transaction.group = group
-        transaction.attachmentData = attachmentData
+        // 创建更新后的交易记录
+        let updatedTransaction = Transaction(
+            id: transaction.id,
+            name: name,
+            amount: transactionType == .expense ? -abs(amountValue) : abs(amountValue),
+            date: date,
+            transactionDescription: description,
+            expenseType: expenseType,
+            group: group,
+            paymentMethod: "现金", // 默认使用现金
+            attachmentData: attachmentData,
+            isVerified: false
+        )
         
-        // 保存到持久化存储
-        projectStore.saveProjects()
+        // 使用ProjectStore的updateTransaction方法更新项目中的交易记录
+        projectStore.updateTransaction(in: project, transaction: updatedTransaction)
         
-        // 延迟一小段时间以显示保存中状态
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isSaving = false
-            isPresented = false
+        // 确保数据更新后视图能正确刷新
+        DispatchQueue.main.async {
+            // 通知ProjectStore发生变化
+            projectStore.objectWillChange.send()
+            
+            // 通知Project对象发生变化
+            project.objectWillChange.send()
+            
+            // 延迟一小段时间以显示保存中状态
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isSaving = false
+                isPresented = false
+                
+                // 发送通知，告知交易记录已更新
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TransactionUpdated"),
+                    object: nil,
+                    userInfo: ["projectId": project.id, "transactionId": transaction.id]
+                )
+            }
         }
     }
 }

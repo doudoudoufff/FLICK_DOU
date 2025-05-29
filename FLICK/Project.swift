@@ -24,16 +24,26 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         guard budget > 0 else { return 0 }
         let totalExpense = transactions
             .filter { $0.transactionType == .expense }
+            .reduce(0) { $0 + abs($1.amount) }  // 支出amount为负值，取绝对值
+        
+        // 考虑总预算和收入的情况下计算使用比例
+        let adjustedBudget = budget + totalIncome
+        return min((totalExpense / adjustedBudget) * 100, 100)  // 限制最大值为100%
+    }
+    
+    // 计算总收入
+    var totalIncome: Double {
+        transactions
+            .filter { $0.transactionType == .income }
             .reduce(0) { $0 + $1.amount }
-        return (totalExpense / budget) * 100
     }
     
     // 计算剩余预算
     var remainingBudget: Double {
         let totalExpense = transactions
             .filter { $0.transactionType == .expense }
-            .reduce(0) { $0 + $1.amount }
-        return max(budget - totalExpense, 0)
+            .reduce(0) { $0 + abs($1.amount) }  // 支出amount为负值，取绝对值
+        return budget + totalIncome - totalExpense
     }
     
     public enum Status: String, Codable, CaseIterable {

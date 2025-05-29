@@ -545,39 +545,48 @@ struct BaiBaiCompactCard: View {
             
             // 天气信息
             if let weather = weatherManager.weatherInfo {
-                HStack(spacing: 20) {
-                    Image(systemName: weather.symbolName.isEmpty ? "sun.max.fill" : weather.symbolName)
-                        .symbolRenderingMode(.multicolor)
-                        .font(.title2)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(weather.condition == "Cloudy" ? "多云" : weather.condition)
-                            .font(.headline)
-                        Text(String(format: "%.1f°C", weather.temperature))
-                            .font(.subheadline)
+                NavigationLink(destination: BaiBaiView(projectColor: projectColor)) {
+                    HStack(spacing: 20) {
+                        Image(systemName: weather.symbolName.isEmpty ? "sun.max.fill" : weather.symbolName)
+                            .symbolRenderingMode(.multicolor)
+                            .font(.title2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(weather.condition == "Cloudy" ? "多云" : weather.condition)
+                                .font(.headline)
+                            Text(String(format: "%.1f°C", weather.temperature))
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "wind")
+                                Text("\(weather.windDirection) \(String(format: "%.1f", weather.windSpeed))m/s")
+                            }.font(.caption)
+                            HStack(spacing: 4) {
+                                Image(systemName: "humidity")
+                                Text("\(String(format: "%.0f", weather.humidity * 100))%")
+                            }.font(.caption)
+                        }
+                        
+                        // 添加一个小的箭头图标，表示可以点击
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
                             .foregroundColor(.secondary)
+                            .opacity(0.6)
                     }
-                    Spacer()
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "wind")
-                            Text("\(weather.windDirection) \(String(format: "%.1f", weather.windSpeed))m/s")
-                        }.font(.caption)
-                        HStack(spacing: 4) {
-                            Image(systemName: "humidity")
-                            Text("\(String(format: "%.0f", weather.humidity * 100))%")
-                        }.font(.caption)
-                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(.systemGray6).opacity(0.6))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color(.systemGray4).opacity(0.3), lineWidth: 1)
+                            )
+                    )
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemGray6).opacity(0.6))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color(.systemGray4).opacity(0.3), lineWidth: 1)
-                        )
-                )
+                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.vertical, 28)

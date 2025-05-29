@@ -38,6 +38,9 @@ struct TransactionManagementView: View {
     @State private var selectedExpenseType: String? = nil
     @State private var selectedGroup: String? = nil
     
+    // 添加筛选区域展开/折叠状态
+    @State private var isFilterExpanded: Bool = false
+    
     // 获取所有费用类型列表
     private var allExpenseTypes: [String] {
         return TagManager.shared.getAllExpenseTypes()
@@ -151,7 +154,7 @@ struct TransactionManagementView: View {
             if project.budget > 0 {
                 BudgetInfoView(
                     budget: project.budget,
-                    spent: project.transactions.filter { $0.transactionType == .expense }.reduce(0) { $0 + $1.amount },
+                    spent: project.remainingBudget,
                     usagePercentage: project.budgetUsagePercentage,
                     onEditBudget: { showingBudgetEditor = true }
                 )
@@ -201,143 +204,205 @@ struct TransactionManagementView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
                     
+                    // 筛选按钮，添加当前筛选条件数量的指示
                     Button(action: {
                         showingFilterSheet = true
                     }) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.system(size: 20))
-                            .foregroundColor(.accentColor)
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .font(.system(size: 20))
+                                .foregroundColor(.accentColor)
+                            
+                            // 显示筛选数量的小红点
+                            let filterCount = [selectedType, selectedExpenseType, selectedGroup].compactMap { $0 }.count
+                            if filterCount > 0 {
+                                Text("\(filterCount)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 16, height: 16)
+                                    .background(Color.red)
+                                    .clipShape(Circle())
+                                    .offset(x: 8, y: -6)
+                            }
+                        }
                     }
                     .padding(.horizontal, 4)
+                    
+                    // 添加展开/折叠筛选区域的按钮
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isFilterExpanded.toggle()
+                        }
+                    }) {
+                        Image(systemName: isFilterExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.secondary)
+                            .padding(6)
+                            .background(Color(.systemGray6))
+                            .clipShape(Circle())
+                    }
                 }
                 
-                // 费用类型行 - 直接显示
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("费用类型")
-                            .font(.system(size: 13, weight: .medium))
+                // 使用可折叠区域包装筛选内容
+                if isFilterExpanded {
+                    VStack(spacing: 8) {
+                        // 费用类型行 - 直接显示
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text("费用类型")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+            
+                            }
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    Button(action: {
+                                        selectedExpenseType = nil
+                                    }) {
+                                        Text("全部")
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedExpenseType == nil ? Color.accentColor : Color(.systemGray5))
+                                            .foregroundColor(selectedExpenseType == nil ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                    
+                                    ForEach(allExpenseTypes, id: \.self) { type in
+                                        FilterButton(
+                                            text: type,
+                                            amount: formatAmount(expenseByType[type, default: 0]),
+                                            isSelected: selectedExpenseType == type,
+                                            action: {
+                                                if selectedExpenseType == type {
+                                                    selectedExpenseType = nil
+                                                } else {
+                                                    selectedExpenseType = type
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                        
+                        // 组别行 - 直接显示
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("组别")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.secondary)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    Button(action: {
+                                        selectedGroup = nil
+                                    }) {
+                                        Text("全部")
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedGroup == nil ? Color.accentColor : Color(.systemGray5))
+                                            .foregroundColor(selectedGroup == nil ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                    
+                                    ForEach(allGroups, id: \.self) { group in
+                                        FilterButton(
+                                            text: group,
+                                            amount: formatAmount(expenseByGroup[group, default: 0]),
+                                            isSelected: selectedGroup == group,
+                                            action: {
+                                                if selectedGroup == group {
+                                                    selectedGroup = nil
+                                                } else {
+                                                    selectedGroup = group
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                        
+                        // 交叉分析结果区域
+                        if let group = selectedGroup, let type = selectedExpenseType {
+                            // 显示特定组别在特定费用类型上的支出
+                            let amount = expenseForGroupAndType(group: group, type: type)
+                            
+                            HStack {
+                                Text("\(group) - \(type) 支出:")
+                                    .font(.system(size: 14))
+                                
+                                Spacer()
+                                
+                                Text(formatAmount(amount))
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(.red)
+                            }
+                            .padding(10)
+                            .background(Color(.systemGray6).opacity(0.5))
+                            .cornerRadius(8)
+                            .padding(.top, 4)
+                        }
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .padding(.top, 8)
+                }
+                
+                // 当前筛选状态提示，始终显示
+                if selectedType != nil || selectedExpenseType != nil || selectedGroup != nil {
+                    HStack(spacing: 6) {
+                        Text("筛选:")
+                            .font(.caption)
                             .foregroundColor(.secondary)
                         
-                        Spacer()
-    
-                    }
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                selectedExpenseType = nil
-                            }) {
-                                Text("全部")
-                                    .font(.system(size: 14))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(selectedExpenseType == nil ? Color.accentColor : Color(.systemGray5))
-                                    .foregroundColor(selectedExpenseType == nil ? .white : .primary)
-                                    .cornerRadius(16)
-                            }
-                            
-                            ForEach(allExpenseTypes, id: \.self) { type in
-                                FilterButton(
-                                    text: type,
-                                    amount: formatAmount(expenseByType[type, default: 0]),
-                                    isSelected: selectedExpenseType == type,
-                                    action: {
-                                        if selectedExpenseType == type {
-                                            selectedExpenseType = nil
-                                        } else {
-                                            selectedExpenseType = type
-                                        }
-                                    }
-                                )
-                            }
+                        if let type = selectedType {
+                            FilterTag(text: type.rawValue, color: type.color)
                         }
-                        .padding(.vertical, 4)
-                    }
-                }
-                
-                // 组别行 - 直接显示
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("组别")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.secondary)
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                selectedGroup = nil
-                            }) {
-                                Text("全部")
-                                    .font(.system(size: 14))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(selectedGroup == nil ? Color.accentColor : Color(.systemGray5))
-                                    .foregroundColor(selectedGroup == nil ? .white : .primary)
-                                    .cornerRadius(16)
-                            }
-                            
-                            ForEach(allGroups, id: \.self) { group in
-                                FilterButton(
-                                    text: group,
-                                    amount: formatAmount(expenseByGroup[group, default: 0]),
-                                    isSelected: selectedGroup == group,
-                                    action: {
-                                        if selectedGroup == group {
-                                            selectedGroup = nil
-                                        } else {
-                                            selectedGroup = group
-                                        }
-                                    }
-                                )
-                            }
+                        
+                        if let type = selectedExpenseType {
+                            FilterTag(text: type, color: .orange)
                         }
-                        .padding(.vertical, 4)
-                    }
-                }
-                
-                // 交叉分析结果区域
-                if let group = selectedGroup, let type = selectedExpenseType {
-                    // 显示特定组别在特定费用类型上的支出
-                    let amount = expenseForGroupAndType(group: group, type: type)
-                    
-                    HStack {
-                        Text("\(group) - \(type) 支出:")
-                            .font(.system(size: 14))
+                        
+                        if let group = selectedGroup {
+                            FilterTag(text: group, color: .purple)
+                        }
+                        
+                        if sortOption != .dateDesc {
+                            FilterTag(
+                                text: "排序: \(sortOption.rawValue)", 
+                                color: .blue
+                            )
+                        }
                         
                         Spacer()
                         
-                        Text(formatAmount(amount))
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.red)
+                        // 添加清除所有筛选的按钮
+                        Button(action: {
+                            selectedType = nil
+                            selectedExpenseType = nil
+                            selectedGroup = nil
+                            sortOption = .dateDesc
+                        }) {
+                            Text("清除")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(4)
+                        }
                     }
-                    .padding(10)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
                     .background(Color(.systemGray6).opacity(0.5))
                     .cornerRadius(8)
-                    .padding(.top, 4)
                 }
-                
-                // 当前筛选状态提示
-                HStack(spacing: 6) {
-                    if let type = selectedType {
-                        FilterTag(text: type.rawValue, color: type.color)
-                    }
-                    
-                    if let type = selectedExpenseType {
-                        FilterTag(text: type, color: .orange)
-                    }
-                    
-                    if let group = selectedGroup {
-                        FilterTag(text: group, color: .purple)
-                    }
-                    
-                    FilterTag(
-                        text: sortOption.rawValue, 
-                        color: .blue
-                    )
-                    
-                    Spacer()
-                }
-                .padding(.top, 4)
-                .padding(.bottom, 8)
             }
             .padding(.horizontal)
             
@@ -429,9 +494,8 @@ struct TransactionManagementView: View {
                 .environmentObject(projectStore)
             }
             .onDisappear {
-                DispatchQueue.main.async {
-                    refreshID = UUID()
-                }
+                // 当添加交易记录sheet关闭时刷新视图
+                refreshID = UUID()
             }
         }
         .sheet(item: $editingTransaction) { transaction in
@@ -450,9 +514,8 @@ struct TransactionManagementView: View {
                 .environmentObject(projectStore)
             }
             .onDisappear {
-                DispatchQueue.main.async {
-                    refreshID = UUID()
-                }
+                // 当编辑交易记录sheet关闭时刷新视图
+                refreshID = UUID()
             }
         }
         .sheet(isPresented: $showingFilterSheet) {
@@ -504,18 +567,23 @@ struct TransactionManagementView: View {
             Text("确定要删除这条交易记录吗？此操作无法撤销。")
         }
         .id(refreshID)
+        // 直接监听project.transactions变化，这是关键
+        .onChange(of: project.transactions) { _ in
+            refreshID = UUID()
+        }
     }
 }
 
 // 预算信息视图
 struct BudgetInfoView: View {
     let budget: Double
-    let spent: Double
-    let usagePercentage: Double
+    let spent: Double // 这个参数现在应该是剩余预算 (budget + income - expense)
+    let usagePercentage: Double // 使用百分比
     let onEditBudget: () -> Void
     
-    private var remainingBudget: Double {
-        max(budget - spent, 0)
+    // 我们不在这里计算 remainingBudget，而是直接使用传入的参数
+    private var isOverBudget: Bool {
+        spent < 0
     }
     
     private func formatAmount(_ amount: Double) -> String {
@@ -547,28 +615,20 @@ struct BudgetInfoView: View {
                 
                 Spacer()
                 
-                Text("剩余: \(formatAmount(remainingBudget))")
-                    .foregroundColor(remainingBudget > budget * 0.2 ? .green : .red)
+                Text(isOverBudget ? "超出预算: " : "剩余预算: ")
+                Text(formatAmount(abs(spent)))
+                    .foregroundColor(isOverBudget ? .red : (spent > budget * 0.2 ? .green : .orange))
+                
+                if isOverBudget {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
             }
             .font(.subheadline)
             
-            VStack(spacing: 4) {
-                HStack {
-                    Text("预算使用")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text("\(Int(usagePercentage))%")
-                        .font(.caption)
-                        .foregroundColor(
-                            usagePercentage < 70 ? .green :
-                                usagePercentage < 90 ? .orange : .red
-                        )
-                }
-                
-                // 进度条
+            // 进度条
+            HStack {
                 ZStack(alignment: .leading) {
                     Rectangle()
                         .frame(height: 6)
@@ -576,13 +636,36 @@ struct BudgetInfoView: View {
                         .cornerRadius(3)
                     
                     Rectangle()
-                        .frame(width: min(max(CGFloat(usagePercentage) / 100.0 * UIScreen.main.bounds.width * 0.85, 0), UIScreen.main.bounds.width * 0.85), height: 6)
+                        .frame(width: min(max(CGFloat(usagePercentage) / 100.0 * UIScreen.main.bounds.width * 0.7, 0), UIScreen.main.bounds.width * 0.7), height: 6)
                         .foregroundColor(
                             usagePercentage < 70 ? .green :
-                                usagePercentage < 90 ? .orange : .red
+                                usagePercentage < 90 ? .yellow : .red
                         )
                         .cornerRadius(3)
                 }
+                
+                Text(String(format: "%.1f%%", usagePercentage))
+                    .font(.caption)
+                    .foregroundColor(
+                        usagePercentage < 70 ? .green :
+                            usagePercentage < 90 ? .yellow : .red
+                    )
+            }
+            
+            // 超出预算警告
+            if isOverBudget {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                    Text("已超出预算 \(formatAmount(abs(spent)))")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(4)
+                .padding(.top, 4)
             }
         }
     }

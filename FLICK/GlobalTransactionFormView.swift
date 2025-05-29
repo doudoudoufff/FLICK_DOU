@@ -101,6 +101,7 @@ struct GlobalTransactionFormView: View {
                             .foregroundColor(transactionType == .expense ? .white : .primary)
                             .cornerRadius(10)
                         }
+                        .buttonStyle(.plain)
                         
                         Spacer()
                             .frame(width: 10)
@@ -122,6 +123,7 @@ struct GlobalTransactionFormView: View {
                             .foregroundColor(transactionType == .income ? .white : .primary)
                             .cornerRadius(10)
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.vertical, 6)
                 }
@@ -457,12 +459,9 @@ struct GlobalTransactionFormView: View {
             transaction.attachmentData = imageData
         }
         
-        // 保存到数据库
-        var project = currentProject
+        // 保存到数据库 - 只调用一次，避免重复添加
+        let project = currentProject
         projectStore.addTransaction(to: project, transaction: transaction)
-        
-        // 直接添加到project的transactions数组，确保视图立即更新
-        project.transactions.append(transaction)
         
         // 关闭表单
         dismiss()

@@ -12,6 +12,8 @@ struct TransactionListView: View {
     @State private var endDate: Date = Date()
     @State private var showingManagement = false
     @State private var showingBudgetEditor = false
+    // 添加刷新ID触发视图更新
+    @State private var refreshID = UUID()
     
     // 判断是否为 iPad
     private var isIPad: Bool {
@@ -51,11 +53,16 @@ struct TransactionListView: View {
             .reduce(0) { $0 + $1.amount }
     }
     
-    // 计算总支出
+    // 计算总支出（取绝对值，因为支出在数据库中是负数）
     private var totalExpense: Double {
         project.transactions
             .filter { $0.transactionType == .expense }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + abs($1.amount) }
+    }
+    
+    // 计算结余
+    private var balance: Double {
+        totalIncome - totalExpense
     }
     
     // 获取最近5条交易记录
@@ -128,8 +135,8 @@ struct TransactionListView: View {
                 
                 FinanceCard(
                     title: "结余",
-                    value: formatAmount(totalIncome - totalExpense),
-                    color: totalIncome - totalExpense >= 0 ? .blue : .red
+                    value: formatAmount(balance),
+                    color: balance >= 0 ? .blue : .red
                 )
             }
             
@@ -185,6 +192,10 @@ struct TransactionListView: View {
                 )
                 .environmentObject(projectStore)
             }
+            .onDisappear {
+                // 当添加交易记录sheet关闭时刷新视图
+                refreshID = UUID()
+            }
         }
         .sheet(isPresented: $showingManagement) {
             NavigationView {
@@ -194,6 +205,12 @@ struct TransactionListView: View {
         }
         .sheet(isPresented: $showingBudgetEditor) {
             BudgetEditorView(project: $project, projectStore: projectStore)
+        }
+        // 使用refreshID触发整个视图刷新
+        .id(refreshID)
+        // 直接监听project.transactions变化，这是关键
+        .onChange(of: project.transactions) { _ in
+            refreshID = UUID()
         }
     }
     
@@ -217,11 +234,16 @@ struct TransactionSummaryCard: View {
             .reduce(0) { $0 + $1.amount }
     }
     
-    // 计算总支出
+    // 计算总支出（取绝对值，因为支出在数据库中是负数）
     private var totalExpense: Double {
         project.transactions
             .filter { $0.transactionType == .expense }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + abs($1.amount) }
+    }
+    
+    // 计算结余
+    private var balance: Double {
+        totalIncome - totalExpense
     }
     
     // 格式化金额
@@ -342,8 +364,8 @@ struct TransactionSummaryCard: View {
                 
                 FinanceCard(
                     title: "结余",
-                    value: formatAmount(totalIncome - totalExpense),
-                    color: totalIncome - totalExpense >= 0 ? .blue : .red
+                    value: formatAmount(balance),
+                    color: balance >= 0 ? .blue : .red
                 )
             }
         }
@@ -374,7 +396,11 @@ struct BudgetCard: View {
     let onEditBudget: () -> Void
     
     private var remainingBudget: Double {
-        max(budget - spent, 0)
+        budget - spent
+    }
+    
+    private var isOverBudget: Bool {
+        remainingBudget < 0
     }
     
     private func formatAmount(_ amount: Double) -> String {
@@ -401,7 +427,7 @@ struct BudgetCard: View {
             if budget > 0 {
                 HStack {
                     Text("总预算: \(formatAmount(budget))")
-                        .font(.subheadline)
+                        .fontWeight(.medium)
                     
                     Spacer()
                     
@@ -411,15 +437,24 @@ struct BudgetCard: View {
                 }
                 
                 HStack {
-                    Text("剩余: \(formatAmount(remainingBudget))")
+                    Text(isOverBudget ? "超出预算: " : "剩余: ")
                         .font(.subheadline)
-                        .foregroundColor(remainingBudget > budget * 0.2 ? .green : .red)
+                    
+                    Text(formatAmount(abs(remainingBudget)))
+                        .font(.subheadline)
+                        .foregroundColor(isOverBudget ? .red : (remainingBudget > budget * 0.2 ? .green : .orange))
+                    
+                    if isOverBudget {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
                     
                     Spacer()
                     
                     Text("\(Int(usagePercentage))%")
                         .font(.subheadline)
-                        .foregroundColor(usagePercentage < 80 ? .secondary : .red)
+                        .foregroundColor(usagePercentage < 80 ? .secondary : usagePercentage >= 100 ? .red : .orange)
                 }
                 
                 // 进度条
@@ -436,6 +471,21 @@ struct BudgetCard: View {
                                 usagePercentage < 90 ? .yellow : .red
                         )
                         .cornerRadius(4)
+                }
+                
+                // 超出预算警告
+                if isOverBudget {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                        Text("已超出预算 \(formatAmount(abs(remainingBudget)))")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(4)
                 }
             } else {
                 Text("未设置预算")

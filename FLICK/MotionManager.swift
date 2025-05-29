@@ -15,7 +15,7 @@ class MotionManager: ObservableObject {
     @Published var bowProgress: Double = 0
     
     // 鞠躬检测阈值
-    private let pitchThreshold: Double = -0.5  // 大约30度
+    private let pitchThreshold: Double = 0.2  // 约10-15度，从正常举着手机鞠躬90度左右就能触发
     private var lastBowTime: Date?
     private var isInBowingPosition = false
     private var hasBowedRecently = false
@@ -63,11 +63,16 @@ class MotionManager: ObservableObject {
         // pitch值表示设备前后倾斜角度，负值表示设备顶部向下倾斜
         let pitch = motion.attitude.pitch
         
-        // 更新鞠躬进度，用于动画
-        let normalizedPitch = min(1.0, max(0.0, -pitch / 1.0))
+        // 调试信息 - 打印实际的pitch值
+        if abs(pitch) > 0.1 { // 只在有明显倾斜时打印
+            print("当前 pitch 值: \(pitch) (约\(Int(pitch * 180 / .pi))度)")
+        }
+        
+        // 更新鞠躬进度，用于动画 - 从正常举着手机(1.57)到阈值(0.2)的进度
+        let normalizedPitch = min(1.0, max(0.0, (1.57 - pitch) / 1.37))  // 1.37 = 1.57 - 0.2
         bowProgress = normalizedPitch
         
-        // 检测鞠躬动作（手机顶部向下倾斜超过阈值）
+        // 检测鞠躬动作（手机从正常举着的位置向前倾斜到阈值以下）
         if pitch < pitchThreshold && !isInBowingPosition {
             isInBowingPosition = true
             isBowing = true

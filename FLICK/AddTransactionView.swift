@@ -78,6 +78,7 @@ struct AddTransactionView: View {
                         .foregroundColor(transactionType == .expense ? .white : .primary)
                         .cornerRadius(10)
                     }
+                    .buttonStyle(.plain)
                     
                     Spacer()
                         .frame(width: 10)
@@ -99,6 +100,7 @@ struct AddTransactionView: View {
                         .foregroundColor(transactionType == .income ? .white : .primary)
                         .cornerRadius(10)
                     }
+                    .buttonStyle(.plain)
                 }
                 .padding(.vertical, 6)
             }
@@ -386,16 +388,29 @@ struct AddTransactionView: View {
             isVerified: false
         )
         
-        // 添加到项目
-        project.transactions.append(transaction)
+        // 使用ProjectStore的addTransaction方法添加到项目
+        projectStore.addTransaction(to: project, transaction: transaction)
         
-        // 保存到持久化存储
-        projectStore.saveProjects()
-        
-        // 延迟一小段时间以显示保存中状态
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isSaving = false
-            isPresented = false
+        // 确保数据更新后视图能正确刷新
+        DispatchQueue.main.async {
+            // 通知ProjectStore发生变化
+            projectStore.objectWillChange.send()
+            
+            // 通知Project对象发生变化
+            project.objectWillChange.send()
+            
+            // 延迟一小段时间以显示保存中状态
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isSaving = false
+                isPresented = false
+                
+                // 发送通知，告知交易记录已添加
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TransactionAdded"),
+                    object: nil,
+                    userInfo: ["projectId": project.id, "transactionId": transaction.id]
+                )
+            }
         }
     }
 }

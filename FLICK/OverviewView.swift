@@ -237,15 +237,21 @@ struct OverviewView: View {
                                 if taskFilter == .all || taskFilter == .pending {
                                     // 未完成任务
                                     if !pendingTasks.isEmpty {
-                                        VStack(spacing: 12) {
+                                        // 恢复使用List以获得更好的系统集成
+                                        LazyVStack(spacing: 12) {
                                             ForEach(pendingTasks) { taskWithProject in
-                                                DailyTaskRow(taskWithProject: taskWithProject) {
-                                                    toggleTaskCompletion(taskWithProject)
+                                                ZStack {
+                                                    Rectangle()
+                                                        .fill(Color.clear)
+                                                    
+                                                    DailyTaskRow(taskWithProject: taskWithProject) {
+                                                        toggleTaskCompletion(taskWithProject)
+                                                    }
                                                 }
                                                 .transition(.opacity)
                                             }
                                         }
-                                        .padding(.horizontal)
+                                        .padding(.horizontal, 16)
                                         .animation(.easeInOut(duration: 0.2), value: pendingTasks.map { $0.id })
                                     }
                                 }
@@ -257,24 +263,32 @@ struct OverviewView: View {
                                             // 仅当显示全部且有未完成任务时才显示此分隔线
                                             Divider()
                                                 .padding(.vertical, 8)
+                                                .padding(.horizontal, 16)
                                             
                                             Text("已完成")
                                                 .font(.subheadline)
                                                 .foregroundColor(.secondary)
                                                 .padding(.bottom, 8)
+                                                .padding(.horizontal, 16)
                                         }
                                         
-                                        VStack(spacing: 12) {
+                                        // 使用LazyVStack替代List以避免内部滚动
+                                        LazyVStack(spacing: 12) {
                                             ForEach(completedTasks) { taskWithProject in
-                                    DailyTaskRow(taskWithProject: taskWithProject) {
-                                        toggleTaskCompletion(taskWithProject)
+                                                ZStack {
+                                                    Rectangle()
+                                                        .fill(Color.clear)
+                                                    
+                                                    DailyTaskRow(taskWithProject: taskWithProject) {
+                                                        toggleTaskCompletion(taskWithProject)
+                                                    }
                                                 }
                                                 .transition(.opacity)
                                             }
                                         }
+                                        .padding(.horizontal, 16)
                                         .animation(.easeInOut(duration: 0.2), value: completedTasks.map { $0.id })
                                     }
-                                    .padding(.horizontal)
                                 }
                         }
                     } else {
@@ -402,6 +416,8 @@ struct DailyTaskRow: View {
     let taskWithProject: TaskWithProject
     let onToggleCompletion: () -> Void
     @State private var isCompleted: Bool
+    @EnvironmentObject private var projectStore: ProjectStore
+    @State private var editingTask: ProjectTask?
     
     init(taskWithProject: TaskWithProject, onToggleCompletion: @escaping () -> Void) {
         self.taskWithProject = taskWithProject
@@ -464,6 +480,43 @@ struct DailyTaskRow: View {
             if isCompleted != newValue {
                 isCompleted = newValue
             }
+        }
+        .onTapGesture {
+            // 点击任务卡片时打开编辑视图
+            editingTask = taskWithProject.task
+        }
+        .contextMenu {
+            Button {
+                editingTask = taskWithProject.task
+            } label: {
+                Label("编辑", systemImage: "pencil")
+            }
+            
+            Button(role: .destructive) {
+                withAnimation {
+                    projectStore.deleteTask(taskWithProject.task, from: taskWithProject.project)
+                }
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+        }
+        .sheet(item: $editingTask) { task in
+            NavigationView {
+                EditTaskView(
+                    isPresented: Binding(
+                        get: { editingTask != nil },
+                        set: { if !$0 { editingTask = nil } }
+                    ),
+                    task: Binding(
+                        get: { task },
+                        set: { newTask in
+                            projectStore.updateTask(newTask, in: taskWithProject.project)
+                            editingTask = nil
+                        }
+                    )
+                )
+            }
+            .presentationDetents([.height(500)])
         }
     }
 }

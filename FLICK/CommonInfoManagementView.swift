@@ -404,20 +404,7 @@ struct ProjectAccountSection: View {
                     ProjectAccountRow(manager: manager, account: account)
                 }
                 .buttonStyle(PlainButtonStyle())
-                .contextMenu {
-                    Button(role: .destructive) {
-                        deleteAction(account)
-                    } label: {
-                        Label("删除", systemImage: "trash")
-                    }
-                    
-                    Button {
-                        manager.toggleFavoriteProjectAccount(account)
-                    } label: {
-                        Label(manager.isProjectAccountFavorited(account) ? "取消收藏" : "收藏", 
-                              systemImage: manager.isProjectAccountFavorited(account) ? "star.slash" : "star")
-                    }
-                }
+                // 替换原有的contextMenu，简化操作防止卡死
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
                         deleteAction(account)
@@ -607,20 +594,7 @@ struct InfoItemRow: View {
             CommonInfoRow(info: info)
         }
         .buttonStyle(PlainButtonStyle())
-        .contextMenu {
-            Button(role: .destructive) {
-                manager.deleteInfo(info)
-            } label: {
-                Label("删除", systemImage: "trash")
-            }
-            
-            Button {
-                manager.toggleFavorite(info)
-            } label: {
-                Label(info.isFavorite ? "取消收藏" : "收藏", 
-                      systemImage: info.isFavorite ? "star.slash" : "star")
-            }
-        }
+        // 替换原有的contextMenu，简化操作防止卡死
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
                 manager.deleteInfo(info)
@@ -1022,22 +996,15 @@ struct ProjectAccountDetailView: View {
     
     // MARK: - 辅助方法
     private func copyAllInfo() {
+        // 简化复制内容，只保留最核心的信息
         let content = """
-        账户名称: \(account.name ?? "")
-        账户类型: \(account.type ?? "")
-        所属项目: \(account.project?.name ?? "")
+        \(account.name ?? "")
         
-        银行信息:
         开户行: \(account.bankName ?? "")
-        支行: \(account.bankBranch ?? "")
-        账号: \(account.bankAccount ?? "")
-        身份证号: \(account.idNumber ?? "")
-        
-        联系信息:
-        联系人: \(account.contactName ?? "")
-        联系电话: \(account.contactPhone ?? "")
-        
-        备注: \(account.notes ?? "")
+        \(account.bankBranch != nil && !account.bankBranch!.isEmpty ? "支行: \(account.bankBranch!)\n" : "")账号: \(account.bankAccount ?? "")
+        \(account.idNumber != nil && !account.idNumber!.isEmpty ? "身份证号: \(account.idNumber!)\n" : "")联系人: \(account.contactName ?? "")
+        电话: \(account.contactPhone ?? "")
+        \(account.notes != nil && !account.notes!.isEmpty ? "\n备注:\n\(account.notes!)" : "")
         """
         
         UIPasteboard.general.string = content
@@ -1514,14 +1481,10 @@ struct CommonInfoDetailView: View {
     
     // MARK: - 辅助方法
     private func copyAllInfo() {
+        // 简化复制内容，只保留最核心的信息
         let content = """
         \(info.title ?? "")
         
-        类型：\(info.type ?? "")
-        标签：\(info.tag ?? "")
-        创建时间：\(formattedDate(info.dateAdded ?? Date()))
-        
-        详细信息：
         \(info.content ?? "")
         """
         

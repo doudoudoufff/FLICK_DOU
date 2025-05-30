@@ -10,6 +10,7 @@ struct OverviewView: View {
     @State private var showingBaiBai = false
     @State private var taskFilter: TaskFilter = .all // 添加任务筛选状态
     @State private var isExternalScrollLocked = false // 添加外部滑动锁定状态
+    @State private var refreshID = UUID() // 用于强制刷新视图
     
     // 计算属性来获取selectedDate，避免每次重新初始化
     private var selectedDate: Date {
@@ -323,7 +324,15 @@ struct OverviewView: View {
             .background(Color(.systemGroupedBackground))
             .onAppear {
                 weatherManager.fetchWeatherData()
+                
+                // 添加通知观察者
+                setupNotificationObservers()
             }
+            .onDisappear {
+                // 移除通知观察者
+                NotificationCenter.default.removeObserver(self)
+            }
+            .id(refreshID) // 使用ID强制刷新视图
         }
         .sheet(isPresented: $showingAddTask) {
             NavigationView {
@@ -336,6 +345,23 @@ struct OverviewView: View {
             NavigationView {
                 BaiBaiView(projectColor: .orange)
             }
+        }
+    }
+    
+    // 设置通知观察者
+    private func setupNotificationObservers() {
+        // 移除任何现有的观察者以防重复
+        NotificationCenter.default.removeObserver(self)
+        
+        // 添加刷新任务列表的观察者
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("RefreshTaskList"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            print("收到刷新任务列表通知")
+            // 使用随机UUID强制刷新视图
+            self.refreshID = UUID()
         }
     }
     
@@ -493,8 +519,23 @@ struct DailyTaskRow: View {
             }
             
             Button(role: .destructive) {
-                withAnimation {
-                    projectStore.deleteTask(taskWithProject.task, from: taskWithProject.project)
+                // 修改删除逻辑，添加调试输出并确保调用正确
+                print("正在执行任务删除 ID: \(taskWithProject.task.id), 标题: \(taskWithProject.task.title)")
+                print("所属项目: \(taskWithProject.project.name), ID: \(taskWithProject.project.id)")
+                
+                // 确保在主线程上执行删除操作
+                DispatchQueue.main.async {
+                    withAnimation {
+                        projectStore.deleteTask(taskWithProject.task, from: taskWithProject.project)
+                        
+                        // 发送通知以刷新UI
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("RefreshTaskList"),
+                            object: nil
+                        )
+                        
+                        print("删除操作已执行")
+                    }
                 }
             } label: {
                 Label("删除", systemImage: "trash")

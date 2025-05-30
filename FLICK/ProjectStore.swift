@@ -951,8 +951,11 @@ class ProjectStore: ObservableObject {
         
         if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
             // 1. 从内存中删除
+            let tasksBeforeDelete = projects[projectIndex].tasks.count
             projects[projectIndex].tasks.removeAll(where: { $0.id == task.id })
-            print("✓ 已从内存中删除任务")
+            let tasksAfterDelete = projects[projectIndex].tasks.count
+            
+            print("✓ 内存中任务删除: 之前数量 \(tasksBeforeDelete), 之后数量 \(tasksAfterDelete)")
             
             // 2. 从 CoreData 中删除
             let fetchRequest: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
@@ -963,7 +966,7 @@ class ProjectStore: ObservableObject {
                 print("找到匹配的任务实体数量: \(results.count)")
                 
                 if let taskEntity = results.first {
-                    print("✓ 找到任务实体")
+                    print("✓ 找到任务实体 ID: \(taskEntity.id?.uuidString ?? "nil")")
                     context.delete(taskEntity)
                     try context.save()
                     print("✓ 成功从 CoreData 中删除任务")
@@ -971,6 +974,19 @@ class ProjectStore: ObservableObject {
                     // 移除提醒
                     NotificationManager.shared.removeTaskReminders(for: task)
                     print("✓ 已移除任务提醒")
+                    
+                    // 发送通知让UI刷新
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("RefreshTaskList"),
+                            object: nil
+                        )
+                        print("✓ 已发送刷新通知")
+                        
+                        // 强制发送UI更新信号
+                        self.objectWillChange.send()
+                        print("✓ 已发送状态变更信号")
+                    }
                 } else {
                     print("⚠️ 未找到对应的任务实体")
                 }
@@ -978,6 +994,8 @@ class ProjectStore: ObservableObject {
                 print("❌ 删除任务失败: \(error)")
                 print("错误描述: \(error.localizedDescription)")
             }
+        } else {
+            print("⚠️ 未找到对应的项目")
         }
         print("================================")
     }

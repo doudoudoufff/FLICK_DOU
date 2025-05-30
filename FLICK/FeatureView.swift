@@ -314,10 +314,10 @@ struct BaiBaiCompactCard: View {
     @StateObject private var weatherManager = WeatherManager.shared
     @StateObject private var motionManager = MotionManager.shared
     @State private var isLoading = false
-    @State private var isMotionMode = false // 是否启用陀螺仪模式
     @State private var sparkleAnimation = false
     @State private var pulseAnimation = false
     @State private var rotateAnimation = false
+    @State private var showFullscreenMode = false // 是否显示全屏模式
     
     private let blessings = [
         "今天拍摄一切顺利",
@@ -382,13 +382,8 @@ struct BaiBaiCompactCard: View {
                 
                 // 拜拜按钮
                 Button {
-                    if isMotionMode {
-                        // 陀螺仪模式下，按钮只用于切换回普通模式
-                        stopMotionMode()
-                    } else {
-                        // 普通模式下，点击按钮触发拜拜动画
-                        performTraditionalBowing()
-                    }
+                    // 点击按钮触发拜拜动画
+                    performTraditionalBowing()
                 } label: {
                     ZStack {
                         // 外层光晕
@@ -421,38 +416,25 @@ struct BaiBaiCompactCard: View {
                             )
                             .shadow(color: projectColor.opacity(0.3), radius: 15, x: 0, y: 8)
                         
-                        if isMotionMode {
-                            // 陀螺仪模式下显示指引
-                            VStack(spacing: 6) {
-                                Image(systemName: "iphone.gen3")
-                                    .font(.system(size: 24, weight: .medium))
-                                    .rotationEffect(.degrees(motionManager.bowProgress * 30))
-                                Text("鞠躬 \(motionManager.bowCount)/3")
-                                    .font(.system(size: 11, weight: .semibold))
+                        // 普通模式下显示"拜拜"文字和装饰
+                        VStack(spacing: 3) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "hands.sparkles")
+                                    .font(.system(size: 16, weight: .medium))
+                                Text("拜拜")
+                                    .font(.system(size: 24, weight: .bold))
+                                Image(systemName: "hands.sparkles")
+                                    .font(.system(size: 16, weight: .medium))
                             }
-                            .foregroundStyle(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
-                        } else {
-                            // 普通模式下显示"拜拜"文字和装饰
-                            VStack(spacing: 3) {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "hands.sparkles")
-                                        .font(.system(size: 16, weight: .medium))
-                                    Text("拜拜")
-                                        .font(.system(size: 24, weight: .bold))
-                                    Image(systemName: "hands.sparkles")
-                                        .font(.system(size: 16, weight: .medium))
-                                }
-                                Text("祈福")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .opacity(0.9)
-                            }
-                            .foregroundStyle(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                            Text("祈福")
+                                .font(.system(size: 10, weight: .medium))
+                                .opacity(0.9)
                         }
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                     }
                     .rotation3DEffect(
-                        .degrees(isMotionMode ? (motionManager.bowProgress * 30) : bowAngle),
+                        .degrees(bowAngle),
                         axis: (x: 1, y: 0, z: 0)
                     )
                 }
@@ -460,14 +442,16 @@ struct BaiBaiCompactCard: View {
             .frame(height: 220) // 固定高度，给动画元素足够空间
             .contextMenu {
                 Button {
-                    toggleMotionMode()
+                    showFullscreenMode = true
                 } label: {
-                    Label(isMotionMode ? "切换为普通模式" : "开启陀螺仪模式", 
-                          systemImage: isMotionMode ? "hand.tap" : "gyroscope")
+                    Label("开启全屏拜拜模式", systemImage: "sparkles")
                 }
             }
             .onLongPressGesture {
-                toggleMotionMode()
+                // 长按手势打开全屏模式
+                withAnimation {
+                    showFullscreenMode = true
+                }
             }
             .onAppear {
                 // 启动环形动画
@@ -479,27 +463,17 @@ struct BaiBaiCompactCard: View {
             }
             
             // 提示文本 - 移到按钮下方
-            if !isMotionMode {
-                VStack(spacing: 4) {
-                    Text("长按开启陀螺仪模式")
-                        .font(.caption)
-                    Text("或点击获取祈福")
-                        .font(.caption)
-                }
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(.systemGray6).opacity(0.8))
-                .cornerRadius(8)
-            } else {
-                Text("手持设备，自然鞠躬三次")
+            VStack(spacing: 4) {
+                Text("长按开启全屏拜拜模式")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(.systemGray6).opacity(0.8))
-                    .cornerRadius(8)
+                Text("或点击获取祈福")
+                    .font(.caption)
             }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color(.systemGray6).opacity(0.8))
+            .cornerRadius(8)
             
             // 祝福语显示 - 增强样式
             if showingBlessing, let blessing = currentBlessing {
@@ -606,47 +580,13 @@ struct BaiBaiCompactCard: View {
             weatherManager.fetchWeatherData()
             
             // 设置陀螺仪回调
-            motionManager.onBowingComplete = {
+            motionManager.onBowingComplete = { 
                 performBlessingAfterBowing()
             }
         }
-        .onDisappear {
-            stopMotionMode()
+        .fullScreenCover(isPresented: $showFullscreenMode) {
+            BaiBaiFullscreenView(projectColor: projectColor)
         }
-    }
-    
-    // 切换陀螺仪模式
-    private func toggleMotionMode() {
-        if isMotionMode {
-            stopMotionMode()
-        } else {
-            startMotionMode()
-        }
-    }
-    
-    // 开启陀螺仪模式
-    private func startMotionMode() {
-        withAnimation {
-            isMotionMode = true
-            showingBlessing = false
-        }
-        
-        // 开始监测设备运动
-        motionManager.startMonitoring()
-        
-        // 震动反馈
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-    }
-    
-    // 停止陀螺仪模式
-    private func stopMotionMode() {
-        withAnimation {
-            isMotionMode = false
-        }
-        
-        // 停止监测设备运动
-        motionManager.stopMonitoring()
     }
     
     // 执行传统点击拜拜动画
@@ -672,14 +612,6 @@ struct BaiBaiCompactCard: View {
         
         // 显示祝福
         showRandomBlessing()
-        
-        // 延迟后自动切回普通模式
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            withAnimation {
-                isMotionMode = false
-            }
-            motionManager.stopMonitoring()
-            }
     }
     
     // 生成强烈的震动反馈（多次连续震动）

@@ -10,6 +10,8 @@ struct CommonInfoManagementView: View {
     
     // 使用CoreData管理器
     @StateObject private var manager = CommonInfoManager()
+    @State private var needsRefresh: Bool = false
+    @State private var isViewActive: Bool = false
     
     // 标签选项
     let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "场地", "道具", "服装", "化妆", "其他"]
@@ -118,6 +120,10 @@ struct CommonInfoManagementView: View {
             }
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+            .onDisappear {
+                // 当添加信息视图消失时，刷新数据
+                needsRefresh = true
+            }
         }
         .sheet(isPresented: $showFilterSheet) {
             NavigationView {
@@ -148,6 +154,30 @@ struct CommonInfoManagementView: View {
             .presentationDragIndicator(.visible)
         }
         .onAppear {
+            isViewActive = true
+            manager.fetchAllInfos()
+        }
+        .onDisappear {
+            isViewActive = false
+        }
+        .onChange(of: needsRefresh) { refresh in
+            if refresh {
+                manager.fetchAllInfos()
+                needsRefresh = false
+            }
+        }
+        .onChange(of: isViewActive) { active in
+            if active {
+                // 视图变得活跃时，主动刷新数据
+                manager.fetchAllInfos()
+            }
+        }
+        .onChange(of: selectedTab) { _ in
+            // 切换选项卡时刷新数据
+            manager.fetchAllInfos()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
+            // 接收数据变更通知
             manager.fetchAllInfos()
         }
     }
@@ -167,6 +197,8 @@ struct ProjectAccountListView: View {
     @ObservedObject var manager: CommonInfoManager
     @Binding var searchText: String
     @Binding var selectedTag: String?
+    @State private var needsRefresh: Bool = false
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
         ZStack {
@@ -176,6 +208,26 @@ struct ProjectAccountListView: View {
             } else {
                 // 账户列表
                 accountListView
+            }
+        }
+        .onAppear {
+            // 当视图出现时立即刷新数据
+            DispatchQueue.main.async {
+                manager.fetchAllInfos()
+            }
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                // 当场景变为活跃状态时刷新数据
+                DispatchQueue.main.async {
+                    manager.fetchAllInfos()
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
+            // 接收数据变更通知，强制刷新
+            DispatchQueue.main.async {
+                manager.fetchAllInfos()
             }
         }
     }
@@ -244,6 +296,11 @@ struct ProjectAccountListView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
+            .id(UUID()) // 强制视图在每次数据更新时重新构建
+        }
+        .refreshable {
+            // 下拉刷新
+            await refreshData()
         }
     }
     
@@ -306,6 +363,13 @@ struct ProjectAccountListView: View {
             print("❌ 删除账户失败: \(error.localizedDescription)")
         }
     }
+    
+    // 添加异步刷新函数
+    private func refreshData() async {
+        // 模拟异步操作
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+        manager.fetchAllInfos()
+    }
 }
 
 // MARK: - 项目账户分组视图
@@ -326,7 +390,17 @@ struct ProjectAccountSection: View {
             
             // 该项目下的账户列表
             ForEach(accounts, id: \.id) { account in
-                NavigationLink(destination: ProjectAccountDetailView(manager: manager, account: account)) {
+                NavigationLink(destination: 
+                    ProjectAccountDetailView(manager: manager, account: account)
+                        .onDisappear {
+                            // 当详情页面消失时，发送强力通知
+                            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+                            // 立即强制刷新
+                            DispatchQueue.main.async {
+                                manager.fetchAllInfos()
+                            }
+                        }
+                ) {
                     ProjectAccountRow(manager: manager, account: account)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -371,6 +445,8 @@ struct CommonInfoListView: View {
     let selectedTab: CommonInfoType
     @Binding var searchText: String
     @Binding var selectedTag: String?
+    @State private var needsRefresh: Bool = false
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
         ZStack {
@@ -380,6 +456,26 @@ struct CommonInfoListView: View {
             } else {
                 // 信息列表
                 infoListView
+            }
+        }
+        .onAppear {
+            // 当视图出现时立即刷新数据
+            DispatchQueue.main.async {
+                manager.fetchAllInfos()
+            }
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                // 当场景变为活跃状态时刷新数据
+                DispatchQueue.main.async {
+                    manager.fetchAllInfos()
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
+            // 接收数据变更通知，强制刷新
+            DispatchQueue.main.async {
+                manager.fetchAllInfos()
             }
         }
     }
@@ -438,6 +534,27 @@ struct CommonInfoListView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
+            .id(UUID()) // 强制视图在每次数据更新时重新构建
+        }
+        .refreshable {
+            // 下拉刷新
+            await refreshData()
+        }
+    }
+    
+    // 添加异步刷新函数
+    private func refreshData() async {
+        // 模拟异步操作
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+        manager.fetchAllInfos()
+    }
+    
+    // 根据选项卡获取标题文本
+    private func tabTitle(for tab: CommonInfoType) -> String {
+        switch tab {
+        case .project: return "项目账户"
+        case .company: return "公司账户"
+        case .personal: return "个人账户"
         }
     }
     
@@ -472,15 +589,6 @@ struct CommonInfoListView: View {
         
         return filtered
     }
-    
-    // 根据选项卡获取标题文本
-    private func tabTitle(for tab: CommonInfoType) -> String {
-        switch tab {
-        case .project: return "项目账户"
-        case .company: return "公司账户"
-        case .personal: return "个人账户"
-        }
-    }
 }
 
 // MARK: - 信息项行视图
@@ -489,7 +597,13 @@ struct InfoItemRow: View {
     let manager: CommonInfoManager
     
     var body: some View {
-        NavigationLink(destination: CommonInfoDetailView(manager: manager, info: info)) {
+        NavigationLink(destination: 
+            CommonInfoDetailView(manager: manager, info: info)
+                .onDisappear {
+                    // 当详情页面消失时，强制刷新数据
+                    NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+                }
+        ) {
             CommonInfoRow(info: info)
         }
         .buttonStyle(PlainButtonStyle())
@@ -533,71 +647,83 @@ struct ProjectAccountRow: View {
     @State private var isFavorite: Bool = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // 顶部：标题、标签和收藏状态
-            HStack {
-                Text(account.name ?? "未命名账户")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                
-                Spacer()
-                
-                // 收藏图标
-                Button(action: toggleFavorite) {
-                    Image(systemName: isFavorite ? "star.fill" : "star")
-                        .foregroundColor(isFavorite ? .yellow : .gray)
-                        .imageScale(.small)
+        NavigationLink(destination: 
+            ProjectAccountDetailView(manager: manager, account: account)
+                .onDisappear {
+                    // 当详情页面消失时，强制刷新数据
+                    NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+                }
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                // 顶部：标题、标签和收藏状态
+                HStack {
+                    Text(account.name ?? "未命名账户")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    // 收藏图标
+                    Button(action: toggleFavorite) {
+                        Image(systemName: isFavorite ? "star.fill" : "star")
+                            .foregroundColor(isFavorite ? .yellow : .gray)
+                            .imageScale(.small)
+                    }
+                    
+                    // 标签胶囊
+                    Text(account.type ?? "其他")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(tagColor(for: account.type ?? "其他").opacity(0.15))
+                        .foregroundColor(tagColor(for: account.type ?? "其他"))
+                        .cornerRadius(12)
                 }
                 
-                // 标签胶囊
-                Text(account.type ?? "其他")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(tagColor(for: account.type ?? "其他").opacity(0.15))
-                    .foregroundColor(tagColor(for: account.type ?? "其他"))
-                    .cornerRadius(12)
+                // 内容预览
+                VStack(alignment: .leading, spacing: 3) {
+                    if let bankName = account.bankName {
+                        Text("开户行: \(bankName)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    if let bankAccount = account.bankAccount {
+                        Text("账号: \(bankAccount)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    if let contactName = account.contactName {
+                        Text("联系人: \(contactName)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
             }
-            
-            // 内容预览
-            VStack(alignment: .leading, spacing: 3) {
-                if let bankName = account.bankName {
-                    Text("开户行: \(bankName)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-                
-                if let bankAccount = account.bankAccount {
-                    Text("账号: \(bankAccount)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-                
-                if let contactName = account.contactName {
-                    Text("联系人: \(contactName)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(.systemGray5), lineWidth: 1)
+            )
+            .onAppear {
+                isFavorite = manager.isProjectAccountFavorited(account)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
+                isFavorite = manager.isProjectAccountFavorited(account)
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(.systemGray5), lineWidth: 1)
-        )
-        .onAppear {
-            isFavorite = manager.isProjectAccountFavorited(account)
-        }
+        .buttonStyle(PlainButtonStyle())
     }
     
     private func toggleFavorite() {
@@ -660,6 +786,10 @@ struct ProjectAccountDetailView: View {
             Text(copiedMessage)
         }
         .onAppear {
+            isFavorite = manager.isProjectAccountFavorited(account)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
+            // 更新收藏状态
             isFavorite = manager.isProjectAccountFavorited(account)
         }
     }
@@ -1086,6 +1216,7 @@ struct CommonInfoDetailView: View {
     @State private var copiedMessage = ""
     @State private var showingCopiedAlert = false
     @State private var isFavorite: Bool
+    @State private var needsRefresh: Bool = false
     @Environment(\.presentationMode) var presentationMode
     
     init(manager: CommonInfoManager, info: CommonInfoEntity) {
@@ -1137,6 +1268,24 @@ struct CommonInfoDetailView: View {
             }
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+            .onDisappear {
+                // 当编辑视图消失时，刷新数据
+                needsRefresh = true
+            }
+        }
+        .onAppear {
+            isFavorite = info.isFavorite
+        }
+        .onChange(of: needsRefresh) { refresh in
+            if refresh {
+                // 触发数据刷新
+                manager.fetchAllInfos()
+                needsRefresh = false
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
+            // 更新收藏状态
+            isFavorite = info.isFavorite
         }
     }
     
@@ -1900,7 +2049,13 @@ struct CommonInfoEditView: View {
             
             ToolbarItem(placement: .confirmationAction) {
                 Button("保存") {
-                    saveChanges()
+                    let success = saveChanges()
+                    if success {
+                        // 成功保存后立即发送通知，确保UI更新
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+                        }
+                    }
                     dismiss()
                 }
                 .disabled(title.isEmpty || content.isEmpty)
@@ -1908,9 +2063,9 @@ struct CommonInfoEditView: View {
         }
     }
     
-    // 保存编辑
-    private func saveChanges() {
-        manager.updateInfo(
+    // 修改返回值为Bool，表示保存是否成功
+    private func saveChanges() -> Bool {
+        return manager.updateInfo(
             info: info,
             title: title, 
             tag: tag, 

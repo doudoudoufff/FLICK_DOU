@@ -13,10 +13,31 @@ class CommonInfoManager: ObservableObject {
     @Published var personalInfos: [CommonInfoEntity] = []
     @Published var projectAccounts: [AccountEntity] = [] // 所有项目账户
     
+    // 添加定时自动刷新机制
+    private var autoRefreshTimer: Timer?
+    private let autoRefreshInterval: TimeInterval = 1.0 // 1秒刷新一次
+    
     init() {
         fetchAllInfos()
         // 添加通知监听，当项目或账户变更时更新数据
         setupNotifications()
+        // 设置自动刷新
+        setupAutoRefresh()
+    }
+    
+    // 设置自动刷新
+    private func setupAutoRefresh() {
+        autoRefreshTimer = Timer.scheduledTimer(withTimeInterval: autoRefreshInterval, repeats: true) { [weak self] _ in
+            self?.checkAndRefresh()
+        }
+    }
+    
+    // 检查并刷新数据
+    private func checkAndRefresh() {
+        // 在主线程刷新数据
+        DispatchQueue.main.async { [weak self] in
+            self?.fetchAllInfos()
+        }
     }
     
     // 设置通知监听
@@ -27,7 +48,9 @@ class CommonInfoManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.fetchAllInfos()
+            DispatchQueue.main.async {
+                self?.fetchAllInfos()
+            }
         }
         
         // 监听CoreData变更通知
@@ -36,12 +59,28 @@ class CommonInfoManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.fetchAllInfos()
+            DispatchQueue.main.async {
+                self?.fetchAllInfos()
+            }
+        }
+        
+        // 监听信息更新通知
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("CommonInfoDataChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.fetchAllInfos()
+            }
         }
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        // 停止定时器
+        autoRefreshTimer?.invalidate()
+        autoRefreshTimer = nil
     }
     
     // MARK: - 获取数据
@@ -50,7 +89,15 @@ class CommonInfoManager: ObservableObject {
         fetchInfos(for: "公司账户", result: &companyInfos)
         fetchInfos(for: "个人账户", result: &personalInfos)
         fetchProjectAccounts()
-        // 注意：不再需要单独获取项目账户CommonInfoEntity，因为我们直接使用AccountEntity
+        // 发布状态更新通知，强制UI刷新
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+    }
+    
+    // 手动刷新方法，供外部调用
+    func refreshData() {
+        fetchAllInfos()
     }
     
     private func fetchInfos(for type: String, result: inout [CommonInfoEntity]) {
@@ -149,6 +196,8 @@ class CommonInfoManager: ObservableObject {
         
         do {
             try viewContext.save()
+            // 触发数据变更通知
+            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
             fetchAllInfos()
             return newInfo
         } catch {
@@ -167,7 +216,16 @@ class CommonInfoManager: ObservableObject {
         
         do {
             try viewContext.save()
+            // 增强通知机制
+            // 1. 先通知数据已变更
+            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            // 2. 立即刷新数据
             fetchAllInfos()
+            // 3. 延迟再次通知，确保UI更新
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.objectWillChange.send()
+                NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            }
             return true
         } catch {
             print("更新常用信息失败: \(error.localizedDescription)")
@@ -183,6 +241,8 @@ class CommonInfoManager: ObservableObject {
         
         do {
             try viewContext.save()
+            // 触发数据变更通知
+            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
             fetchAllInfos()
             return true
         } catch {
@@ -199,7 +259,16 @@ class CommonInfoManager: ObservableObject {
         
         do {
             try viewContext.save()
+            // 增强通知机制
+            // 1. 先通知数据已变更
+            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            // 2. 立即刷新数据
             fetchAllInfos()
+            // 3. 延迟再次通知，确保UI更新
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.objectWillChange.send()
+                NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            }
             return true
         } catch {
             print("切换收藏状态失败: \(error.localizedDescription)")
@@ -245,6 +314,16 @@ class CommonInfoManager: ObservableObject {
             }
             
             try viewContext.save()
+            // 增强通知机制
+            // 1. 先通知数据已变更
+            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            // 2. 立即刷新数据
+            fetchAllInfos()
+            // 3. 延迟再次通知，确保UI更新
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.objectWillChange.send()
+                NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            }
             return true
         } catch {
             print("切换项目账户收藏状态失败: \(error.localizedDescription)")

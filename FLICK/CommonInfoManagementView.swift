@@ -1978,7 +1978,7 @@ struct CommonInfoEditView: View {
         Form {
             Section(header: Text("信息类型")) {
                 Picker("类型", selection: $selectedType) {
-                    // 这里只允许在公司账户和个人账户之间切换
+                    // 这里允许在公司账户和个人账户之间切换
                     Text("公司账户").tag(CommonInfoType.company)
                     Text("个人账户").tag(CommonInfoType.personal)
                 }
@@ -2028,10 +2028,12 @@ struct CommonInfoEditView: View {
     
     // 修改返回值为Bool，表示保存是否成功
     private func saveChanges() -> Bool {
-        return manager.updateInfo(
+        // 更新类型和其他信息
+        return manager.updateInfoWithType(
             info: info,
-            title: title, 
-            tag: tag, 
+            title: title,
+            type: selectedType.rawValue,
+            tag: tag,
             content: content
         )
     }

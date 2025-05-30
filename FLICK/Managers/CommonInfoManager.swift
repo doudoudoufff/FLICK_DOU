@@ -234,6 +234,34 @@ class CommonInfoManager: ObservableObject {
         }
     }
     
+    // MARK: - 更新信息（包括类型）
+    
+    func updateInfoWithType(info: CommonInfoEntity, title: String, type: String, tag: String, content: String) -> Bool {
+        info.title = title
+        info.type = type  // 更新类型
+        info.tag = tag
+        info.content = content
+        
+        do {
+            try viewContext.save()
+            // 增强通知机制
+            // 1. 先通知数据已变更
+            NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            // 2. 立即刷新数据
+            fetchAllInfos()
+            // 3. 延迟再次通知，确保UI更新
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self.objectWillChange.send()
+                NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
+            }
+            return true
+        } catch {
+            print("更新常用信息失败: \(error.localizedDescription)")
+            viewContext.rollback()
+            return false
+        }
+    }
+    
     // MARK: - 删除信息
     
     func deleteInfo(_ info: CommonInfoEntity) -> Bool {

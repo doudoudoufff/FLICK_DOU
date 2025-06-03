@@ -5,16 +5,16 @@ struct CommonInfoManagementView: View {
     @State private var selectedTab: CommonInfoType = .project
     @State private var searchText = ""
     @State private var showingAddInfo = false
-    @State private var showFilterSheet = false
     @State private var selectedTag: String? = nil
     
     // 使用CoreData管理器
     @StateObject private var manager = CommonInfoManager()
     @State private var needsRefresh: Bool = false
     @State private var isViewActive: Bool = false
+    @EnvironmentObject private var projectStore: ProjectStore
     
     // 标签选项
-    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "场地", "道具", "服装", "化妆", "其他"]
+    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他"]
     
     var body: some View {
         VStack(spacing: 0) {
@@ -52,34 +52,62 @@ struct CommonInfoManagementView: View {
                 .background(Color(.systemGray6))
                 .cornerRadius(12)
                 
-                // 筛选按钮
-                Button(action: { showFilterSheet = true }) {
+                // 重置筛选按钮
+                Button(action: { 
+                    // 重置筛选和搜索
+                    selectedTag = nil
+                    searchText = ""
+                }) {
                     HStack(spacing: 6) {
                         Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                            .foregroundColor(selectedTag != nil ? .accentColor : .secondary)
+                            .foregroundColor(selectedTag != nil || !searchText.isEmpty ? .accentColor : .secondary)
                         
-                        if let tag = selectedTag {
-                            Text(tag)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                                .fixedSize()
-                        }
+                        Text("筛选")
+                            .font(.subheadline)
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedTag != nil ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
+                            .fill(selectedTag != nil || !searchText.isEmpty ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(selectedTag != nil ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
+                                    .stroke(selectedTag != nil || !searchText.isEmpty ? Color.accentColor.opacity(0.3) : Color.clear, lineWidth: 1)
                             )
                     )
                 }
             }
             .padding(.horizontal)
             .padding(.top, 8)
-            .padding(.bottom, 12)
+            
+            // 添加水平滑动标签筛选器
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    // 全部选项
+                    TagFilterChip(
+                        title: "全部",
+                        isSelected: selectedTag == nil,
+                        action: {
+                            selectedTag = nil
+                        }
+                    )
+                    
+                    // 所有标签选项
+                    ForEach(tagOptions, id: \.self) { tag in
+                        TagFilterChip(
+                            title: tag,
+                            isSelected: selectedTag == tag,
+                            action: {
+                                selectedTag = tag
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+            }
             
             Divider()
                 .padding(.vertical, 8)
@@ -94,29 +122,18 @@ struct CommonInfoManagementView: View {
             }
         }
         .navigationTitle("常用信息")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { showingAddInfo = true }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                        Text("添加")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.accentColor)
-                    .clipShape(Capsule())
+                    Image(systemName: "plus")
                 }
             }
         }
         .sheet(isPresented: $showingAddInfo) {
             NavigationView {
-                // 根据当前选中的选项卡传递不同的类型
                 UnifiedAddInfoView(infoType: selectedTab, manager: manager)
+                    .environmentObject(projectStore)
             }
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
@@ -124,34 +141,6 @@ struct CommonInfoManagementView: View {
                 // 当添加信息视图消失时，刷新数据
                 needsRefresh = true
             }
-        }
-        .sheet(isPresented: $showFilterSheet) {
-            NavigationView {
-                List {
-                    Button("全部") {
-                        selectedTag = nil
-                        showFilterSheet = false
-                    }
-                    
-                    ForEach(tagOptions, id: \.self) { tag in
-                        Button(tag) {
-                            selectedTag = tag
-                            showFilterSheet = false
-                        }
-                    }
-                }
-                .navigationTitle("选择标签")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("完成") {
-                            showFilterSheet = false
-                        }
-                    }
-                }
-            }
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
         }
         .onAppear {
             isViewActive = true
@@ -310,7 +299,11 @@ struct ProjectAccountListView: View {
         
         // 应用标签筛选
         if let tag = selectedTag {
-            accounts = accounts.filter { $0.type == tag }
+            accounts = accounts.filter { account in
+                // 将账户类型映射到标签分类
+                let mappedTag = mapAccountTypeToTag(account.type ?? "其他")
+                return mappedTag == tag
+            }
         }
         
         // 应用搜索筛选
@@ -370,6 +363,23 @@ struct ProjectAccountListView: View {
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
         manager.fetchAllInfos()
     }
+    
+    // 将账户类型映射到标签分类
+    private func mapAccountTypeToTag(_ accountType: String) -> String {
+        // 根据账户类型返回对应的标签
+        switch accountType {
+        case "银行账户":
+            return "银行账户"
+        case "发票":
+            return "发票"
+        case "地址":
+            return "地址"
+        case "常用供应商":
+            return "常用供应商"
+        default:
+            return "其他"
+        }
+    }
 }
 
 // MARK: - 项目账户分组视图
@@ -378,6 +388,7 @@ struct ProjectAccountSection: View {
     let accounts: [AccountEntity]
     let manager: CommonInfoManager
     let deleteAction: (AccountEntity) -> Void
+    @EnvironmentObject private var projectStore: ProjectStore
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -392,6 +403,7 @@ struct ProjectAccountSection: View {
             ForEach(accounts, id: \.id) { account in
                 NavigationLink(destination: 
                     ProjectAccountDetailView(manager: manager, account: account)
+                        .environmentObject(projectStore)
                         .onDisappear {
                             // 当详情页面消失时，发送强力通知
                             NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
@@ -619,80 +631,89 @@ struct ProjectAccountRow: View {
     @ObservedObject var manager: CommonInfoManager
     let account: AccountEntity
     @State private var isFavorite: Bool = false
+    @EnvironmentObject private var projectStore: ProjectStore
     
     var body: some View {
         NavigationLink(destination: 
             ProjectAccountDetailView(manager: manager, account: account)
+                .environmentObject(projectStore)
                 .onDisappear {
                     // 当详情页面消失时，强制刷新数据
                     NotificationCenter.default.post(name: NSNotification.Name("CommonInfoDataChanged"), object: nil)
                 }
         ) {
-            VStack(alignment: .leading, spacing: 10) {
-                // 顶部：标题、标签和收藏状态
-                HStack {
-                    Text(account.name ?? "未命名账户")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                    
-                    Spacer()
-                    
-                    // 收藏图标
-                    Button(action: toggleFavorite) {
-                        Image(systemName: isFavorite ? "star.fill" : "star")
-                            .foregroundColor(isFavorite ? .yellow : .gray)
-                            .imageScale(.small)
-                    }
-                    
-                    // 标签胶囊
-                    Text(account.type ?? "其他")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(tagColor(for: account.type ?? "其他").opacity(0.15))
-                        .foregroundColor(tagColor(for: account.type ?? "其他"))
-                        .cornerRadius(12)
+        VStack(alignment: .leading, spacing: 10) {
+            // 顶部：标题、标签和收藏状态
+            HStack {
+                Text(account.name ?? "未命名账户")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                // 收藏图标
+                Button(action: toggleFavorite) {
+                    Image(systemName: isFavorite ? "star.fill" : "star")
+                        .foregroundColor(isFavorite ? .yellow : .gray)
+                        .imageScale(.small)
                 }
                 
-                // 内容预览
-                VStack(alignment: .leading, spacing: 3) {
-                    if let bankName = account.bankName {
-                        Text("开户行: \(bankName)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    if let bankAccount = account.bankAccount {
-                        Text("账号: \(bankAccount)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    if let contactName = account.contactName {
-                        Text("联系人: \(contactName)")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
+                // 标签胶囊
+                let mappedTag = mapAccountTypeToTag(account.type ?? "其他")
+                Text(mappedTag)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(tagColor(for: mappedTag).opacity(0.15))
+                    )
+                    .foregroundColor(tagColor(for: mappedTag))
+                    .overlay(
+                        Capsule()
+                            .stroke(tagColor(for: mappedTag).opacity(0.3), lineWidth: 1)
+                    )
+            }
+            
+            // 内容预览
+            VStack(alignment: .leading, spacing: 3) {
+                if let bankName = account.bankName {
+                    Text("开户行: \(bankName)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                if let bankAccount = account.bankAccount {
+                    Text("账号: \(bankAccount)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                if let contactName = account.contactName {
+                    Text("联系人: \(contactName)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color(.systemGray5), lineWidth: 1)
-            )
-            .onAppear {
-                isFavorite = manager.isProjectAccountFavorited(account)
-            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(.systemGray5), lineWidth: 1)
+        )
+        .onAppear {
+            isFavorite = manager.isProjectAccountFavorited(account)
+        }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
                 isFavorite = manager.isProjectAccountFavorited(account)
             }
@@ -709,16 +730,33 @@ struct ProjectAccountRow: View {
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
         switch tag {
-        case "场地":
-            return .orange
-        case "道具":
+        case "银行账户":
             return .blue
-        case "服装":
+        case "发票":
             return .green
-        case "化妆":
+        case "地址":
             return .purple
+        case "常用供应商":
+            return .orange
         default:
             return .gray
+        }
+    }
+    
+    // 将账户类型映射到标签分类
+    private func mapAccountTypeToTag(_ accountType: String) -> String {
+        // 根据账户类型返回对应的标签
+        switch accountType {
+        case "银行账户":
+            return "银行账户"
+        case "发票":
+            return "发票"
+        case "地址":
+            return "地址"
+        case "常用供应商":
+            return "常用供应商"
+        default:
+            return "其他"
         }
     }
 }
@@ -728,9 +766,11 @@ struct ProjectAccountDetailView: View {
     @ObservedObject var manager: CommonInfoManager
     let account: AccountEntity
     @State private var isFavorite: Bool = false
+    @State private var showingEditSheet = false
     @State private var showingCopiedAlert = false
     @State private var copiedMessage = ""
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject private var projectStore: ProjectStore
     
     var body: some View {
         ScrollView {
@@ -751,7 +791,13 @@ struct ProjectAccountDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                favoriteButton
+                HStack {
+                    Button(action: { showingEditSheet = true }) {
+                        Image(systemName: "pencil")
+                    }
+                    
+                    favoriteButton
+                }
             }
         }
         .alert("已复制", isPresented: $showingCopiedAlert) {
@@ -765,6 +811,37 @@ struct ProjectAccountDetailView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CommonInfoDataChanged"))) { _ in
             // 更新收藏状态
             isFavorite = manager.isProjectAccountFavorited(account)
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            if let projectEntity = account.project,
+               let accountModel = Account.fromEntity(account) {
+                // 将 ProjectEntity 转换为 Project
+                let project = Project(
+                    id: projectEntity.id ?? UUID(),
+                    name: projectEntity.name ?? "",
+                    director: projectEntity.director ?? "",
+                    producer: projectEntity.producer ?? "",
+                    startDate: projectEntity.startDate ?? Date(),
+                    status: Project.Status(rawValue: projectEntity.status ?? "") ?? .preProduction,
+                    color: projectEntity.color.flatMap(Color.init(data:)) ?? .blue,
+                    tasks: [],
+                    invoices: [],
+                    locations: [],
+                    accounts: [], // 暂时为空，这里仅用于编辑单个账户
+                    transactions: [],
+                    isLocationScoutingEnabled: projectEntity.isLocationScoutingEnabled,
+                    logoData: projectEntity.logoData,
+                    budget: projectEntity.budget
+                )
+                
+                // 使用 EditAccountView 编辑账户
+                EditAccountView(
+                    isPresented: $showingEditSheet,
+                    project: .constant(project),
+                    account: accountModel
+                )
+                .environmentObject(projectStore)
+            }
         }
     }
     
@@ -790,19 +867,20 @@ struct ProjectAccountDetailView: View {
                     Spacer()
                     
                     // 类型标签
-                    Text(account.type ?? "其他")
+                    let mappedTag = mapAccountTypeToTag(account.type ?? "其他")
+                    Text(mappedTag)
                         .font(.caption)
                         .fontWeight(.semibold)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(
                             Capsule()
-                                .fill(tagColor(for: account.type ?? "").opacity(0.15))
+                                .fill(tagColor(for: mappedTag).opacity(0.15))
                         )
-                        .foregroundColor(tagColor(for: account.type ?? ""))
+                        .foregroundColor(tagColor(for: mappedTag))
                         .overlay(
                             Capsule()
-                                .stroke(tagColor(for: account.type ?? "").opacity(0.3), lineWidth: 1)
+                                .stroke(tagColor(for: mappedTag).opacity(0.3), lineWidth: 1)
                         )
                 }
             }
@@ -944,22 +1022,42 @@ struct ProjectAccountDetailView: View {
     
     // MARK: - 操作按钮
     private var actionButtons: some View {
-        HStack(spacing: 12) {
-            // 复制所有信息
-            Button(action: copyAllInfo) {
-                HStack(spacing: 8) {
-                    Image(systemName: "doc.on.doc")
-                        .font(.system(size: 16, weight: .medium))
-                    Text("复制信息")
-                        .font(.system(size: 16, weight: .medium))
+        VStack(spacing: 12) {
+            // 主要操作按钮
+            HStack(spacing: 12) {
+                // 复制所有信息
+                Button(action: copyAllInfo) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("复制信息")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.blue)
+                    )
+                    .foregroundColor(.white)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue)
-                )
-                .foregroundColor(.white)
+                
+                // 编辑按钮
+                Button(action: { showingEditSheet = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 16, weight: .medium))
+                        Text("编辑")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray5))
+                    )
+                    .foregroundColor(.primary)
+                }
             }
             
             // 拨打电话（如果有电话号码）
@@ -1040,16 +1138,33 @@ struct ProjectAccountDetailView: View {
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
         switch tag {
-        case "场地":
-            return .orange
-        case "道具":
+        case "银行账户":
             return .blue
-        case "服装":
+        case "发票":
             return .green
-        case "化妆":
+        case "地址":
             return .purple
+        case "常用供应商":
+            return .orange
         default:
             return .gray
+        }
+    }
+    
+    // 将账户类型映射到标签分类
+    private func mapAccountTypeToTag(_ accountType: String) -> String {
+        // 根据账户类型返回对应的标签
+        switch accountType {
+        case "银行账户":
+            return "银行账户"
+        case "发票":
+            return "发票"
+        case "地址":
+            return "地址"
+        case "常用供应商":
+            return "常用供应商"
+        default:
+            return "其他"
         }
     }
 }
@@ -1160,14 +1275,6 @@ struct CommonInfoRow: View {
             return .purple
         case "常用供应商":
             return .orange
-        case "场地":
-            return .orange
-        case "道具":
-            return .blue
-        case "服装":
-            return .green
-        case "化妆":
-            return .purple
         default:
             return .gray
         }
@@ -1212,7 +1319,13 @@ struct CommonInfoDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                favoriteButton
+                HStack {
+                    Button(action: { showingEditSheet = true }) {
+                        Image(systemName: "pencil")
+                    }
+                    
+                    favoriteButton
+                }
             }
         }
         .alert("已复制", isPresented: $showingCopiedAlert) {
@@ -1542,14 +1655,6 @@ struct CommonInfoDetailView: View {
             return .purple
         case "常用供应商":
             return .orange
-        case "场地":
-            return .orange
-        case "道具":
-            return .blue
-        case "服装":
-            return .green
-        case "化妆":
-            return .purple
         default:
             return .gray
         }
@@ -1575,7 +1680,7 @@ struct UnifiedAddInfoView: View {
     
     // 项目账户详细信息
     @State private var accountName = ""
-    @State private var accountType = "场地"
+    @State private var accountType = "项目账户"
     @State private var bankName = ""
     @State private var bankBranch = ""
     @State private var bankAccount = ""
@@ -1585,7 +1690,7 @@ struct UnifiedAddInfoView: View {
     @State private var notes = ""
     
     // 账户类型选项
-    let accountTypeOptions = ["场地", "道具", "服装", "化妆", "其他"]
+    let accountTypeOptions = ["项目账户", "银行账户", "发票", "地址", "常用供应商", "其他"]
     
     // 标签选项
     let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他"]
@@ -2031,9 +2136,9 @@ struct CommonInfoEditView: View {
         // 更新类型和其他信息
         return manager.updateInfoWithType(
             info: info,
-            title: title,
+            title: title, 
             type: selectedType.rawValue,
-            tag: tag,
+            tag: tag, 
             content: content
         )
     }
@@ -2087,5 +2192,47 @@ extension CommonInfoManager {
                 print("移除账户收藏失败: \(error.localizedDescription)")
             }
         }
+    }
+}
+
+// 标签筛选器组件
+struct TagFilterChip: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(isSelected ? .white : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? LinearGradient(
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ) : LinearGradient(
+                            colors: [Color(.systemGray6)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ))
+                )
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.clear : Color(.systemGray4), lineWidth: 1)
+                )
+                .shadow(
+                    color: isSelected ? Color.accentColor.opacity(0.3) : Color.clear,
+                    radius: isSelected ? 4 : 0,
+                    x: 0,
+                    y: isSelected ? 2 : 0
+                )
+        }
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 } 

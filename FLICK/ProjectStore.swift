@@ -1715,7 +1715,7 @@ class ProjectStore: ObservableObject {
             accounts: [
                 Account(
                     name: "星光场地公司",
-                    type: .location,
+                    type: .bankAccount,
                     bankName: "中国建设银行",
                     bankBranch: "北京东城支行",
                     bankAccount: "6222021234567890",
@@ -1775,7 +1775,7 @@ class ProjectStore: ObservableObject {
             accounts: [
                 Account(
                     name: "城市影棚",
-                    type: .location,
+                    type: .bankAccount,
                     bankName: "中国工商银行",
                     bankBranch: "北京朝阳支行",
                     bankAccount: "6222021234567891",

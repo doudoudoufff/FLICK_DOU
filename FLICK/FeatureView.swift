@@ -383,7 +383,7 @@ struct BaiBaiCompactCard: View {
                 // 拜拜按钮
                 Button {
                     // 点击按钮触发拜拜动画
-                    performTraditionalBowing()
+                        performTraditionalBowing()
                 } label: {
                     ZStack {
                         // 外层光晕
@@ -416,22 +416,22 @@ struct BaiBaiCompactCard: View {
                             )
                             .shadow(color: projectColor.opacity(0.3), radius: 15, x: 0, y: 8)
                         
-                        // 普通模式下显示"拜拜"文字和装饰
-                        VStack(spacing: 3) {
-                            HStack(spacing: 3) {
-                                Image(systemName: "hands.sparkles")
-                                    .font(.system(size: 16, weight: .medium))
-                                Text("拜拜")
-                                    .font(.system(size: 24, weight: .bold))
-                                Image(systemName: "hands.sparkles")
-                                    .font(.system(size: 16, weight: .medium))
+                            // 普通模式下显示"拜拜"文字和装饰
+                            VStack(spacing: 3) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "hands.sparkles")
+                                        .font(.system(size: 16, weight: .medium))
+                                    Text("拜拜")
+                                        .font(.system(size: 24, weight: .bold))
+                                    Image(systemName: "hands.sparkles")
+                                        .font(.system(size: 16, weight: .medium))
+                                }
+                                Text("祈福")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .opacity(0.9)
                             }
-                            Text("祈福")
-                                .font(.system(size: 10, weight: .medium))
-                                .opacity(0.9)
-                        }
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                     }
                     .rotation3DEffect(
                         .degrees(bowAngle),
@@ -463,17 +463,17 @@ struct BaiBaiCompactCard: View {
             }
             
             // 提示文本 - 移到按钮下方
-            VStack(spacing: 4) {
+                VStack(spacing: 4) {
                 Text("长按开启全屏拜拜模式")
-                    .font(.caption)
-                Text("或点击获取祈福")
-                    .font(.caption)
-            }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(.systemGray6).opacity(0.8))
-            .cornerRadius(8)
+                        .font(.caption)
+                    Text("或点击获取祈福")
+                        .font(.caption)
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(.systemGray6).opacity(0.8))
+                .cornerRadius(8)
             
             // 祝福语显示 - 增强样式
             if showingBlessing, let blessing = currentBlessing {
@@ -580,7 +580,7 @@ struct BaiBaiCompactCard: View {
             weatherManager.fetchWeatherData()
             
             // 设置陀螺仪回调
-            motionManager.onBowingComplete = { 
+            motionManager.onBowingComplete = {
                 performBlessingAfterBowing()
             }
         }
@@ -591,6 +591,11 @@ struct BaiBaiCompactCard: View {
     
     // 执行传统点击拜拜动画
     private func performTraditionalBowing() {
+        // 添加轻微的震动反馈
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+        
         withAnimation(.easeInOut(duration: 0.3)) {
             bowAngle = 30
             showingBlessing = false

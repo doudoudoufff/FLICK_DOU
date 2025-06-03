@@ -82,6 +82,11 @@ struct BaiBaiView: View {
             VStack(spacing: 20) {
                 // 拜拜按钮
                 Button {
+                    // 添加震动反馈
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.prepare()
+                    generator.impactOccurred()
+                    
                     // 执行鞠躬动画
                     withAnimation(.easeInOut(duration: 0.3)) {
                         bowAngle = 30  // 向前倾斜30度

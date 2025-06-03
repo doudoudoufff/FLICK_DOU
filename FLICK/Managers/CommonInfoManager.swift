@@ -49,7 +49,7 @@ class CommonInfoManager: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             DispatchQueue.main.async {
-                self?.fetchAllInfos()
+            self?.fetchAllInfos()
             }
         }
         
@@ -71,7 +71,7 @@ class CommonInfoManager: ObservableObject {
             queue: .main
         ) { [weak self] _ in
             DispatchQueue.main.async {
-                self?.fetchAllInfos()
+            self?.fetchAllInfos()
             }
         }
     }
@@ -152,16 +152,8 @@ class CommonInfoManager: ObservableObject {
         备注：\(account.notes ?? "")
         """
         
-        var tag = "其他"
-        if let typeStr = account.type {
-            switch typeStr {
-            case "场地": tag = "场地"
-            case "道具": tag = "道具"
-            case "服装": tag = "服装"
-            case "化妆": tag = "化妆"
-            default: tag = "其他"
-            }
-        }
+        // 使用账户的实际类型作为标签
+        let tag = account.type ?? "其他"
         
         return addInfo(
             title: accountName,

@@ -3,10 +3,10 @@ import CoreData
 
 // 将 AccountType 移到外部，并添加 public 访问级别
 public enum AccountType: String, Codable, CaseIterable {
-    case location = "场地"
-    case prop = "道具"
-    case costume = "服装"
-    case makeup = "化妆"
+    case bankAccount = "银行账户"
+    case invoice = "发票"
+    case address = "地址"
+    case supplier = "常用供应商"
     case other = "其他"
 }
 

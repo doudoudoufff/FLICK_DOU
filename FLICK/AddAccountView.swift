@@ -7,7 +7,7 @@ struct AddAccountView: View {
     @Binding var project: Project
     
     @State private var name = ""
-    @State private var type = AccountType.location
+    @State private var type = AccountType.bankAccount
     @State private var bankName = ""
     @State private var bankBranch = ""
     @State private var bankAccount = ""

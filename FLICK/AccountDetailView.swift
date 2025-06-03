@@ -327,14 +327,8 @@ struct AccountDetailView: View {
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
         switch tag {
-        case "场地":
+        case "项目账户":
             return .orange
-        case "道具":
-            return .blue
-        case "服装":
-            return .green
-        case "化妆":
-            return .purple
         default:
             return .gray
         }

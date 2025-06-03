@@ -10,6 +10,7 @@ struct ProjectDetailView: View {
     @State private var showingBaiBai = false
     @State private var editingTask: ProjectTask? = nil
     @State private var refreshID = UUID()
+    // 暂时保留但不使用发票相关的代码
     @State private var invoiceToDelete: (invoice: Invoice, project: Project)? = nil
     
     var body: some View {
@@ -37,6 +38,7 @@ struct ProjectDetailView: View {
                 refreshID = UUID()
             }
         }
+        /* 暂时隐藏发票功能
         .alert("确认删除", isPresented: Binding(
             get: { invoiceToDelete != nil },
             set: { if !$0 { invoiceToDelete = nil } }
@@ -61,6 +63,7 @@ struct ProjectDetailView: View {
                 invoiceToDelete = (invoice, project)
             }
         }
+        */
         .background(Color(.systemGroupedBackground))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
@@ -128,7 +131,7 @@ enum ProjectModule: String, CaseIterable {
     case tasks = "提醒我做"
     case finance = "账目管理"
     case scouting = "堪景"
-    case invoices = "开票信息"
+    // case invoices = "开票信息"  // 暂时隐藏发票功能
     case accounts = "账户信息"
     
     var icon: String {
@@ -136,7 +139,7 @@ enum ProjectModule: String, CaseIterable {
         case .tasks: return "checklist"
         case .finance: return "chart.line.uptrend.xyaxis"
         case .scouting: return "camera.viewfinder"
-        case .invoices: return "doc.text"
+        // case .invoices: return "doc.text"  // 暂时隐藏发票功能
         case .accounts: return "creditcard"
         }
     }
@@ -151,6 +154,7 @@ struct ProjectDetailMainContent: View {
     @Binding var showingBaiBai: Bool
     @Binding var editingTask: ProjectTask?
     @Binding var refreshID: UUID
+    // 暂时保留但不使用发票相关的参数
     @Binding var invoiceToDelete: (invoice: Invoice, project: Project)?
     
     @State private var selectedModule: ProjectModule = .tasks
@@ -230,10 +234,12 @@ struct ProjectDetailMainContent: View {
                 .environmentObject(projectStore)
                 .transition(.opacity.combined(with: .move(edge: .trailing)))
             
+        /* 暂时隐藏发票功能
         case .invoices:
             InvoiceListView(project: $project)
                 .environmentObject(projectStore)
                 .transition(.opacity.combined(with: .move(edge: .trailing)))
+        */
             
         case .accounts:
             AccountListView(project: $project, showManagement: true)

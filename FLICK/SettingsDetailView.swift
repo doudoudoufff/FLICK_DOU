@@ -817,150 +817,329 @@ struct ContributorRow: View {
 // 关于应用视图
 struct AboutAppView: View {
     @Environment(\.openURL) private var openURL
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var isDarkMode: Bool {
+        return colorScheme == .dark
+    }
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // 应用图标
-                Image("filmReel") // 确保在资源中有此图像，或使用系统图标替代
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 120, height: 120)
-                    .padding(.top, 20)
-                
-                // 应用名称
-                Text("FLICK")
-                    .font(.system(size: 40, weight: .bold))
-                
-                // 版本号
-                Text("版本 1.0.0")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
-                Divider()
-                    .padding(.horizontal, 30)
-                
-                // 应用介绍
-                Text("FLICK 是一款专为影视行业设计的项目与场景管理应用，帮助您高效管理拍摄、照片、PDF报告与团队协作。")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                
-                // 功能特点
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("功能特点")
-                        .font(.headline)
-                        .padding(.bottom, 4)
-                    
-                    // 项目与场景管理
-                    FeatureItemRow(
-                        icon: "doc.text.fill",
-                        iconColor: .blue,
-                        title: "项目与场景管理",
-                        description: "轻松创建和管理影视项目与多场景"
+            VStack(spacing: 0) {
+                // 顶部视觉区域
+                ZStack {
+                    // 背景渐变
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.1, green: 0.4, blue: 0.9),
+                            Color(red: 0.3, green: 0.2, blue: 0.8)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    
-                    // 堪景与照片管理
-                    FeatureItemRow(
-                        icon: "camera.fill",
-                        iconColor: .blue,
-                        title: "堪景与照片管理",
-                        description: "现场拍照、批量上传，自动生成PDF报告"
+                    .overlay(
+                        // 添加纹理效果
+                        Rectangle()
+                            .fill(
+                                isDarkMode 
+                                ? Color.white.opacity(0.03) 
+                                : Color.black.opacity(0.05)
+                            )
+                            .blendMode(.overlay)
                     )
+                    .ignoresSafeArea()
                     
-                    // PDF报告
-                    FeatureItemRow(
-                        icon: "doc.fill",
-                        iconColor: .blue,
-                        title: "PDF 报告",
-                        description: "一键生成专业场地勘察报告，LOGO与时间信息规范显示"
-                    )
-                    
-                    // 任务提醒
-                    FeatureItemRow(
-                        icon: "bell.fill",
-                        iconColor: .blue,
-                        title: "任务提醒",
-                        description: "设置任务提醒，不错过重要日期"
-                    )
-                    
-                    // iCloud同步
-                    FeatureItemRow(
-                        icon: "icloud.fill",
-                        iconColor: .blue,
-                        title: "iCloud 同步",
-                        description: "跨设备同步所有数据"
-                    )
-                }
-                .frame(maxWidth: .infinity)
-                .padding(20)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.systemBackground))
-                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                )
-                .padding(.horizontal, 20)
-                
-                // 联系我们按钮
-                Button(action: {
-                    // 这里可以添加发送邮件或打开网站的操作
-                    if let url = URL(string: "mailto:danziyi9@gmail.com") {
-                        openURL(url)
+                    // 动态背景图形
+                    ZStack {
+                        // 圆形装饰
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 200)
+                            .offset(x: -120, y: -60)
+                        
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 150)
+                            .offset(x: 140, y: 80)
+                        
+                        // 添加一些小圆点
+                        ForEach(0..<12) { i in
+                            Circle()
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: 8, height: 8)
+                                .offset(
+                                    x: CGFloat.random(in: -170...170),
+                                    y: CGFloat.random(in: -100...100)
+                                )
+                        }
                     }
-                }) {
-                    HStack {
-                        Image(systemName: "envelope.fill")
-                            .imageScale(.medium)
-                        Text("联系我们")
-                            .fontWeight(.semibold)
+                    
+                    // 内容
+                    VStack(spacing: 30) {
+                        // 应用Logo
+                        Image("FLICKLogo") // 使用正确的Logo资源
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 160, height: 160)
+                            .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
+                            .padding(.top, 20)
+                        
+                        // 应用名称和版本
+                        VStack(spacing: 8) {
+                            Text("FLICK")
+                                .font(.system(size: 42, weight: .bold))
+                                .foregroundStyle(.white)
+                            
+                            Text("版本 1.0.0")
+                                .font(.system(size: 18))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .padding(.bottom, 10)
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+                    .padding(.vertical, 50)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
                 
-                // 版权信息
-                Text("© 2024 FLICK Studio. 保留所有权利。")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 20)
-                    .padding(.bottom, 30)
+                // 卡片式内容区域（向上偏移）
+                VStack(spacing: 0) {
+                    // 内容卡片
+                    VStack(spacing: 30) {
+                        // 应用口号和简介
+                        VStack(spacing: 16) {
+                            Text("影视项目管理利器")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.1, green: 0.4, blue: 0.9),
+                                            Color(red: 0.3, green: 0.2, blue: 0.8)
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .multilineTextAlignment(.center)
+                            
+                            Text("FLICK 是专为影视创作者打造的一体化项目管理平台，\n帮助您轻松应对拍摄全流程中的各项挑战。")
+                                .font(.system(size: 16))
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(.secondary)
+                                .lineSpacing(6)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 10)
+                        
+                        // 分隔线
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.15))
+                            .frame(height: 1)
+                            .padding(.horizontal, 40)
+                        
+                        // 功能特点卡片
+                        VStack(spacing: 24) {
+                            Text("核心功能")
+                                .font(.system(size: 24, weight: .bold))
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.bottom, 8)
+                            
+                            LazyVGrid(columns: [GridItem(.flexible())], spacing: 16) {
+                                // 项目与场景管理
+                                FeatureCard(
+                                    icon: "folder.fill",
+                                    iconColor: Color(red: 0.1, green: 0.4, blue: 0.9),
+                                    title: "项目与场景管理",
+                                    description: "轻松创建和管理影视项目与多场景，追踪项目进度"
+                                )
+                                
+                                // 堪景与照片管理
+                                FeatureCard(
+                                    icon: "camera.fill",
+                                    iconColor: Color(red: 0.2, green: 0.8, blue: 0.4),
+                                    title: "堪景与照片管理",
+                                    description: "现场拍照、批量上传，集中管理现场堪景资料"
+                                )
+                                
+                                // 任务管理
+                                FeatureCard(
+                                    icon: "checklist",
+                                    iconColor: Color(red: 1.0, green: 0.6, blue: 0.0),
+                                    title: "任务提醒",
+                                    description: "设置任务提醒，追踪待办事项，不错过重要日期"
+                                )
+                                
+                                // 财务管理
+                                FeatureCard(
+                                    icon: "creditcard.fill",
+                                    iconColor: Color(red: 0.8, green: 0.3, blue: 0.7),
+                                    title: "财务管理",
+                                    description: "记录项目收支，管理预算，生成财务报表"
+                                )
+                                
+                                // iCloud同步
+                                FeatureCard(
+                                    icon: "icloud.fill",
+                                    iconColor: Color(red: 0.4, green: 0.4, blue: 0.9),
+                                    title: "iCloud 同步",
+                                    description: "跨设备同步所有数据，随时随地访问项目信息"
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        // 分隔线
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.15))
+                            .frame(height: 1)
+                            .padding(.horizontal, 40)
+                        
+                        // 联系我们
+                        VStack(spacing: 20) {
+                            Text("联系我们")
+                                .font(.system(size: 24, weight: .bold))
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            
+                            // 联系按钮 - 只保留邮件
+                            Button {
+                                if let url = URL(string: "mailto:danziyi9@gmail.com") {
+                                    openURL(url)
+                                }
+                            } label: {
+                                ContactButton(
+                                    icon: "envelope.fill", 
+                                    title: "邮件联系", 
+                                    gradient: [
+                                        Color(red: 0.1, green: 0.4, blue: 0.9),
+                                        Color(red: 0.3, green: 0.2, blue: 0.8)
+                                    ]
+                                )
+                            }
+                            .padding(.top, 8)
+                        }
+                        .padding(.top, 10)
+                    }
+                    .padding(.top, 40)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 32)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.1), radius: 15, x: 0, y: -5)
+                    )
+                    .offset(y: -30)
+                    
+                    // 版权信息
+                    VStack(spacing: 12) {
+                        Image(systemName: "film.fill")
+                            .font(.system(size: 24))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.1, green: 0.4, blue: 0.9),
+                                        Color(red: 0.3, green: 0.2, blue: 0.8)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .padding(.bottom, 4)
+                        
+                        Text("© 2023-2024 FLICK Studio")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        
+                        Text("保留所有权利")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.tertiary)
+                            .padding(.bottom, 20)
+                    }
+                    .padding(.top, -10)
+                    .padding(.bottom, 20)
+                }
             }
-            .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .edgesIgnoringSafeArea(.top)
         .navigationTitle("关于应用")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-// 功能项行组件（用于AboutAppView）
-struct FeatureItemRow: View {
+// 功能卡片组件
+struct FeatureCard: View {
     let icon: String
     let iconColor: Color
     let title: String
     let description: String
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundStyle(iconColor)
-                .frame(width: 32, height: 32)
+        HStack(alignment: .center, spacing: 16) {
+            // 图标
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 56, height: 56)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(iconColor)
+            }
             
-            VStack(alignment: .leading, spacing: 2) {
+            // 文字内容
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 17, weight: .bold))
                 
                 Text(description)
-                    .font(.subheadline)
+                    .font(.system(size: 14))
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            
+            Spacer()
+        }
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 5)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(iconColor.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+// 联系按钮组件
+struct ContactButton: View {
+    let icon: String
+    let title: String
+    let gradient: [Color]
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // 图标背景
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 65, height: 65)
+                    .shadow(color: gradient[0].opacity(0.3), radius: 8, x: 0, y: 4)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 25))
+                    .foregroundColor(.white)
+            }
+            
+            // 标题
+            Text(title)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.primary)
         }
     }
 }
@@ -971,12 +1150,14 @@ struct SettingsFooterView: View {
         VStack(spacing: 20) {
             // 应用图标和名称
             VStack(spacing: 4) {
-                Image(systemName: "film.fill")
-                    .font(.system(size: 36))
+                Image("FLICKLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 55, height: 55)
                     .foregroundStyle(.blue)
                 Text("FLICK")
-                    .font(.headline)
-                Text("© 2023-2024")
+                    .font(.system(size: 24, weight: .bold)) 
+                Text("© 2024-2025")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -988,6 +1169,11 @@ struct SettingsFooterView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+            
+            // ICP备案号
+            Text("鲁ICP备2025145409号-1A")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
                 .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity)

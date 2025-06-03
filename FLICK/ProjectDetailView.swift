@@ -252,24 +252,139 @@ struct ProjectDetailMainContent: View {
 // 项目信息卡片
 struct ProjectInfoCard: View {
     @Binding var project: Project
+    @State private var showingStatusPicker = false
+    
+    // 根据项目状态获取颜色
+    private var statusColor: Color {
+        switch project.status {
+        case .preProduction: return .blue
+        case .production: return .orange
+        case .postProduction: return .purple
+        case .completed: return .green
+        case .cancelled: return .gray
+        }
+    }
+    
+    // 根据项目状态获取图标
+    private var statusIcon: String {
+        switch project.status {
+        case .preProduction: return "gear"
+        case .production: return "film"
+        case .postProduction: return "slider.horizontal.3"
+        case .completed: return "checkmark.circle"
+        case .cancelled: return "xmark.circle"
+        }
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("项目信息")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 18) {
+            // 顶部标题和状态指示器
+            HStack {
+                Text("项目信息")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                // 可点击的状态指示器 - 点击后弹出选择器
+                Button {
+                    showingStatusPicker = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: statusIcon)
+                            .font(.system(size: 14))
+                        
+                        Text(project.status.rawValue)
+                            .font(.system(size: 14, weight: .medium))
+                        
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [statusColor, statusColor.opacity(0.7)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+                    .foregroundColor(.white)
+                    .shadow(color: statusColor.opacity(0.3), radius: 3, x: 0, y: 2)
+                }
+                .popover(isPresented: $showingStatusPicker) {
+                    StatusPickerView(project: $project, isPresented: $showingStatusPicker)
+                }
+            }
             
             Divider()
+                .background(Color(.systemGray4))
             
-            VStack(alignment: .leading, spacing: 12) {
-                DetailRow(title: "开始时间", content: project.startDate.chineseStyleString())
-                DetailRow(title: "导演", content: project.director)
-                DetailRow(title: "制片", content: project.producer)
+            // 项目详细信息
+            VStack(alignment: .leading, spacing: 14) {
+                // 项目开始时间
+                HStack(spacing: 12) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 16))
+                        .foregroundColor(.blue)
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("开始时间")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(project.startDate.chineseStyleString())
+                            .font(.subheadline)
+                    }
+                }
+                
+                // 导演信息
+                HStack(spacing: 12) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.orange)
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("导演")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(project.director.isEmpty ? "未设置" : project.director)
+                            .font(.subheadline)
+                            .foregroundColor(project.director.isEmpty ? .secondary : .primary)
+                    }
+                }
+                
+                // 制片信息
+                HStack(spacing: 12) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green)
+                        .frame(width: 24, height: 24)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("制片")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text(project.producer.isEmpty ? "未设置" : project.producer)
+                            .font(.subheadline)
+                            .foregroundColor(project.producer.isEmpty ? .secondary : .primary)
+                    }
+                }
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+        )
     }
 }
 
@@ -454,22 +569,6 @@ struct TaskListCard: View {
     }
 }
 
-// 详情行组件
-struct DetailRow: View {
-    let title: String
-    let content: String
-    
-    var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .foregroundColor(.secondary)
-                .frame(width: 80, alignment: .leading)
-            Text(content)
-        }
-        .font(.subheadline)
-    }
-}
-
 // 堪景模块卡片
 struct LocationScoutingCard: View {
     @Binding var project: Project
@@ -508,6 +607,97 @@ struct LocationScoutingCard: View {
         ProjectDetailView(project: .constant(Project(name: "测试项目")))
             .environmentObject(ProjectStore(context: PersistenceController.preview.container.viewContext))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    }
+}
+
+// 状态选择器视图
+struct StatusPickerView: View {
+    @Binding var project: Project
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("更改项目状态")
+                .font(.headline)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(.systemGroupedBackground))
+            
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Project.Status.allCases, id: \.self) { status in
+                        Button {
+                            project.status = status
+                            isPresented = false
+                        } label: {
+                            HStack {
+                                // 状态图标
+                                ZStack {
+                                    Circle()
+                                        .fill(statusColor(for: status).opacity(0.15))
+                                        .frame(width: 36, height: 36)
+                                    
+                                    Image(systemName: statusIcon(for: status))
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(statusColor(for: status))
+                                }
+                                
+                                // 状态名称
+                                Text(status.rawValue)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.primary)
+                                    .padding(.leading, 10)
+                                
+                                Spacer()
+                                
+                                // 当前选中的状态
+                                if project.status == status {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.accentColor)
+                                }
+                            }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 16)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        if status != Project.Status.allCases.last {
+                            Divider()
+                                .padding(.leading, 62)
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+        }
+        .frame(width: 300)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+    }
+    
+    // 获取状态对应的颜色
+    private func statusColor(for status: Project.Status) -> Color {
+        switch status {
+        case .preProduction: return .blue
+        case .production: return .orange
+        case .postProduction: return .purple
+        case .completed: return .green
+        case .cancelled: return .gray
+        }
+    }
+    
+    // 获取状态对应的图标
+    private func statusIcon(for status: Project.Status) -> String {
+        switch status {
+        case .preProduction: return "gear"
+        case .production: return "film"
+        case .postProduction: return "slider.horizontal.3"
+        case .completed: return "checkmark.circle"
+        case .cancelled: return "xmark.circle"
+        }
     }
 }
 

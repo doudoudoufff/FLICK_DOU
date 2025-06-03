@@ -238,8 +238,8 @@ struct StatusTabBar: View {
     // 获取状态对应图标
     private func getStatusIcon(_ status: Project.Status) -> String {
         switch status {
-        case .production: return "play.circle"  // 改为播放图标表示进行中
-        case .completed: return "checkmark.circle"
+        case .production: return "bolt.horizontal.circle.fill"  // 更现代的图标表示进行中
+        case .completed: return "checkmark.circle.fill"  // 使用filled版本的图标
         default: return ""
         }
     }
@@ -247,8 +247,8 @@ struct StatusTabBar: View {
     // 获取状态对应颜色
     private func getStatusColor(_ status: Project.Status) -> Color {
         switch status {
-        case .production: return .blue  // 改为蓝色表示进行中
-        case .completed: return .green  // 改为绿色表示已完成
+        case .production: return Color(red: 0.0, green: 0.6, blue: 1.0)  // 更亮的蓝色
+        case .completed: return Color(red: 0.2, green: 0.8, blue: 0.4)  // 更鲜艳的绿色
         default: return .gray
         }
     }
@@ -256,68 +256,57 @@ struct StatusTabBar: View {
     var body: some View {
         VStack(spacing: 0) {
             // 分段选择器
-            HStack(spacing: 0) {
+            HStack(spacing: 25) {
                 ForEach(statusOptions, id: \.self) { status in
                     Button(action: {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             selectedStatus = status
                         }
                     }) {
-                        VStack(spacing: 6) {
-                            // 图标
-                            Image(systemName: getStatusIcon(status))
-                                .font(.system(size: selectedStatus == status ? 18 : 16))
-                                .foregroundColor(selectedStatus == status ? getStatusColor(status) : .secondary)
-                                .frame(height: 24)
-                                .scaleEffect(selectedStatus == status ? 1.1 : 1.0)
-                                .animation(.spring(response: 0.2, dampingFraction: 0.6), value: selectedStatus == status)
+                        VStack(spacing: 10) {
+                            // 背景与图标
+                            ZStack {
+                                Circle()
+                                    .fill(selectedStatus == status 
+                                          ? getStatusColor(status) 
+                                          : getStatusColor(status).opacity(0.1))
+                                    .frame(width: 64, height: 64)
+                                    .shadow(color: selectedStatus == status 
+                                            ? getStatusColor(status).opacity(0.4) 
+                                            : Color.clear, 
+                                            radius: 8, x: 0, y: 4)
+                                
+                                Image(systemName: getStatusIcon(status))
+                                    .font(.system(size: 28, weight: .semibold))
+                                    .foregroundColor(selectedStatus == status 
+                                                    ? .white 
+                                                    : getStatusColor(status))
+                                    .scaleEffect(selectedStatus == status ? 1.1 : 1.0)
+                            }
                             
                             // 文字
                             Text(getStatusName(status))
-                                .font(.system(size: 15, weight: selectedStatus == status ? .semibold : .medium))
+                                .font(.system(size: 16, weight: selectedStatus == status ? .semibold : .medium))
                                 .foregroundColor(selectedStatus == status ? .primary : .secondary)
                                 .opacity(selectedStatus == status ? 1.0 : 0.7)
-                            
-                            // 选中指示器
-                            ZStack {
-                                if selectedStatus == status {
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .fill(getStatusColor(status))
-                                        .frame(width: 24, height: 3)
-                                        .matchedGeometryEffect(id: "underline", in: animation)
-                                } else {
-                                    Rectangle()
-                                        .fill(Color.clear)
-                                        .frame(width: 24, height: 3)
-                                }
-                            }
                         }
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
                         .padding(.vertical, 12)
-                        .background(
-                            ZStack {
-                                if selectedStatus == status {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(getStatusColor(status).opacity(0.1))
-                                        .matchedGeometryEffect(id: "background", in: animation)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                }
-                            }
-                        )
                     }
                     .buttonStyle(ScaleButtonStyle())
                 }
             }
-            .padding(.top, 4)
-            .padding(.bottom, 2)
-            .background(Color(.systemBackground))
-            
-            // 分隔线
-            Rectangle()
-                .fill(Color(.systemGray5))
-                .frame(height: 1)
+            .padding(.horizontal, 30)
+            .padding(.top, 16)
+            .padding(.bottom, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 5)
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
         }
     }
 }

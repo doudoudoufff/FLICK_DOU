@@ -291,7 +291,7 @@ struct StatusTabBar: View {
                         VStack(spacing: 10) {
                             // 背景与图标
                             ZStack {
-                                RoundedRectangle(cornerRadius: 12)
+                                Circle()
                                     .fill(selectedStatus == status 
                                           ? getStatusColor(status) 
                                           : getStatusColor(status).opacity(0.1))
@@ -301,23 +301,19 @@ struct StatusTabBar: View {
                                             : Color.clear, 
                                             radius: 8, x: 0, y: 4)
                                 
-                                VStack(spacing: 6) {
-                                    Image(systemName: status == .production ? "bolt.horizontal" : "checkmark")
-                                        .font(.system(size: 22, weight: .semibold))
-                                        .foregroundColor(selectedStatus == status 
-                                                        ? .white 
-                                                        : getStatusColor(status))
-                                    
-                                    Text(getStatusName(status))
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(selectedStatus == status 
-                                                        ? .white 
-                                                        : getStatusColor(status))
-                                }
-                                .scaleEffect(selectedStatus == status ? 1.05 : 1.0)
+                                Image(systemName: getStatusIcon(status))
+                                    .font(.system(size: 28, weight: .semibold))
+                                    .foregroundColor(selectedStatus == status 
+                                                    ? .white 
+                                                    : getStatusColor(status))
+                                    .scaleEffect(selectedStatus == status ? 1.1 : 1.0)
                             }
                             
-                            // 不需要下方文字，已包含在方形中
+                            // 文字
+                            Text(getStatusName(status))
+                                .font(.system(size: 16, weight: selectedStatus == status ? .semibold : .medium))
+                                .foregroundColor(selectedStatus == status ? .primary : .secondary)
+                                .opacity(selectedStatus == status ? 1.0 : 0.7)
                         }
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())

@@ -382,8 +382,8 @@ struct BaiBaiCompactCard: View {
                 
                 // 拜拜按钮
                 Button {
-                    // 点击按钮触发拜拜动画
-                        performTraditionalBowing()
+                    // 点击按钮直接进入全屏模式
+                    showFullscreenMode = true
                 } label: {
                     ZStack {
                         // 外层光晕
@@ -440,18 +440,14 @@ struct BaiBaiCompactCard: View {
                 }
             }
             .frame(height: 220) // 固定高度，给动画元素足够空间
-            .contextMenu {
-                Button {
-                    showFullscreenMode = true
-                } label: {
-                    Label("开启全屏拜拜模式", systemImage: "sparkles")
-                }
-            }
-            .onLongPressGesture {
-                // 长按手势打开全屏模式
-                withAnimation {
-                    showFullscreenMode = true
-                }
+            .onLongPressGesture(minimumDuration: 0.3) { // 减少长按时间到0.3秒，更快响应
+                // 长按手势直接打开全屏模式
+                // 添加震动反馈
+                let generator = UIImpactFeedbackGenerator(style: .medium)
+                generator.prepare()
+                generator.impactOccurred()
+                
+                showFullscreenMode = true
             }
             .onAppear {
                 // 启动环形动画
@@ -464,9 +460,9 @@ struct BaiBaiCompactCard: View {
             
             // 提示文本 - 移到按钮下方
                 VStack(spacing: 4) {
-                Text("长按开启全屏拜拜模式")
+                Text("点击进入全屏拜拜")
                         .font(.caption)
-                    Text("或点击获取祈福")
+                    Text("长按也可进入")
                         .font(.caption)
                 }
                 .foregroundStyle(.secondary)

@@ -426,7 +426,7 @@ struct UserAgreementView: View {
                     .bold()
                     .padding(.bottom, 4)
                 
-                Text("Last Updated: April 26, 2025")
+                Text("Last Updated: June 5, 2025")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.bottom, 20)
@@ -576,7 +576,7 @@ struct PrivacyPolicyView: View {
                     .bold()
                     .padding(.bottom, 4)
                 
-                Text("Last Updated: March 15, 2024")
+                Text("Last Updated: June 5, 2025")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.bottom, 20)
@@ -1042,7 +1042,7 @@ struct AboutAppView: View {
                             )
                             .padding(.bottom, 4)
                         
-                        Text("© 2023-2024 FLICK Studio")
+                        Text("© 2024-2025 FLICK Studio")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
                         

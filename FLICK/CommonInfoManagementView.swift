@@ -14,7 +14,7 @@ struct CommonInfoManagementView: View {
     @EnvironmentObject private var projectStore: ProjectStore
     
     // 标签选项
-    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他"]
+    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他", "星标"]
     
     var body: some View {
         VStack(spacing: 0) {
@@ -299,10 +299,17 @@ struct ProjectAccountListView: View {
         
         // 应用标签筛选
         if let tag = selectedTag {
-            accounts = accounts.filter { account in
-                // 将账户类型映射到标签分类
-                let mappedTag = mapAccountTypeToTag(account.type ?? "其他")
-                return mappedTag == tag
+            if tag == "星标" {
+                // 筛选星标/收藏的项目账户
+                accounts = accounts.filter { account in
+                    manager.isProjectAccountFavorited(account)
+                }
+            } else {
+                accounts = accounts.filter { account in
+                    // 将账户类型映射到标签分类
+                    let mappedTag = mapAccountTypeToTag(account.type ?? "其他")
+                    return mappedTag == tag
+                }
             }
         }
         
@@ -575,7 +582,12 @@ struct CommonInfoListView: View {
         
         // 应用标签筛选
         if let tag = selectedTag {
-            filtered = filtered.filter { $0.tag == tag }
+            if tag == "星标" {
+                // 筛选星标/收藏的信息
+                filtered = filtered.filter { $0.isFavorite }
+            } else {
+                filtered = filtered.filter { $0.tag == tag }
+            }
         }
         
         // 应用搜索筛选

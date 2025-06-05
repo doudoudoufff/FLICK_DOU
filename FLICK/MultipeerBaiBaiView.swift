@@ -6,7 +6,8 @@ struct MultipeerBaiBaiView: View {
     @StateObject private var motionManager = MotionManager.shared
     @Environment(\.dismiss) private var dismiss
     
-    // 拜拜动画状态
+    // 界面状态
+    @State private var showFullscreenBai = false
     @State private var isBowing = false
     @State private var showBaiAnimation = false
     @State private var particles: [BaiParticle] = []
@@ -80,6 +81,9 @@ struct MultipeerBaiBaiView: View {
                     // 拜拜按钮 - 只有主设备可以发起
                     if multipeerManager.deviceRole == .main {
                         Button {
+                            // 主设备发起全屏拜拜
+                            showFullscreenBai = true
+                            // 同时发送信号给其他设备
                             multipeerManager.sendBaiSignal()
                         } label: {
                             ZStack {
@@ -201,7 +205,10 @@ struct MultipeerBaiBaiView: View {
         .onAppear {
             // 设置回调函数
             multipeerManager.onBaiSignalReceived = {
-                performBaiAnimation()
+                // 非主设备接收到信号时，显示全屏拜拜
+                if multipeerManager.deviceRole != .main {
+                    showFullscreenBai = true
+                }
             }
         }
         .onDisappear {
@@ -209,6 +216,9 @@ struct MultipeerBaiBaiView: View {
             particleTimer?.invalidate()
             particleTimer = nil
             multipeerManager.onBaiSignalReceived = nil
+        }
+        .fullScreenCover(isPresented: $showFullscreenBai) {
+            BaiBaiFullscreenView(projectColor: projectColor)
         }
     }
     

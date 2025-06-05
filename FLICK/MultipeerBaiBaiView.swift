@@ -218,7 +218,12 @@ struct MultipeerBaiBaiView: View {
             multipeerManager.onBaiSignalReceived = nil
         }
         .fullScreenCover(isPresented: $showFullscreenBai) {
-            BaiBaiFullscreenView(projectColor: projectColor)
+            // 根据设备角色决定是否使用自动模式
+            // 主设备使用手动模式，从设备使用自动模式
+            BaiBaiFullscreenView(
+                projectColor: projectColor,
+                isAutoMode: multipeerManager.deviceRole != .main
+            )
         }
     }
     

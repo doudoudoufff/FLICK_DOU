@@ -2,6 +2,8 @@ import SwiftUI
 
 struct BaiBaiFullscreenView: View {
     let projectColor: Color
+    var isAutoMode: Bool = false  // 是否是自动模式（从机模式）
+    
     @Environment(\.dismiss) private var dismiss
     @StateObject private var motionManager = MotionManager.shared
     @State private var currentBlessing: String?
@@ -110,8 +112,8 @@ struct BaiBaiFullscreenView: View {
                 // 中央拜拜区域
                 VStack(spacing: 20) {
                     if !prayerComplete {
-                        if showInstructions {
-                            // 拜拜引导说明
+                        if showInstructions && !isAutoMode {
+                            // 拜拜引导说明 - 只在手动模式下显示
                             VStack(spacing: 10) {
                                 Text("诚心三拜")
                                     .font(.title)
@@ -129,6 +131,24 @@ struct BaiBaiFullscreenView: View {
                                     .blur(radius: 3)
                             )
                             .opacity(showInstructions ? 1 : 0)
+                        } else if isAutoMode {
+                            // 自动模式下显示提示
+                            VStack(spacing: 10) {
+                                Text("同步拜拜")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                
+                                Text("请稍候，正在与主持人同步...")
+                                    .font(.body)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(Color.black.opacity(0.3))
+                                    .blur(radius: 3)
+                            )
                         }
                         
                         // 拜拜指示器
@@ -174,8 +194,12 @@ struct BaiBaiFullscreenView: View {
                                     .font(.system(size: 36, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                                 
-                                if motionManager.bowCount > 0 {
+                                if !isAutoMode && motionManager.bowCount > 0 {
                                     Text("\(motionManager.bowCount)/3")
+                                        .font(.title2)
+                                        .foregroundColor(.white)
+                                } else if isAutoMode && bowCount > 0 {
+                                    Text("\(bowCount)/3")
                                         .font(.title2)
                                         .foregroundColor(.white)
                                 }
@@ -269,13 +293,21 @@ struct BaiBaiFullscreenView: View {
         }
         .onAppear {
             startEntranceAnimation()
-            startMotionDetection()
+            
+            // 根据模式决定是否启动陀螺仪监测
+            if isAutoMode {
+                // 自动模式下执行自动拜拜动画
+                startAutoBowing()
+            } else {
+                // 手动模式下启动陀螺仪监测
+                startMotionDetection()
+            }
         }
         .onDisappear {
             motionManager.stopMonitoring()
         }
         .onChange(of: motionManager.isBowing) { isBowing in
-            if isBowing != bowInProgress {
+            if !isAutoMode && (isBowing != bowInProgress) {
                 bowInProgress = isBowing
                 animateBowing(isBowing: isBowing)
             }
@@ -307,6 +339,57 @@ struct BaiBaiFullscreenView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             withAnimation {
                 showInstructions = false
+            }
+        }
+    }
+    
+    // 自动拜拜模式
+    private func startAutoBowing() {
+        // 等待一段时间后开始自动拜拜
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            // 执行第一次拜拜
+            performAutoBow()
+            
+            // 1.5秒后执行第二次拜拜
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                performAutoBow()
+                
+                // 1.5秒后执行第三次拜拜
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    performAutoBow()
+                    
+                    // 最后一次拜拜后完成
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        onBowingComplete()
+                    }
+                }
+            }
+        }
+    }
+    
+    // 执行单次自动拜拜
+    private func performAutoBow() {
+        // 震动反馈
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+        
+        // 增加拜拜计数
+        bowCount += 1
+        
+        // 向前倾斜动画
+        withAnimation(.easeInOut(duration: 0.3)) {
+            bowAngle = 30
+            bowInProgress = true
+        }
+        
+        // 添加粒子效果
+        generateParticles(count: 5)
+        
+        // 回弹动画
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                bowAngle = 0
+                bowInProgress = false
             }
         }
     }

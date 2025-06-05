@@ -11,6 +11,7 @@ struct BaiBaiView: View {
     @State private var error: String?
     @State private var bowAngle: Double = 0  // 鞠躬角度
     @State private var isAnimating = false   // 动画状态
+    @State private var showMultipeerSetup = false  // 是否显示多人拜拜设置
     
     // 祈福语录库
     private let blessings = [
@@ -80,6 +81,28 @@ struct BaiBaiView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
+                // 多人拜拜按钮
+                NavigationLink(destination: MultipeerBaiBaiSetupView(projectColor: projectColor), isActive: $showMultipeerSetup) {
+                    Button {
+                        showMultipeerSetup = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.title2)
+                            Text("多人拜拜")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.secondary.opacity(0.1))
+                        )
+                        .foregroundColor(projectColor)
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+                
                 // 拜拜按钮
                 Button {
                     // 添加震动反馈

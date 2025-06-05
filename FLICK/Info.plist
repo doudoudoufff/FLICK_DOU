@@ -18,5 +18,14 @@
 	<string>FLICK需要访问天气信息，以便在拍摄计划时提供当前天气状况</string>
 	<key>NSMotionUsageDescription</key>
 	<string>FLICK需要访问设备的运动传感器，以启用陀螺仪感应拜拜功能</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>FLICK需要访问本地网络，以便连接附近的设备进行多人拜拜互动</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_flick-baibai._tcp</string>
+		<string>_flick-baibai._udp</string>
+	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>FLICK需要使用蓝牙来连接附近的设备进行多人拜拜互动</string>
 </dict>
 </plist>

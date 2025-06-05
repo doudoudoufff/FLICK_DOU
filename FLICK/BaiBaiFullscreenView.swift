@@ -6,6 +6,7 @@ struct BaiBaiFullscreenView: View {
     
     @Environment(\.dismiss) private var dismiss
     @StateObject private var motionManager = MotionManager.shared
+    @StateObject private var multipeerManager = MultipeerManager.shared  // 添加MultipeerManager
     @State private var currentBlessing: String?
     @State private var showingBlessing = false
     @State private var animationPhase = 0
@@ -139,7 +140,7 @@ struct BaiBaiFullscreenView: View {
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                                 
-                                Text("请稍候，正在与主持人同步...")
+                                Text("正在跟随主持人的动作...")
                                     .font(.body)
                                     .foregroundColor(.white.opacity(0.8))
                             }
@@ -294,22 +295,41 @@ struct BaiBaiFullscreenView: View {
         .onAppear {
             startEntranceAnimation()
             
-            // 根据模式决定是否启动陀螺仪监测
+            // 根据模式决定不同的行为
             if isAutoMode {
-                // 自动模式下执行自动拜拜动画
-                startAutoBowing()
+                // 自动模式（从机）：设置接收鞠躬动作的回调
+                multipeerManager.onBowActionReceived = { isBowing in
+                    // 收到鞠躬动作信号时，执行对应动作
+                    handleBowActionSignal(isBowing: isBowing)
+                }
             } else {
-                // 手动模式下启动陀螺仪监测
+                // 手动模式（主机）：设置陀螺仪检测
                 startMotionDetection()
             }
         }
         .onDisappear {
             motionManager.stopMonitoring()
+            multipeerManager.onBowActionReceived = nil
         }
         .onChange(of: motionManager.isBowing) { isBowing in
             if !isAutoMode && (isBowing != bowInProgress) {
+                // 主机模式：检测到陀螺仪变化时
                 bowInProgress = isBowing
+                
+                // 执行鞠躬动画
                 animateBowing(isBowing: isBowing)
+                
+                // 发送鞠躬动作信号给从机
+                multipeerManager.sendBowAction(isBowing: isBowing)
+                
+                // 如果开始鞠躬，增加计数
+                if isBowing {
+                    // 记录鞠躬次数，当达到3次时触发完成回调
+                    if motionManager.bowCount == 3 && !prayerComplete {
+                        // 三次拜拜完成
+                        onBowingComplete()
+                    }
+                }
             }
         }
     }
@@ -502,6 +522,26 @@ struct BaiBaiFullscreenView: View {
             // 第三次震动：再次使用通知反馈
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 notificationGenerator.notificationOccurred(.success)
+            }
+        }
+    }
+    
+    // 处理从主机接收到的鞠躬动作信号
+    private func handleBowActionSignal(isBowing: Bool) {
+        // 更新UI状态
+        bowInProgress = isBowing
+        
+        // 执行鞠躬动画
+        animateBowing(isBowing: isBowing)
+        
+        // 如果开始鞠躬，增加鞠躬计数
+        if isBowing {
+            bowCount += 1
+            
+            // 判断是否完成三次鞠躬
+            if bowCount == 3 && !prayerComplete {
+                // 三次拜拜完成
+                onBowingComplete()
             }
         }
     }

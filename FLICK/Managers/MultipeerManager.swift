@@ -14,6 +14,7 @@ enum MessageType: String, Codable {
     case baiSignal      // 拜拜信号
     case statusUpdate   // 状态更新
     case peerList       // 节点列表更新
+    case bowAction      // 鞠躬动作
 }
 
 // 消息结构
@@ -71,6 +72,7 @@ class MultipeerManager: NSObject, ObservableObject {
     // 回调函数
     var onBaiSignalReceived: (() -> Void)?
     var onConnectionStatusChanged: ((Bool) -> Void)?
+    var onBowActionReceived: ((Bool) -> Void)?  // 接收到鞠躬动作信号的回调，参数表示是否开始鞠躬
     
     // 私有初始化方法
     private override init() {
@@ -142,6 +144,27 @@ class MultipeerManager: NSObject, ObservableObject {
         if deviceRole == .main {
             onBaiSignalReceived?()
         }
+    }
+    
+    // 发送鞠躬动作信号
+    func sendBowAction(isBowing: Bool) {
+        guard session != nil, !connectedPeers.isEmpty else {
+            print("没有连接的设备，无法发送鞠躬动作信号")
+            return
+        }
+        
+        // 创建鞠躬动作消息
+        let message = BaiMessage(
+            type: .bowAction,
+            sender: myPeerId.displayName,
+            content: ["isBowing": isBowing ? "true" : "false"]
+        )
+        
+        // 发送消息
+        broadcastMessage(message)
+        
+        // 打印调试信息
+        print("发送鞠躬动作信号: \(isBowing)")
     }
     
     // 断开连接
@@ -254,6 +277,22 @@ class MultipeerManager: NSObject, ObservableObject {
         case .peerList:
             // 处理节点列表更新
             print("收到节点列表更新")
+            
+        case .bowAction:
+            // 处理鞠躬动作信号
+            if let isBowingStr = message.content["isBowing"], let isBowing = (isBowingStr == "true") ? true : false {
+                print("收到鞠躬动作信号: \(isBowing)")
+                
+                // 转发给其他节点
+                if deviceRole == .secondary {
+                    broadcastMessage(message)
+                }
+                
+                // 触发鞠躬动作回调
+                DispatchQueue.main.async {
+                    self.onBowActionReceived?(isBowing)
+                }
+            }
         }
     }
     

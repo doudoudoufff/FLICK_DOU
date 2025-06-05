@@ -582,128 +582,155 @@ class ProjectStore: ObservableObject {
         // 保持数据引用，避免在处理过程中其他地方修改数据
         let projectId = project.id
         
-        // 从 CoreData 中删除
-        let fetchRequest = ProjectEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == %@", projectId as CVarArg)
+        // 1. 同步从内存中移除项目，立即在主线程上执行
+        DispatchQueue.main.sync {
+            // 从内存中移除项目
+            self.projects.removeAll { $0.id == projectId }
+            // 立即通知 UI 更新
+            self.objectWillChange.send()
+        }
         
-        do {
-            let results = try self.context.fetch(fetchRequest)
-            print("找到匹配的项目实体数量: \(results.count)")
-            
-            if let projectEntity = results.first {
-                print("✓ 找到项目实体，正在删除")
+        // 2. 后台线程执行数据库操作
+        DispatchQueue.global(qos: .userInitiated).async {
+            // 3. 创建新的上下文避免线程问题
+            let backgroundContext = PersistenceController.shared.container.newBackgroundContext()
+            backgroundContext.performAndWait {
+                // 获取项目实体
+                let fetchRequest = ProjectEntity.fetchRequest()
+                fetchRequest.predicate = NSPredicate(format: "id == %@", projectId as CVarArg)
                 
-                // 手动删除相关实体，确保级联删除生效
-                
-                // 删除所有任务
-                if let tasks = projectEntity.tasks?.allObjects as? [TaskEntity], !tasks.isEmpty {
-                    print("- 删除\(tasks.count)个关联任务")
-                    for task in tasks {
-                        // 删除任务提醒
-                        NotificationManager.shared.removeTaskReminders(for: ProjectTask(
-                            id: task.id ?? UUID(),
-                            title: task.title ?? "",
-                            assignee: task.assignee ?? "",
-                            startDate: task.startDate,
-                            dueDate: task.dueDate ?? Date(),
-                            isCompleted: task.isCompleted,
-                            reminder: task.reminder.flatMap { ProjectTask.TaskReminder(rawValue: $0) },
-                            reminderHour: Int(task.reminderHour)
-                        ))
-                        self.context.delete(task)
-                    }
-                }
-                
-                // 删除所有场景及其照片
-                if let locations = projectEntity.locations?.allObjects as? [LocationEntity], !locations.isEmpty {
-                    print("- 删除\(locations.count)个关联场景")
-                    for location in locations {
-                        // 删除场景下的所有照片
-                        if let photos = location.photos?.allObjects as? [LocationPhotoEntity], !photos.isEmpty {
-                            print("  - 删除\(photos.count)个照片")
-                            for photo in photos {
-                                self.context.delete(photo)
-                            }
-                        }
-                        self.context.delete(location)
-                    }
-                }
-                
-                // 删除所有账户
-                if let accounts = projectEntity.accounts?.allObjects as? [AccountEntity], !accounts.isEmpty {
-                    print("- 删除\(accounts.count)个关联账户")
-                    for account in accounts {
-                        self.context.delete(account)
-                    }
-                }
-    
-                // 删除所有发票
-                if let invoices = projectEntity.invoices?.allObjects as? [InvoiceEntity], !invoices.isEmpty {
-                    print("- 删除\(invoices.count)个关联发票")
-                    for invoice in invoices {
-                        self.context.delete(invoice)
-                    }
-                }
-                
-                // 删除所有交易记录
-                if let transactions = projectEntity.transactions?.allObjects as? [TransactionEntity], !transactions.isEmpty {
-                    print("- 删除\(transactions.count)个关联交易记录")
-                    for transaction in transactions {
-                        // 删除交易记录的附件
-                        if let attachments = transaction.attachments?.allObjects as? [AttachmentEntity], !attachments.isEmpty {
-                            print("  - 删除\(attachments.count)个交易附件")
-                            for attachment in attachments {
-                                self.context.delete(attachment)
-                            }
-                        }
-                        self.context.delete(transaction)
-                    }
-                }
-                
-                // 最后删除项目实体本身
-                self.context.delete(projectEntity)
-                
-                // 立即保存上下文
-                try self.context.save()
-                print("✓ CoreData 删除成功")
-                
-                // 从内存中移除项目
-                self.projects.removeAll { $0.id == projectId }
-                
-                // 通知UI更新
-                DispatchQueue.main.async {
-                    self.objectWillChange.send()
+                do {
+                    let results = try backgroundContext.fetch(fetchRequest)
+                    print("找到匹配的项目实体数量: \(results.count)")
                     
-                    // 发送项目删除完成通知
-                    NotificationCenter.default.post(
-                        name: Notification.Name("ProjectDeleted"),
-                        object: nil,
-                        userInfo: ["projectId": projectId]
-                    )
-                }
+                    if let projectEntity = results.first {
+                        print("✓ 找到项目实体，正在删除")
+                        
+                        // 手动删除相关实体，确保级联删除生效
+                        
+                        // 删除所有任务
+                        if let tasks = projectEntity.tasks?.allObjects as? [TaskEntity], !tasks.isEmpty {
+                            print("- 删除\(tasks.count)个关联任务")
+                            for task in tasks {
+                                // 删除任务提醒
+                                DispatchQueue.main.async {
+                                    NotificationManager.shared.removeTaskReminders(for: ProjectTask(
+                                        id: task.id ?? UUID(),
+                                        title: task.title ?? "",
+                                        assignee: task.assignee ?? "",
+                                        startDate: task.startDate,
+                                        dueDate: task.dueDate ?? Date(),
+                                        isCompleted: task.isCompleted,
+                                        reminder: task.reminder.flatMap { ProjectTask.TaskReminder(rawValue: $0) },
+                                        reminderHour: Int(task.reminderHour)
+                                    ))
+                                }
+                                backgroundContext.delete(task)
+                            }
+                        }
+                        
+                        // 删除所有场景及其照片
+                        if let locations = projectEntity.locations?.allObjects as? [LocationEntity], !locations.isEmpty {
+                            print("- 删除\(locations.count)个关联场景")
+                            for location in locations {
+                                // 删除场景下的所有照片
+                                if let photos = location.photos?.allObjects as? [LocationPhotoEntity], !photos.isEmpty {
+                                    print("  - 删除\(photos.count)个照片")
+                                    for photo in photos {
+                                        backgroundContext.delete(photo)
+                                    }
+                                }
+                                backgroundContext.delete(location)
+                            }
+                        }
+                        
+                        // 删除所有账户
+                        if let accounts = projectEntity.accounts?.allObjects as? [AccountEntity], !accounts.isEmpty {
+                            print("- 删除\(accounts.count)个关联账户")
+                            for account in accounts {
+                                backgroundContext.delete(account)
+                            }
+                        }
                 
-                // 触发 CloudKit 同步
-                PersistenceController.shared.save()
-                print("✓ 已触发CloudKit同步")
-                
-                print("✓ 项目删除完成")
-            } else {
-                print("❌ 未找到项目实体")
-            }
-        } catch {
-            print("❌ 删除项目失败: \(error)")
-            print("错误描述: \(error.localizedDescription)")
-            
-            // 详细错误信息
-            if let nsError = error as NSError? {
-                print("错误代码: \(nsError.code), 域: \(nsError.domain)")
-                for (key, value) in nsError.userInfo {
-                    print("- \(key): \(value)")
+                        // 删除所有发票
+                        if let invoices = projectEntity.invoices?.allObjects as? [InvoiceEntity], !invoices.isEmpty {
+                            print("- 删除\(invoices.count)个关联发票")
+                            for invoice in invoices {
+                                backgroundContext.delete(invoice)
+                            }
+                        }
+                        
+                        // 删除所有交易记录
+                        if let transactions = projectEntity.transactions?.allObjects as? [TransactionEntity], !transactions.isEmpty {
+                            print("- 删除\(transactions.count)个关联交易记录")
+                            for transaction in transactions {
+                                // 删除交易记录的附件
+                                if let attachments = transaction.attachments?.allObjects as? [AttachmentEntity], !attachments.isEmpty {
+                                    print("  - 删除\(attachments.count)个交易附件")
+                                    for attachment in attachments {
+                                        backgroundContext.delete(attachment)
+                                    }
+                                }
+                                backgroundContext.delete(transaction)
+                            }
+                        }
+                        
+                        // 最后删除项目实体本身
+                        backgroundContext.delete(projectEntity)
+                        
+                        // 立即保存上下文
+                        try backgroundContext.save()
+                        print("✓ CoreData 删除成功")
+                        
+                        // 同步到主线程发送通知
+                        DispatchQueue.main.async {
+                            // 发送项目删除完成通知
+                            NotificationCenter.default.post(
+                                name: Notification.Name("ProjectDeleted"),
+                                object: nil,
+                                userInfo: ["projectId": projectId]
+                            )
+                            
+                            // 确保 CloudKit 同步在主线程触发
+                            PersistenceController.shared.save()
+                            print("✓ 已触发CloudKit同步")
+                        }
+                        
+                        print("✓ 项目删除完成")
+                    } else {
+                        print("❌ 未找到项目实体")
+                        
+                        // 如果实体不存在，也发送删除完成通知
+                        DispatchQueue.main.async {
+                            NotificationCenter.default.post(
+                                name: Notification.Name("ProjectDeleted"),
+                                object: nil,
+                                userInfo: ["projectId": projectId]
+                            )
+                        }
+                    }
+                } catch {
+                    print("❌ 删除项目失败: \(error)")
+                    print("错误描述: \(error.localizedDescription)")
+                    
+                    // 详细错误信息
+                    if let nsError = error as NSError? {
+                        print("错误代码: \(nsError.code), 域: \(nsError.domain)")
+                        for (key, value) in nsError.userInfo {
+                            print("- \(key): \(value)")
+                        }
+                    }
+                    
+                    // 即使失败也发送通知
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(
+                            name: Notification.Name("ProjectDeleted"),
+                            object: nil,
+                            userInfo: ["projectId": projectId, "error": error]
+                        )
+                    }
                 }
             }
-            
-            // 恢复内存中的项目数据
-            self.loadProjects()
         }
         
         print("================================")

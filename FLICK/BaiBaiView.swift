@@ -11,6 +11,7 @@ struct BaiBaiView: View {
     @State private var error: String?
     @State private var bowAngle: Double = 0  // 鞠躬角度
     @State private var isAnimating = false   // 动画状态
+    @State private var showMultipeerBaiBaiView = false // 是否显示多人拜拜界面
     
     // 祈福语录库
     private let blessings = [
@@ -135,6 +136,27 @@ struct BaiBaiView: View {
                         perspective: 1
                     )
                 }
+                
+                // 多人拜拜按钮
+                Button {
+                    showMultipeerBaiBaiView = true
+                } label: {
+                    HStack {
+                        Image(systemName: "person.2.wave.2.fill")
+                            .font(.headline)
+                        Text("多人碰一碰拜拜")
+                            .font(.headline)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 20)
+                    .background(
+                        Capsule()
+                            .fill(projectColor.gradient)
+                            .shadow(color: projectColor.opacity(0.3), radius: 6, x: 0, y: 3)
+                    )
+                }
+                .padding(.top, 5)
                 
                 // 祈福语显示区域
                 if showingBlessing, let blessing = currentBlessing {
@@ -273,6 +295,11 @@ struct BaiBaiView: View {
         .overlay {
             if isLoading && lunarInfo == nil {
                 ProgressView()
+            }
+        }
+        .sheet(isPresented: $showMultipeerBaiBaiView) {
+            NavigationStack {
+                MultipeerBaiBaiView(projectColor: projectColor)
             }
         }
     }

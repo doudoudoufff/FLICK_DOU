@@ -2,21 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_flick-baibai._tcp</string>
+		<string>_flick-baibai._udp</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>FLICK需要访问您的相机来拍摄堪景照片</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>FLICK需要访问您的相册来选择堪景照片</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>FLICK需要访问您的位置以便在添加场地时自动填写位置信息，同时也用于获取当前位置的天气信息</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>FLICK需要访问您的位置以便获取当前位置的天气信息</string>
 	<key>WeatherKitUsageDescription</key>
 	<string>FLICK需要访问天气信息，以便在拍摄计划时提供当前天气状况</string>
-	<key>NSMotionUsageDescription</key>
-	<string>FLICK需要访问设备的运动传感器，以启用陀螺仪感应拜拜功能</string>
+	<key>com.apple.developer.nearby-interaction</key>
+	<true/>
 </dict>
 </plist>

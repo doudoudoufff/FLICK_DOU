@@ -163,12 +163,11 @@ struct ProjectsView: View {
                         // 禁用UI交互，减少用户点击
                         isRefreshing = true
                         
-                        // 延迟执行删除操作，确保UI已更新
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            // 执行删除操作
-                            projectStore.deleteProject(project)
-                            
-                            // 完成后恢复UI交互
+                        // 直接执行删除操作，不使用延迟
+                        projectStore.deleteProject(project)
+                        
+                        // 延迟恢复UI交互，确保数据处理有足够时间
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             isRefreshing = false
                         }
                     }
@@ -473,12 +472,20 @@ struct ProjectListRow: View {
                     isDeleting = true
                 }
                 
-                // 直接发送删除通知，不使用异步延迟
+                // 直接发送删除通知
                 NotificationCenter.default.post(
                     name: Notification.Name("DeleteProject"),
                     object: nil,
                     userInfo: ["project": project]
                 )
+                
+                // 延迟恢复状态，确保有足够时间处理删除操作
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    // 如果删除操作超时未收到通知，也恢复状态
+                    withAnimation {
+                        isDeleting = false
+                    }
+                }
             } label: {
                 Label("删除", systemImage: "trash")
             }

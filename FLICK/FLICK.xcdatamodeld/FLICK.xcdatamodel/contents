@@ -67,6 +67,7 @@
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="imageData" optional="YES" attributeType="Binary"/>
         <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="thumbnailData" optional="YES" attributeType="Binary"/>
         <attribute name="weather" optional="YES" attributeType="String"/>
         <relationship name="location" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="LocationEntity" inverseName="photos" inverseEntity="LocationEntity"/>
     </entity>

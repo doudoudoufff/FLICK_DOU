@@ -20,6 +20,7 @@ extension LocationPhotoEntity {
     @NSManaged public var id: UUID?
     @NSManaged public var imageData: Data?
     @NSManaged public var note: String?
+    @NSManaged public var thumbnailData: Data?
     @NSManaged public var weather: String?
     @NSManaged public var location: LocationEntity?
 

@@ -10,11 +10,13 @@ struct PDFPreviewView: View {
     @State private var showShareSheet = false
     @State private var pdfURL: URL?
     @State private var isLoading = true
+    @State private var currentPage: Int = 1
+    @State private var totalPages: Int = 0
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationStack {
-            Group {
+            ZStack {
                 if isLoading {
                     VStack(spacing: 20) {
                         ProgressView("加载中...")
@@ -27,7 +29,58 @@ struct PDFPreviewView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let pdfDocument {
-                    PDFKitView(document: pdfDocument)
+                    VStack(spacing: 0) {
+                        // PDF预览区域
+                        PDFKitViewWithNavigation(
+                            document: pdfDocument,
+                            currentPage: $currentPage,
+                            totalPages: $totalPages
+                        )
+                        
+                        // 底部页面导航栏
+                        if totalPages > 1 {
+                            HStack {
+                                Button {
+                                    if currentPage > 1 {
+                                        currentPage -= 1
+                                    }
+                                } label: {
+                                    Image(systemName: "chevron.left")
+                                        .font(.title2)
+                                        .foregroundColor(currentPage > 1 ? .blue : .gray)
+                                }
+                                .disabled(currentPage <= 1)
+                                
+                                Spacer()
+                                
+                                Text("第 \(currentPage) 页，共 \(totalPages) 页")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                Spacer()
+                                
+                                Button {
+                                    if currentPage < totalPages {
+                                        currentPage += 1
+                                    }
+                                } label: {
+                                    Image(systemName: "chevron.right")
+                                        .font(.title2)
+                                        .foregroundColor(currentPage < totalPages ? .blue : .gray)
+                                }
+                                .disabled(currentPage >= totalPages)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color(.systemBackground))
+                            .overlay(
+                                Rectangle()
+                                    .frame(height: 0.5)
+                                    .foregroundColor(Color(.separator)),
+                                alignment: .top
+                            )
+                        }
+                    }
                 } else {
                     VStack(spacing: 20) {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -54,12 +107,20 @@ struct PDFPreviewView: View {
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        showShareSheet = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
+                    HStack(spacing: 16) {
+                        if let pdfDocument = pdfDocument, totalPages > 0 {
+                            Text("\(totalPages)页")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Button {
+                            showShareSheet = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .disabled(pdfURL == nil)
                     }
-                    .disabled(pdfURL == nil)
                 }
             }
             .onAppear {
@@ -111,4 +172,4 @@ struct PDFPreviewView: View {
     }
 }
 
-// 注意：PDFKitView 和 ShareSheet 结构体已经在 PDFReportView.swift 文件中定义 
+// 注意：PDFKitViewWithNavigation 和 ShareSheet 结构体在 PDFReportView.swift 文件中定义 

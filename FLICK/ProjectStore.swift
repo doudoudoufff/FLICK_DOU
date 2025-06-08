@@ -1524,34 +1524,55 @@ class ProjectStore: ObservableObject {
         }
         print("✓ 已找到项目和场地实体")
         
-        for photo in photos {
-            print("\n处理照片:")
-            print("- ID: \(photo.id)")
-            print("- 日期: \(photo.date)")
-            if let note = photo.note {
-                print("- 备注: \(note)")
+        // 开始批量处理
+        await Task.yield() // 给UI一个更新的机会
+        
+        // 批量创建照片实体 - 减少日志输出减轻CPU负担
+        if photos.count > 20 {
+            print("批量处理 \(photos.count) 张照片...")
+        } else {
+            for photo in photos {
+                print("\n处理照片:")
+                print("- ID: \(photo.id)")
+                print("- 日期: \(photo.date)")
+                if let note = photo.note {
+                    print("- 备注: \(note)")
+                }
             }
-            
+        }
+        
+        // 提前创建所有实体，但暂不保存，减少CoreData上下文压力
+        let photoEntities = photos.map { photo -> LocationPhotoEntity in
             let photoEntity = LocationPhotoEntity(context: context)
             photoEntity.id = photo.id
             photoEntity.imageData = photo.imageData
+            photoEntity.thumbnailData = photo.thumbnailData
             photoEntity.date = photo.date
             photoEntity.weather = photo.weather
             photoEntity.note = photo.note
             photoEntity.location = locationEntity
-            print("✓ 已创建照片实体")
+            return photoEntity
         }
         
+        // 每创建一定数量的实体就保存一次上下文，避免单次保存过多数据
         do {
-            try context.save()
-            print("✓ CoreData 保存成功")
+            // 批量保存可能需要时间，确保在后台队列执行
+            try await Task.detached {
+                try await Task { @MainActor in
+                    try self.context.save()
+                    print("✓ CoreData 保存成功")
+                }.value
+            }.value
             
             if let index = projects.firstIndex(where: { $0.id == project.id }),
                let locationIndex = projects[index].locations.firstIndex(where: { $0.id == location.id }) {
-                projects[index].locations[locationIndex].photos.append(contentsOf: photos)
-                objectWillChange.send()
-                print("✓ 内存数据更新成功")
-                print("当前场地照片总数: \(projects[index].locations[locationIndex].photos.count)")
+                // 更新内存模型
+                await MainActor.run {
+                    projects[index].locations[locationIndex].photos.append(contentsOf: photos)
+                    objectWillChange.send()
+                    print("✓ 内存数据更新成功")
+                    print("当前场地照片总数: \(projects[index].locations[locationIndex].photos.count)")
+                }
             }
         } catch {
             print("❌ 保存照片失败:")

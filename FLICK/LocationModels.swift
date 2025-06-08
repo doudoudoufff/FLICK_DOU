@@ -292,17 +292,134 @@ struct Location: Identifiable, Codable, Equatable, Hashable {
 struct LocationPhoto: Identifiable, Codable, Hashable {
     let id: UUID
     let imageData: Data
+    let thumbnailData: Data?  // 添加缩略图数据
     let date: Date
     let weather: String?
     let note: String?
     
+    // 不再存储UIImage实例，而是使用全局缓存
+    
+    // 获取原图
     var image: UIImage? {
-        UIImage(data: imageData)
+                 // 先从缓存中查找
+         if let cachedImage = ImageCacheManager.shared.get(forKey: id.uuidString) {
+            return cachedImage
+         }
+         
+         // 缓存中没有，从imageData创建
+         if let image = UIImage(data: imageData) {
+            // 存入缓存
+            ImageCacheManager.shared.set(image, forKey: id.uuidString)
+            return image
+         }
+        
+        return nil
+    }
+    
+    // 获取缩略图
+    var thumbnail: UIImage? {
+        // 先从缓存中查找缩略图
+        let thumbnailKey = "thumb_\(id.uuidString)"
+        if let cachedThumbnail = ImageCacheManager.shared.get(forKey: thumbnailKey) {
+            return cachedThumbnail
+        }
+        
+        // 缓存中没有，但有缩略图数据，则从thumbnailData创建
+        if let thumbnailData = thumbnailData, let thumbnail = UIImage(data: thumbnailData) {
+            ImageCacheManager.shared.set(thumbnail, forKey: thumbnailKey)
+            return thumbnail
+        }
+         
+        // 缓存中没有且没有缩略图数据，从imageData创建并生成缩略图
+        if let image = UIImage(data: imageData) {
+            let thumbnailSize = CGSize(width: 300, height: 300)
+            let size = image.size
+            let widthRatio = thumbnailSize.width / size.width
+            let heightRatio = thumbnailSize.height / size.height
+            let ratio = min(widthRatio, heightRatio)
+            
+            let thumbnailImage: UIImage
+            
+            // 如果图片已经比缩略图小，直接使用原图
+            if ratio >= 1.0 {
+                thumbnailImage = image
+            } else {
+                // 创建缩略图
+                let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+                UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+                image.draw(in: CGRect(origin: .zero, size: newSize))
+                thumbnailImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+                UIGraphicsEndImageContext()
+            }
+            
+            // 存入缓存
+            ImageCacheManager.shared.set(thumbnailImage, forKey: thumbnailKey)
+            return thumbnailImage
+         }
+        
+        return nil
     }
     
     init(id: UUID = UUID(), image: UIImage, date: Date = Date(), weather: String? = nil, note: String? = nil) {
         self.id = id
-        self.imageData = image.jpegData(compressionQuality: 0.8) ?? Data()
+        
+        // 优化图片存储 - 先降低图片质量
+        let maxDimension: CGFloat = 2000 // 最大尺寸限制
+        let originalSize = image.size
+        let scale: CGFloat
+        
+        if originalSize.width > maxDimension || originalSize.height > maxDimension {
+            scale = maxDimension / max(originalSize.width, originalSize.height)
+        } else {
+            scale = 1.0
+        }
+        
+        // 只有当图片需要压缩时才创建新图像
+        let resizedImage: UIImage
+        if scale < 1.0 {
+            let newSize = CGSize(width: originalSize.width * scale, height: originalSize.height * scale)
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+            resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+            UIGraphicsEndImageContext()
+        } else {
+            resizedImage = image
+        }
+        
+        // 使用适当的压缩率保存
+        self.imageData = resizedImage.jpegData(compressionQuality: 0.7) ?? Data()
+        
+                 // 预先存入缓存系统
+         ImageCacheManager.shared.set(resizedImage, forKey: id.uuidString)
+        
+        // 创建并缓存缩略图
+        let thumbnailSize = CGSize(width: 300, height: 300)
+        let widthRatio = thumbnailSize.width / resizedImage.size.width
+        let heightRatio = thumbnailSize.height / resizedImage.size.height
+        let ratio = min(widthRatio, heightRatio)
+        
+        var thumbnailData: Data? = nil
+        
+        if ratio < 1.0 {
+            let newSize = CGSize(width: resizedImage.size.width * ratio, height: resizedImage.size.height * ratio)
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            resizedImage.draw(in: CGRect(origin: .zero, size: newSize))
+            let thumbnailImage = UIGraphicsGetImageFromCurrentImageContext() ?? resizedImage
+            UIGraphicsEndImageContext()
+            
+            // 保存缩略图数据
+            thumbnailData = thumbnailImage.jpegData(compressionQuality: 0.7)
+            
+            // 存入缓存
+            ImageCacheManager.shared.set(thumbnailImage, forKey: "thumb_\(id.uuidString)")
+        } else {
+            // 如果原图已经足够小，缩略图就使用原图
+            thumbnailData = self.imageData
+            ImageCacheManager.shared.set(resizedImage, forKey: "thumb_\(id.uuidString)")
+        }
+        
+        self.thumbnailData = thumbnailData
+        
         self.date = date
         self.weather = weather
         self.note = note
@@ -312,6 +429,7 @@ struct LocationPhoto: Identifiable, Codable, Hashable {
         let entity = LocationPhotoEntity(context: context)
         entity.id = id
         entity.imageData = imageData
+        entity.thumbnailData = thumbnailData
         entity.date = date
         entity.weather = weather
         entity.note = note
@@ -321,18 +439,40 @@ struct LocationPhoto: Identifiable, Codable, Hashable {
     static func fromEntity(_ entity: LocationPhotoEntity) -> LocationPhoto? {
         guard let id = entity.id,
               let imageData = entity.imageData,
-              let date = entity.date,
-              let image = UIImage(data: imageData)
+              let date = entity.date
         else {
             return nil
         }
         
-        return LocationPhoto(
-            id: id,
-            image: image,
+        let photo = LocationPhoto(
+            id: id, 
+            imageData: imageData,
+            thumbnailData: entity.thumbnailData,
             date: date,
             weather: entity.weather,
             note: entity.note
         )
+        
+        return photo
+    }
+    
+        // 直接从imageData创建的初始化方法
+    init(id: UUID, imageData: Data, thumbnailData: Data? = nil, date: Date, weather: String? = nil, note: String? = nil) {
+        self.id = id
+        self.imageData = imageData
+        self.thumbnailData = thumbnailData
+        self.date = date
+        self.weather = weather
+        self.note = note
+        
+        // 尝试从数据创建图片并缓存（非必须）
+        if let image = UIImage(data: imageData) {
+            ImageCacheManager.shared.set(image, forKey: id.uuidString)
+        }
+        
+        // 如果有缩略图数据，也加入缓存
+        if let thumbnailData = thumbnailData, let thumbnailImage = UIImage(data: thumbnailData) {
+            ImageCacheManager.shared.set(thumbnailImage, forKey: "thumb_\(id.uuidString)")
+        }
     }
 } 

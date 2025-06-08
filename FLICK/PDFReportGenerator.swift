@@ -17,7 +17,7 @@ class PDFReportGenerator {
     private let pageHeight: CGFloat = 595.2 // A4 宽度 (72dpi) - 横版时为高度
     private let margin: CGFloat = 50
     private let contentWidth: CGFloat
-    private let headerHeight: CGFloat = 80
+    private let headerHeight: CGFloat = 60
     private let photoWidth: CGFloat = 250     // 调整照片宽度
     private let photoHeight: CGFloat = 400    // 调整照片高度
     private let photosPerRow: Int = 3         // 每行3张照片
@@ -39,14 +39,17 @@ class PDFReportGenerator {
     private let cardShadowOffset: CGSize = CGSize(width: 0, height: 4)  // 阴影偏移
     private let gradientHeight: CGFloat = 120       // 渐变背景高度
     
-    // 颜色和样式 - 升级配色方案
+    // 颜色和样式 - 专业级配色方案
     private let primaryColor: UIColor
     private let secondaryColor: UIColor
     private let accentColor: UIColor
-    private let backgroundColor: UIColor = UIColor(red: 0.98, green: 0.98, blue: 1.0, alpha: 1.0)  // 淡蓝白色
+    private let backgroundColor: UIColor = UIColor(red: 0.97, green: 0.97, blue: 0.98, alpha: 1.0)  // 极简灰白
     private let cardBackgroundColor: UIColor = UIColor.white
-    private let textColor: UIColor = UIColor(white: 0.2, alpha: 1.0)  // 深灰色文字
-    private let subtleTextColor: UIColor = UIColor(white: 0.5, alpha: 1.0)  // 浅灰色次要文字
+    private let textColor: UIColor = UIColor(white: 0.15, alpha: 1.0)  // 深炭色文字
+    private let subtleTextColor: UIColor = UIColor(white: 0.45, alpha: 1.0)  // 优雅灰色
+    private let headerGradientStartColor: UIColor = UIColor(white: 0.98, alpha: 1.0)
+    private let headerGradientEndColor: UIColor = UIColor(white: 0.95, alpha: 1.0)
+    private let shadowColor: UIColor = UIColor(white: 0.0, alpha: 0.08)  // 微妙阴影
     
     // MARK: - 初始化
     init(project: Project, location: Location, logoImage: UIImage? = nil) {
@@ -353,15 +356,12 @@ class PDFReportGenerator {
                 // 开始新页面
                 context.beginPage()
                 
-                // 添加页面标题
-                if let locationTitle = locationTitle {
-                    addHeader(to: context, text: "\(title) - \(locationTitle)")
-                } else {
-                    addHeader(to: context, text: title)
-                }
-                
                 // 计算本页的照片索引范围
                 let startIndex = pageIndex * photosPerPage
+                let currentPhoto = photos[startIndex]
+                
+                // 添加页面标题 - 传递当前照片信息给页眉
+                addHeader(to: context, text: title, currentPhoto: currentPhoto)
                 let endIndex = min(startIndex + photosPerPage - 1, photos.count - 1)
                 
                 // 计算一行照片加备注的总高度
@@ -414,74 +414,47 @@ class PDFReportGenerator {
                                 yOffset = 0
                             }
                             
-                            // 绘制照片背景 - 简单的白色背景
+                            // 绘制现代化照片卡片
                             let cgContext = context.cgContext
-                            cgContext.setFillColor(UIColor.white.cgColor)
-                            cgContext.fill(photoRect)
                             
-                            // 绘制淡色边框
-                            cgContext.setStrokeColor(secondaryColor.cgColor)
-                            cgContext.setLineWidth(1.0)
-                            cgContext.stroke(photoRect)
+                            // 绘制照片卡片背景和阴影
+                            drawModernPhotoCard(in: context, rect: photoRect)
                             
-                            // 绘制照片
+                            // 绘制照片，添加圆角和间距
                             if let compressedImage = compressImage(image, quality: compressionQuality) {
-                                let drawRect = CGRect(
-                                    x: x + xOffset,
-                                    y: y + yOffset,
-                                    width: drawWidth,
-                                    height: drawHeight
+                                let cardInset: CGFloat = 6  // 卡片内边距
+                                let imageRect = CGRect(
+                                    x: x + xOffset + cardInset,
+                                    y: y + yOffset + cardInset,
+                                    width: drawWidth - (cardInset * 2),
+                                    height: drawHeight - (cardInset * 2)
                                 )
-                                compressedImage.draw(in: drawRect)
+                                
+                                // 创建圆角蒙版
+                                cgContext.saveGState()
+                                let imagePath = UIBezierPath(roundedRect: imageRect, cornerRadius: 4)
+                                cgContext.addPath(imagePath.cgPath)
+                                cgContext.clip()
+                                
+                                compressedImage.draw(in: imageRect)
+                                cgContext.restoreGState()
                             }
                             
-                            // 绘制照片编号和时间
+                            // 绘制现代化照片标签
                             let dateFormatter = DateFormatter()
                             dateFormatter.locale = Locale(identifier: "zh_CN")
-                            dateFormatter.dateFormat = "yyyy年M月d日 HH:mm"
+                            dateFormatter.dateFormat = "MM/dd HH:mm"
                             let timeText = dateFormatter.string(from: photo.date)
-                            let indexText = "\(photoIndex + 1). \(timeText)"
-                            let indexFont = UIFont.boldSystemFont(ofSize: 12)
-                            let indexAttributes = [
-                                NSAttributedString.Key.font: indexFont,
-                                NSAttributedString.Key.foregroundColor: primaryColor
-                            ]
                             
-                            // 调整备注区域的位置
-                            if let note = photo.note, !note.isEmpty {
-                                // 绘制时间和编号
-                                indexText.draw(
-                                    at: CGPoint(x: x + 5, y: y + photoHeight + 15),
-                                    withAttributes: indexAttributes
-                                )
-                                
-                                let noteFont = UIFont.systemFont(ofSize: 11)
-                                let noteParagraphStyle = NSMutableParagraphStyle()
-                                noteParagraphStyle.lineBreakMode = .byTruncatingTail
-                                noteParagraphStyle.lineSpacing = 2
-                                
-                                let noteAttributes = [
-                                    NSAttributedString.Key.font: noteFont,
-                                    NSAttributedString.Key.foregroundColor: textColor,
-                                    NSAttributedString.Key.paragraphStyle: noteParagraphStyle
-                                ]
-                                
-                                let noteText = "备注: \(note)"
-                                let noteRect = CGRect(
-                                    x: x + 5,
-                                    y: y + photoHeight + 35,
-                                    width: photoWidth - 10,
-                                    height: noteHeight - 30
-                                )
-                                
-                                noteText.draw(in: noteRect, withAttributes: noteAttributes)
-                            } else {
-                                // 如果没有备注，只显示时间和编号
-                                indexText.draw(
-                                    at: CGPoint(x: x + 5, y: y + photoHeight + 15),
-                                    withAttributes: indexAttributes
-                                )
-                            }
+                            // 现代化编号标签
+                            let indexNumber = photoIndex + 1
+                            drawModernPhotoLabel(
+                                in: context,
+                                rect: CGRect(x: x, y: y + photoHeight + 8, width: photoWidth, height: 45),
+                                indexNumber: indexNumber,
+                                timeText: timeText,
+                                note: photo.note
+                            )
                         }
                     }
                 }
@@ -493,6 +466,151 @@ class PDFReportGenerator {
     }
     
     // MARK: - 美化辅助方法
+    
+    // 修正UIImage方向，确保logo在PDF中不倒置
+    private func fixedImage(_ image: UIImage) -> UIImage {
+        if image.imageOrientation == .up {
+            return image
+        }
+        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
+        UIGraphicsEndImageContext()
+        return normalizedImage
+    }
+    
+    // 绘制现代化Logo容器
+    private func drawModernLogoContainer(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
+        let cgContext = context.cgContext
+        
+        cgContext.saveGState()
+        
+        // 创建圆角矩形路径
+        let cornerRadius: CGFloat = 8
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+        
+        // 绘制微妙的阴影
+        cgContext.setShadow(offset: CGSize(width: 0, height: 2), blur: 4, color: shadowColor.cgColor)
+        
+        // 绘制白色背景
+        cgContext.setFillColor(UIColor.white.cgColor)
+        cgContext.addPath(path.cgPath)
+        cgContext.fillPath()
+        
+        cgContext.restoreGState()
+        
+        // 绘制精致的边框
+        cgContext.setStrokeColor(UIColor(white: 0.9, alpha: 1.0).cgColor)
+        cgContext.setLineWidth(0.5)
+        cgContext.addPath(path.cgPath)
+        cgContext.strokePath()
+    }
+    
+    // 绘制现代化照片卡片
+    private func drawModernPhotoCard(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
+        let cgContext = context.cgContext
+        
+        cgContext.saveGState()
+        
+        // 创建圆角矩形路径
+        let cornerRadius: CGFloat = 12
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+        
+        // 绘制卡片阴影
+        cgContext.setShadow(offset: CGSize(width: 0, height: 4), blur: 8, color: shadowColor.cgColor)
+        
+        // 绘制白色卡片背景
+        cgContext.setFillColor(UIColor.white.cgColor)
+        cgContext.addPath(path.cgPath)
+        cgContext.fillPath()
+        
+        cgContext.restoreGState()
+        
+        // 绘制精致的边框
+        cgContext.setStrokeColor(UIColor(white: 0.92, alpha: 1.0).cgColor)
+        cgContext.setLineWidth(0.5)
+        cgContext.addPath(path.cgPath)
+        cgContext.strokePath()
+    }
+    
+    // 绘制现代化照片标签
+    private func drawModernPhotoLabel(in context: UIGraphicsPDFRendererContext, rect: CGRect, indexNumber: Int, timeText: String, note: String?) {
+        let cgContext = context.cgContext
+        
+        // 编号标签 - 现代圆形设计
+        let numberSize: CGFloat = 24
+        let numberRect = CGRect(
+            x: rect.minX + 8,
+            y: rect.minY + 2,
+            width: numberSize,
+            height: numberSize
+        )
+        
+        // 绘制编号圆圈背景
+        cgContext.saveGState()
+        cgContext.setShadow(offset: CGSize(width: 0, height: 1), blur: 2, color: shadowColor.cgColor)
+        cgContext.setFillColor(primaryColor.cgColor)
+        cgContext.addEllipse(in: numberRect)
+        cgContext.fillPath()
+        cgContext.restoreGState()
+        
+        // 绘制编号文字
+        let numberText = "\(indexNumber)"
+        let numberFont = UIFont.systemFont(ofSize: 11, weight: .semibold)
+        let numberAttributes = [
+            NSAttributedString.Key.font: numberFont,
+            NSAttributedString.Key.foregroundColor: UIColor.white
+        ] as [NSAttributedString.Key : Any]
+        
+        let numberTextSize = numberText.size(withAttributes: numberAttributes)
+        let numberTextRect = CGRect(
+            x: numberRect.midX - numberTextSize.width / 2,
+            y: numberRect.midY - numberTextSize.height / 2,
+            width: numberTextSize.width,
+            height: numberTextSize.height
+        )
+        numberText.draw(in: numberTextRect, withAttributes: numberAttributes)
+        
+        // 时间标签
+        let timeFont = UIFont.systemFont(ofSize: 11, weight: .medium)
+        let timeAttributes = [
+            NSAttributedString.Key.font: timeFont,
+            NSAttributedString.Key.foregroundColor: subtleTextColor,
+            NSAttributedString.Key.kern: 0.2
+        ] as [NSAttributedString.Key : Any]
+        
+        let timeRect = CGRect(
+            x: rect.minX + numberSize + 15,
+            y: rect.minY + 6,
+            width: rect.width - numberSize - 25,
+            height: 16
+        )
+        timeText.draw(in: timeRect, withAttributes: timeAttributes)
+        
+        // 备注（如果有）
+        if let note = note, !note.isEmpty {
+            let noteFont = UIFont.systemFont(ofSize: 10, weight: .regular)
+            let noteParagraphStyle = NSMutableParagraphStyle()
+            noteParagraphStyle.lineBreakMode = .byTruncatingTail
+            
+            let noteAttributes = [
+                NSAttributedString.Key.font: noteFont,
+                NSAttributedString.Key.foregroundColor: textColor,
+                NSAttributedString.Key.paragraphStyle: noteParagraphStyle,
+                NSAttributedString.Key.kern: 0.1
+            ] as [NSAttributedString.Key : Any]
+            
+            let noteRect = CGRect(
+                x: rect.minX + 8,
+                y: rect.minY + 26,
+                width: rect.width - 16,
+                height: 15
+            )
+            
+            let noteText = "💬 \(note)"
+            noteText.draw(in: noteRect, withAttributes: noteAttributes)
+        }
+    }
     
     // 绘制带阴影的圆角卡片背景
     private func drawCardBackground(in context: UIGraphicsPDFRendererContext, rect: CGRect) {
@@ -854,82 +972,203 @@ class PDFReportGenerator {
         }
     }
     
-    private func addHeader(to context: UIGraphicsPDFRendererContext, text: String) {
+    private func addHeader(to context: UIGraphicsPDFRendererContext, text: String, currentPhoto: LocationPhoto? = nil) {
         // 获取CGContext
         let cgContext = context.cgContext
         
-        // 绘制页眉背景
-        cgContext.setFillColor(primaryColor.withAlphaComponent(0.1).cgColor)
-        cgContext.fill(CGRect(x: 0, y: 0, width: pageWidth, height: headerHeight))
+        // 绘制现代化渐变背景
+        let headerRect = CGRect(x: 0, y: 0, width: pageWidth, height: headerHeight)
+        drawGradientBackground(in: context, rect: headerRect, startColor: headerGradientStartColor, endColor: headerGradientEndColor)
         
-        // 绘制页眉文本
-        let headerFont = UIFont.systemFont(ofSize: 18, weight: .medium)
-        let headerAttributes = [
-            NSAttributedString.Key.font: headerFont,
-            NSAttributedString.Key.foregroundColor: textColor
-        ]
+        // 添加微妙的底部阴影线
+        cgContext.setStrokeColor(shadowColor.cgColor)
+        cgContext.setLineWidth(0.5)
+        cgContext.move(to: CGPoint(x: 0, y: headerHeight))
+        cgContext.addLine(to: CGPoint(x: pageWidth, y: headerHeight))
+        cgContext.strokePath()
         
-        let headerTextSize = text.size(withAttributes: headerAttributes)
-        let headerTextRect = CGRect(
+        // Logo尺寸
+        let logoSize: CGFloat = 40
+        let logoMargin: CGFloat = 10
+        
+        // 左上角FLICK App logo
+        let flickLogoRect = CGRect(
             x: margin,
-            y: (headerHeight - headerTextSize.height) / 2,
-            width: contentWidth - 100, // 为LOGO留出空间
-            height: headerTextSize.height
+            y: logoMargin+5,
+            width: logoSize,
+            height: logoSize
         )
         
-        text.draw(in: headerTextRect, withAttributes: headerAttributes)
+        // 绘制FLICK App logo（使用Asset中的FLICKLogo）
+        if let appLogoImage = UIImage(named: "FLICKLogo") {
+            let fixedLogo = fixedImage(appLogoImage)
+            if let cgImage = fixedLogo.cgImage {
+                // 绘制现代化Logo容器
+                drawModernLogoContainer(in: context, rect: flickLogoRect)
+                // 翻转坐标系，确保logo方向正确
+                cgContext.saveGState()
+                cgContext.translateBy(x: flickLogoRect.midX, y: flickLogoRect.midY)
+                cgContext.scaleBy(x: 1, y: -1)
+                cgContext.translateBy(x: -flickLogoRect.midX, y: -flickLogoRect.midY)
+                // 绘制logo，稍微缩小一点留出边距
+                let logoInset: CGFloat = 4
+                let logoContentRect = CGRect(
+                    x: flickLogoRect.origin.x + logoInset,
+                    y: flickLogoRect.origin.y + logoInset,
+                    width: flickLogoRect.width - (logoInset * 2),
+                    height: flickLogoRect.height - (logoInset * 2)
+                )
+                cgContext.draw(cgImage, in: logoContentRect)
+                cgContext.restoreGState()
+            }
+        } else {
+            // 如果找不到FLICKLogo，绘制现代化文字logo
+            drawModernLogoContainer(in: context, rect: flickLogoRect)
+            
+            let flickLogoText = "FLICK"
+            let flickLogoFont = UIFont.systemFont(ofSize: 13, weight: .semibold)
+            let flickLogoAttributes = [
+                NSAttributedString.Key.font: flickLogoFont,
+                NSAttributedString.Key.foregroundColor: primaryColor,
+                NSAttributedString.Key.kern: 0.5  // 字母间距
+            ] as [NSAttributedString.Key : Any]
+            
+            let flickLogoTextSize = flickLogoText.size(withAttributes: flickLogoAttributes)
+            let flickLogoTextRect = CGRect(
+                x: flickLogoRect.midX - flickLogoTextSize.width / 2,
+                y: flickLogoRect.midY - flickLogoTextSize.height / 2,
+                width: flickLogoTextSize.width,
+                height: flickLogoTextSize.height
+            )
+            flickLogoText.draw(in: flickLogoTextRect, withAttributes: flickLogoAttributes)
+        }
         
-        // 绘制小型LOGO
-        let logoSize: CGFloat = 30
-        let logoRect = CGRect(
-            x: pageWidth - margin - logoSize - 10,
-            y: (headerHeight - logoSize) / 2,
+        // 右上角项目logo
+        let projectLogoRect = CGRect(
+            x: pageWidth - margin - logoSize,
+            y: logoMargin,
             width: logoSize,
             height: logoSize
         )
         
         if let logo = logoImage, let cgImage = logo.cgImage {
-            context.cgContext.saveGState()
+            // 直接绘制项目logo，不加边框和背景（适合PNG透明logo）
+            cgContext.saveGState()
             // 平移到logo中心
-            context.cgContext.translateBy(x: logoRect.midX, y: logoRect.midY)
+            cgContext.translateBy(x: projectLogoRect.midX, y: projectLogoRect.midY)
             // 旋转180度
-            context.cgContext.rotate(by: .pi)
+            cgContext.rotate(by: .pi)
             // 平移回左上角
-            context.cgContext.translateBy(x: -logoRect.midX, y: -logoRect.midY)
+            cgContext.translateBy(x: -projectLogoRect.midX, y: -projectLogoRect.midY)
             // 绘制旋转后的logo
-            context.cgContext.draw(cgImage, in: logoRect)
-            context.cgContext.restoreGState()
-        } else {
-            // 默认LOGO文字
-            let logoText = "FLICK"
-            let logoFont = UIFont.boldSystemFont(ofSize: 12)
-            let logoAttributes = [
-                NSAttributedString.Key.font: logoFont,
-                NSAttributedString.Key.foregroundColor: primaryColor
-            ]
-            let logoTextSize = logoText.size(withAttributes: logoAttributes)
-            let logoTextRect = CGRect(
-                x: logoRect.midX - logoTextSize.width / 2,
-                y: logoRect.midY - logoTextSize.height / 2,
-                width: logoTextSize.width,
-                height: logoTextSize.height
+            cgContext.draw(cgImage, in: projectLogoRect)
+            cgContext.restoreGState()
+        }
+        
+        // 中间的两行文字区域
+        let textStartX = margin + logoSize + 15
+        let textWidth = pageWidth - (margin * 2) - (logoSize * 2) - 30 // 减去两个logo和间距
+        
+        // 解析文本内容，提取项目名称、场景名称和地址
+        let projectName = project.name
+        var locationName = ""
+        var locationAddress = ""
+        
+        // 如果是单个场景报告
+        if let location = location {
+            locationName = location.name
+            locationAddress = location.address
+        } else if let currentPhoto = currentPhoto {
+            // 如果是多场景报告，从当前照片的位置信息获取
+            // 需要找到当前照片所属的位置
+            if let photos = photos {
+                for (photoLocation, photo) in photos {
+                    if photo.id == currentPhoto.id {
+                        locationName = photoLocation.name
+                        locationAddress = photoLocation.address
+                        break
+                    }
+                }
+            }
+        } else if let photos = photos, !photos.isEmpty {
+            // 如果没有指定当前照片，从第一个照片获取信息
+            let firstLocation = photos[0].0
+            locationName = firstLocation.name
+            locationAddress = firstLocation.address
+        }
+        
+        // 第一行：项目名称-场景名称（现代化排版）
+        let firstLineText = locationName.isEmpty ? projectName : "\(projectName) • \(locationName)"
+        let firstLineFont = UIFont.systemFont(ofSize: 17, weight: .medium)
+        let firstLineParagraphStyle = NSMutableParagraphStyle()
+        firstLineParagraphStyle.lineBreakMode = .byTruncatingTail
+        
+        let firstLineAttributes = [
+            NSAttributedString.Key.font: firstLineFont,
+            NSAttributedString.Key.foregroundColor: textColor,
+            NSAttributedString.Key.paragraphStyle: firstLineParagraphStyle,
+            NSAttributedString.Key.kern: 0.3  // 字母间距
+        ] as [NSAttributedString.Key : Any]
+        
+        let firstLineRect = CGRect(
+            x: textStartX,
+            y: 12,
+            width: textWidth,
+            height: 28
+        )
+        
+        firstLineText.draw(in: firstLineRect, withAttributes: firstLineAttributes)
+        
+        // 第二行：场景地址（优雅显示）
+        if !locationAddress.isEmpty {
+            let secondLineFont = UIFont.systemFont(ofSize: 13, weight: .regular)
+            let secondLineParagraphStyle = NSMutableParagraphStyle()
+            secondLineParagraphStyle.lineBreakMode = .byTruncatingTail
+            
+            let secondLineAttributes = [
+                NSAttributedString.Key.font: secondLineFont,
+                NSAttributedString.Key.foregroundColor: subtleTextColor,
+                NSAttributedString.Key.paragraphStyle: secondLineParagraphStyle,
+                NSAttributedString.Key.kern: 0.2
+            ] as [NSAttributedString.Key : Any]
+            
+            // 添加图标前缀
+            let locationIcon = "📍 "
+            let fullLocationText = locationAddress
+            
+            let secondLineRect = CGRect(
+                x: textStartX,
+                y: 42,
+                width: textWidth,
+                height: 25
             )
-            logoText.draw(in: logoTextRect, withAttributes: logoAttributes)
+            
+            fullLocationText.draw(in: secondLineRect, withAttributes: secondLineAttributes)
         }
     }
     
     private func addFooter(to context: UIGraphicsPDFRendererContext, pageNumber: Int, totalPages: Int) {
-        // 绘制页脚背景
-        context.cgContext.setFillColor(primaryColor.withAlphaComponent(0.1).cgColor)
-        context.cgContext.fill(CGRect(x: 0, y: pageHeight - footerHeight, width: pageWidth, height: footerHeight))
+        let cgContext = context.cgContext
+        let footerRect = CGRect(x: 0, y: pageHeight - footerHeight, width: pageWidth, height: footerHeight)
         
-        // 绘制页码文本
-        let footerText = "第 \(pageNumber) 页，共 \(totalPages) 页"
-        let footerFont = UIFont.systemFont(ofSize: 12)
+        // 绘制现代化页脚背景渐变
+        drawGradientBackground(in: context, rect: footerRect, startColor: headerGradientEndColor, endColor: headerGradientStartColor)
+        
+        // 添加顶部分割线
+        cgContext.setStrokeColor(shadowColor.cgColor)
+        cgContext.setLineWidth(0.5)
+        cgContext.move(to: CGPoint(x: 0, y: pageHeight - footerHeight))
+        cgContext.addLine(to: CGPoint(x: pageWidth, y: pageHeight - footerHeight))
+        cgContext.strokePath()
+        
+        // 页码文本 - 现代化设计
+        let footerText = "\(pageNumber) / \(totalPages)"
+        let footerFont = UIFont.systemFont(ofSize: 11, weight: .medium)
         let footerAttributes = [
             NSAttributedString.Key.font: footerFont,
-            NSAttributedString.Key.foregroundColor: textColor
-        ]
+            NSAttributedString.Key.foregroundColor: subtleTextColor,
+            NSAttributedString.Key.kern: 0.3
+        ] as [NSAttributedString.Key : Any]
         
         let footerTextSize = footerText.size(withAttributes: footerAttributes)
         let footerTextRect = CGRect(
@@ -940,6 +1179,37 @@ class PDFReportGenerator {
         )
         
         footerText.draw(in: footerTextRect, withAttributes: footerAttributes)
+        
+        // 左下角版权信息
+        let copyrightText = "© FLICK"
+        let copyrightFont = UIFont.systemFont(ofSize: 9, weight: .light)
+        let copyrightAttributes = [
+            NSAttributedString.Key.font: copyrightFont,
+            NSAttributedString.Key.foregroundColor: subtleTextColor
+        ] as [NSAttributedString.Key : Any]
+        
+        let copyrightRect = CGRect(
+            x: margin,
+            y: pageHeight - footerHeight + (footerHeight - 12) / 2,
+            width: 100,
+            height: 12
+        )
+        
+        copyrightText.draw(in: copyrightRect, withAttributes: copyrightAttributes)
+        
+        // 右下角生成时间
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy.MM.dd"
+        let dateText = dateFormatter.string(from: Date())
+        
+        let dateRect = CGRect(
+            x: pageWidth - margin - 80,
+            y: pageHeight - footerHeight + (footerHeight - 12) / 2,
+            width: 80,
+            height: 12
+        )
+        
+        dateText.draw(in: dateRect, withAttributes: copyrightAttributes)
     }
 } 
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct AccountDetailView: View {
     @Environment(\.dismiss) private var dismiss
@@ -326,12 +327,7 @@ struct AccountDetailView: View {
     
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
-        switch tag {
-        case "项目账户":
-            return .orange
-        default:
-            return .gray
-        }
+        return CustomTagManager.shared.tagColor(for: tag)
     }
 }
 

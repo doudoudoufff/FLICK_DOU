@@ -34,11 +34,11 @@ struct TransactionFormView: View {
     
     // 字段列表
     private var expenseTypes: [String] {
-        return TagManager.shared.getAllExpenseTypes()
+        return CustomTagManager.shared.getAllExpenseTypes()
     }
     
     private var groupTypes: [String] {
-        return TagManager.shared.getAllGroupTypes()
+        return CustomTagManager.shared.getAllGroupTypes()
     }
     
     init(project: Binding<Project>, projectStore: ProjectStore, transactionToEdit: Transaction?, isPresented: Binding<Bool>) {
@@ -354,15 +354,15 @@ struct TransactionFormView: View {
         
         if isExpenseType {
             // 添加费用类型
-            if !TagManager.shared.getAllExpenseTypes().contains(newTypeName) {
-                TagManager.shared.addExpenseType(newTypeName)
+            if !CustomTagManager.shared.getAllExpenseTypes().contains(newTypeName) {
+                CustomTagManager.shared.addExpenseType(newTypeName)
                 expenseType = newTypeName
             }
             showingExpenseTypeSheet = false
         } else {
             // 添加组别
-            if !TagManager.shared.getAllGroupTypes().contains(newTypeName) {
-                TagManager.shared.addGroupType(newTypeName)
+            if !CustomTagManager.shared.getAllGroupTypes().contains(newTypeName) {
+                CustomTagManager.shared.addGroupType(newTypeName)
                 group = newTypeName
             }
             showingGroupSheet = false

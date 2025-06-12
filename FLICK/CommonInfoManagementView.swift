@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct CommonInfoManagementView: View {
     // 信息类型选择（项目账户、公司账户、个人账户）
@@ -14,7 +15,12 @@ struct CommonInfoManagementView: View {
     @EnvironmentObject private var projectStore: ProjectStore
     
     // 标签选项
-    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他", "星标"]
+    var tagOptions: [String] {
+        var tags = CustomTagManager.shared.getAllInfoTags()
+        // 添加"星标"选项，它始终存在但不在用户可自定义标签中
+        tags.append("星标")
+        return tags
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -125,8 +131,14 @@ struct CommonInfoManagementView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddInfo = true }) {
-                    Image(systemName: "plus")
+                HStack {
+                    NavigationLink(destination: CommonInfoTagsSettingsView()) {
+                        Image(systemName: "tag")
+                    }
+                    
+                    Button(action: { showingAddInfo = true }) {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
@@ -373,17 +385,11 @@ struct ProjectAccountListView: View {
     
     // 将账户类型映射到标签分类
     private func mapAccountTypeToTag(_ accountType: String) -> String {
-        // 根据账户类型返回对应的标签
-        switch accountType {
-        case "银行账户":
-            return "银行账户"
-        case "发票":
-            return "发票"
-        case "地址":
-            return "地址"
-        case "常用供应商":
-            return "常用供应商"
-        default:
+        // 如果账户类型存在于标签列表中，则直接返回
+        let allTags = CustomTagManager.shared.getAllInfoTags()
+        if allTags.contains(accountType) {
+            return accountType
+        } else {
             return "其他"
         }
     }
@@ -741,33 +747,16 @@ struct ProjectAccountRow: View {
     
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
-        switch tag {
-        case "银行账户":
-            return .blue
-        case "发票":
-            return .green
-        case "地址":
-            return .purple
-        case "常用供应商":
-            return .orange
-        default:
-            return .gray
-        }
+        return CustomTagManager.shared.tagColor(for: tag)
     }
     
     // 将账户类型映射到标签分类
     private func mapAccountTypeToTag(_ accountType: String) -> String {
-        // 根据账户类型返回对应的标签
-        switch accountType {
-        case "银行账户":
-            return "银行账户"
-        case "发票":
-            return "发票"
-        case "地址":
-            return "地址"
-        case "常用供应商":
-            return "常用供应商"
-        default:
+        // 如果账户类型存在于标签列表中，则直接返回
+        let allTags = CustomTagManager.shared.getAllInfoTags()
+        if allTags.contains(accountType) {
+            return accountType
+        } else {
             return "其他"
         }
     }
@@ -1149,33 +1138,16 @@ struct ProjectAccountDetailView: View {
     
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
-        switch tag {
-        case "银行账户":
-            return .blue
-        case "发票":
-            return .green
-        case "地址":
-            return .purple
-        case "常用供应商":
-            return .orange
-        default:
-            return .gray
-        }
+        return CustomTagManager.shared.tagColor(for: tag)
     }
     
     // 将账户类型映射到标签分类
     private func mapAccountTypeToTag(_ accountType: String) -> String {
-        // 根据账户类型返回对应的标签
-        switch accountType {
-        case "银行账户":
-            return "银行账户"
-        case "发票":
-            return "发票"
-        case "地址":
-            return "地址"
-        case "常用供应商":
-            return "常用供应商"
-        default:
+        // 如果账户类型存在于标签列表中，则直接返回
+        let allTags = CustomTagManager.shared.getAllInfoTags()
+        if allTags.contains(accountType) {
+            return accountType
+        } else {
             return "其他"
         }
     }
@@ -1278,18 +1250,7 @@ struct CommonInfoRow: View {
     
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
-        switch tag {
-        case "银行账户":
-            return .blue
-        case "发票":
-            return .green
-        case "地址":
-            return .purple
-        case "常用供应商":
-            return .orange
-        default:
-            return .gray
-        }
+        return CustomTagManager.shared.tagColor(for: tag)
     }
 }
 
@@ -1658,18 +1619,7 @@ struct CommonInfoDetailView: View {
     
     // 根据标签返回不同颜色
     func tagColor(for tag: String) -> Color {
-        switch tag {
-        case "银行账户":
-            return .blue
-        case "发票":
-            return .green
-        case "地址":
-            return .purple
-        case "常用供应商":
-            return .orange
-        default:
-            return .gray
-        }
+        return CustomTagManager.shared.tagColor(for: tag)
     }
 }
 
@@ -1702,10 +1652,16 @@ struct UnifiedAddInfoView: View {
     @State private var notes = ""
     
     // 账户类型选项
-    let accountTypeOptions = ["项目账户", "银行账户", "发票", "地址", "常用供应商", "其他"]
+    var accountTypeOptions: [String] {
+        var options = ["项目账户"]
+        options.append(contentsOf: CustomTagManager.shared.getAllInfoTags())
+        return options
+    }
     
     // 标签选项
-    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他"]
+    var tagOptions: [String] {
+        return CustomTagManager.shared.getAllInfoTags()
+    }
     
     init(infoType: CommonInfoType, manager: CommonInfoManager) {
         self.manager = manager
@@ -1783,34 +1739,57 @@ struct UnifiedAddInfoView: View {
                     }) {
                         TextField("收款方名称", text: $accountName)
                         
-                        Picker("账户类型", selection: $accountType) {
-                            ForEach(accountTypeOptions, id: \.self) { type in
-                                Text(type).tag(type)
+                        // 替换账户类型Picker为滑动选择UI
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("账户类型")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                            }
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(accountTypeOptions, id: \.self) { option in
+                                        Button(action: {
+                                            accountType = option
+                                        }) {
+                                            Text(option)
+                                                .font(.system(size: 14))
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(accountType == option ? Color.accentColor : Color(.systemGray5))
+                                                .foregroundColor(accountType == option ? .white : .primary)
+                                                .cornerRadius(16)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 4)
                             }
                         }
-                    }
-                    
-                    // 银行信息
-                    Section(header: Text("银行信息（选填）")) {
-                        TextField("开户行（选填）", text: $bankName)
-                        TextField("支行（选填）", text: $bankBranch)
-                        TextField("账号（选填）", text: $bankAccount)
-                            .keyboardType(.numberPad)
-                        TextField("身份证号（选填）", text: $idNumber)
-                            .textInputAutocapitalization(.never)
-                    }
-                    
-                    // 联系方式
-                    Section(header: Text("联系方式（选填）")) {
-                        TextField("联系人（选填）", text: $contactName)
-                        TextField("联系电话（选填）", text: $contactPhone)
-                            .keyboardType(.phonePad)
-                    }
-                    
-                    // 备注
-                    Section(header: Text("备注（选填）")) {
-                        TextEditor(text: $notes)
-                            .frame(height: 100)
+                        
+                        // 银行信息
+                        Section(header: Text("银行信息（选填）")) {
+                            TextField("开户行（选填）", text: $bankName)
+                            TextField("支行（选填）", text: $bankBranch)
+                            TextField("账号（选填）", text: $bankAccount)
+                                .keyboardType(.numberPad)
+                            TextField("身份证号（选填）", text: $idNumber)
+                                .textInputAutocapitalization(.never)
+                        }
+                        
+                        // 联系方式
+                        Section(header: Text("联系方式（选填）")) {
+                            TextField("联系人（选填）", text: $contactName)
+                            TextField("联系电话（选填）", text: $contactPhone)
+                                .keyboardType(.phonePad)
+                        }
+                        
+                        // 备注
+                        Section(header: Text("备注（选填）")) {
+                            TextEditor(text: $notes)
+                                .frame(height: 100)
+                        }
                     }
                 }
             } else {
@@ -1818,9 +1797,32 @@ struct UnifiedAddInfoView: View {
                 Section(header: Text("基本信息")) {
                     TextField("标题", text: $title)
                     
-                    Picker("标签", selection: $tag) {
-                        ForEach(tagOptions, id: \.self) { option in
-                            Text(option).tag(option)
+                    // 替换Picker为滑动选择UI
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("标签")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(tagOptions, id: \.self) { option in
+                                    Button(action: {
+                                        tag = option
+                                    }) {
+                                        Text(option)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(tag == option ? Color.accentColor : Color(.systemGray5))
+                                            .foregroundColor(tag == option ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
                     }
                 }
@@ -2077,7 +2079,9 @@ struct CommonInfoEditView: View {
     @State private var selectedType: CommonInfoType
     
     // 标签选项
-    let tagOptions = ["银行账户", "发票", "地址", "常用供应商", "其他"]
+    var tagOptions: [String] {
+        return CustomTagManager.shared.getAllInfoTags()
+    }
     
     init(manager: CommonInfoManager, info: CommonInfoEntity) {
         self.manager = manager
@@ -2105,9 +2109,32 @@ struct CommonInfoEditView: View {
             Section(header: Text("基本信息")) {
                 TextField("标题", text: $title)
                 
-                Picker("标签", selection: $tag) {
-                    ForEach(tagOptions, id: \.self) { option in
-                        Text(option).tag(option)
+                // 替换Picker为滑动选择UI
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("标签")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(tagOptions, id: \.self) { option in
+                                Button(action: {
+                                    tag = option
+                                }) {
+                                    Text(option)
+                                        .font(.system(size: 14))
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(tag == option ? Color.accentColor : Color(.systemGray5))
+                                        .foregroundColor(tag == option ? .white : .primary)
+                                        .cornerRadius(16)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
             }

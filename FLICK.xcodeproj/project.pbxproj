@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0FDD604B2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */; };
+		0FDD604C2DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */; };
 		9E10368F2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368D2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift */; };
 		9E1036902DE5EB8200156AB4 /* VenueEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368E2DE5EB8200156AB4 /* VenueEntity+CoreDataProperties.swift */; };
 		9E1036912DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368C2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataProperties.swift */; };
@@ -50,6 +52,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TagEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TagEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		0FE011122D3F8916007A7B5B /* FLICK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FLICK.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FE011232D3F8918007A7B5B /* FLICKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FLICKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0FE0112D2D3F8918007A7B5B /* FLICKUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FLICKUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -137,6 +141,8 @@
 		0FE011092D3F8916007A7B5B = {
 			isa = PBXGroup;
 			children = (
+				0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */,
+				0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */,
 				9E10374E2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift */,
 				9E10374F2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift */,
 				9E10368B2DE5EB8200156AB4 /* VenueAttachmentEntity+CoreDataClass.swift */,
@@ -342,6 +348,8 @@
 				9EAAE6832D69F11800131C8A /* LocationPhotoEntity+CoreDataClass.swift in Sources */,
 				9EAAE6842D69F11800131C8A /* LocationEntity+CoreDataClass.swift in Sources */,
 				9EAAE6852D69F11800131C8A /* LocationEntity+CoreDataProperties.swift in Sources */,
+				0FDD604B2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift in Sources */,
+				0FDD604C2DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift in Sources */,
 				9EAAE6862D69F11800131C8A /* LocationPhotoEntity+CoreDataProperties.swift in Sources */,
 				9E10368F2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift in Sources */,
 				9E1036902DE5EB8200156AB4 /* VenueEntity+CoreDataProperties.swift in Sources */,

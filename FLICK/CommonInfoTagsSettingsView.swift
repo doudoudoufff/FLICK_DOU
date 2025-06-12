@@ -1,49 +1,8 @@
 import SwiftUI
 
-struct CustomTagsSettingsView: View {
+struct CommonInfoTagsSettingsView: View {
     @StateObject private var tagManager = CustomTagManager.shared
-    
-    enum TagUIType {
-        case expenseType, groupType
-        
-        var title: String {
-            switch self {
-            case .expenseType: return "费用类型"
-            case .groupType: return "组别"
-            }
-        }
-        
-        var description: String {
-            switch self {
-            case .expenseType: return "设置交易记录中可选择的费用类型"
-            case .groupType: return "设置交易记录中可选择的组别"
-            }
-        }
-        
-        var iconName: String {
-            switch self {
-            case .expenseType: return "dollarsign.circle.fill"
-            case .groupType: return "person.2.fill"
-            }
-        }
-        
-        var iconColor: Color {
-            switch self {
-            case .expenseType: return .blue
-            case .groupType: return .green
-            }
-        }
-        
-        var tagType: TagCategoryType {
-            switch self {
-            case .expenseType: return .expenseType
-            case .groupType: return .groupType
-            }
-        }
-    }
-    
-    @State private var selectedTagType: TagUIType = .expenseType
-    @State private var tags: [TagEntity] = []
+    @State private var infoTags: [TagEntity] = []
     @State private var newTagName: String = ""
     @State private var showingResetAlert: Bool = false
     @State private var showingDeleteAlert: Bool = false
@@ -54,20 +13,11 @@ struct CustomTagsSettingsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 分段控制器 - 选择管理费用类型或组别
-            Picker("标签类型", selection: $selectedTagType) {
-                Text("费用类型").tag(TagUIType.expenseType)
-                Text("组别").tag(TagUIType.groupType)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.top)
-            
             // 标签说明
             HStack {
-                Image(systemName: selectedTagType.iconName)
-                    .foregroundColor(selectedTagType.iconColor)
-                Text(selectedTagType.description)
+                Image(systemName: "tag.fill")
+                    .foregroundColor(.blue)
+                Text("设置常用信息中可选择的标签类型")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 Spacer()
@@ -82,7 +32,7 @@ struct CustomTagsSettingsView: View {
                 Section {
                     // 新增标签输入框
                     HStack {
-                        TextField("添加新\(selectedTagType.title)", text: $newTagName)
+                        TextField("添加新标签", text: $newTagName)
                         
                         Button(action: {
                             addNewTag()
@@ -93,19 +43,19 @@ struct CustomTagsSettingsView: View {
                         .disabled(newTagName.isEmpty)
                     }
                 } header: {
-                    Text("新增\(selectedTagType.title)")
+                    Text("新增标签")
                 }
                 
                 Section {
-                    ForEach(tags, id: \.id) { tag in
+                    ForEach(infoTags, id: \.id) { tag in
                         tagRow(for: tag)
                     }
                     .onDelete { indexSet in
-                        deleteTags(at: indexSet)
+                        deleteInfoTags(at: indexSet)
                     }
                 } header: {
                     HStack {
-                        Text("已有\(selectedTagType.title)")
+                        Text("已有标签")
                         Spacer()
                         Button("重置为默认") {
                             showingResetAlert = true
@@ -117,7 +67,7 @@ struct CustomTagsSettingsView: View {
             }
             .listStyle(.insetGrouped)
         }
-        .navigationTitle("自定义标签管理")
+        .navigationTitle("自定义常用信息标签")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -135,22 +85,18 @@ struct CustomTagsSettingsView: View {
                 resetTags()
             }
         } message: {
-            Text("确定要将\(selectedTagType.title)重置为默认值吗？这将删除所有自定义标签。")
+            Text("确定要将标签重置为默认值吗？这将删除所有自定义标签。")
         }
         .alert("确认删除", isPresented: $showingDeleteAlert) {
             Button("取消", role: .cancel) {}
             Button("删除", role: .destructive) {
                 if !tagToDelete.isEmpty {
-                    tagManager.removeTag(name: tagToDelete, type: selectedTagType.tagType)
+                    tagManager.removeInfoTag(tagToDelete)
                     refreshData()
                 }
             }
         } message: {
-            Text("确定要删除\"\(tagToDelete)\"吗？这可能会影响已使用该标签的交易记录。")
-        }
-        .onChange(of: selectedTagType) { _ in
-            // 切换标签类型时刷新数据
-            refreshData()
+            Text("确定要删除\"\(tagToDelete)\"吗？这可能会影响已使用该标签的常用信息。")
         }
         .onAppear {
             refreshData()
@@ -198,7 +144,7 @@ struct CustomTagsSettingsView: View {
                 
                 Button("保存") {
                     if let name = tag.name {
-                        tagManager.updateTagColor(name: name, type: selectedTagType.tagType, color: selectedColor)
+                        tagManager.updateTagColor(name: name, type: .infoType, color: selectedColor)
                         refreshData()
                         showingColorPicker = false
                     }
@@ -224,18 +170,19 @@ struct CustomTagsSettingsView: View {
     private func addNewTag() {
         guard !newTagName.isEmpty else { return }
         
-        _ = tagManager.addTag(name: newTagName, type: selectedTagType.tagType)
+        tagManager.addInfoTag(newTagName)
         refreshData()
+        
         newTagName = ""
     }
     
     // 删除标签
-    private func deleteTags(at offsets: IndexSet) {
+    private func deleteInfoTags(at offsets: IndexSet) {
         offsets.forEach { index in
-            if index < tags.count {
-                let tag = tags[index]
+            if index < infoTags.count {
+                let tag = infoTags[index]
                 if let name = tag.name, !tag.isDefault {
-                    tagManager.removeTag(name: name, type: selectedTagType.tagType)
+                    tagManager.removeInfoTag(name)
                 }
             }
         }
@@ -244,18 +191,18 @@ struct CustomTagsSettingsView: View {
     
     // 重置标签
     private func resetTags() {
-        tagManager.resetTags(forType: selectedTagType.tagType)
+        tagManager.resetInfoTags()
         refreshData()
     }
     
     // 刷新数据
     private func refreshData() {
-        tags = tagManager.getAllTags(ofType: selectedTagType.tagType)
+        infoTags = tagManager.getAllTags(ofType: .infoType)
     }
 }
 
 #Preview {
     NavigationStack {
-        CustomTagsSettingsView()
+        CommonInfoTagsSettingsView()
     }
 } 

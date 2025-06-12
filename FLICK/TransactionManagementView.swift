@@ -41,14 +41,14 @@ struct TransactionManagementView: View {
     // 添加筛选区域展开/折叠状态
     @State private var isFilterExpanded: Bool = false
     
-    // 获取所有费用类型列表
-    private var allExpenseTypes: [String] {
-        return TagManager.shared.getAllExpenseTypes()
+    // 获取所有可用的费用类型
+    var expenseTypes: [String] {
+        return CustomTagManager.shared.getAllExpenseTypes()
     }
     
-    // 获取所有组别列表
-    private var allGroups: [String] {
-        return TagManager.shared.getAllGroupTypes()
+    // 获取所有可用的组别
+    var groupTypes: [String] {
+        return CustomTagManager.shared.getAllGroupTypes()
     }
     
     // 按费用类型统计
@@ -271,7 +271,7 @@ struct TransactionManagementView: View {
                                             .cornerRadius(16)
                                     }
                                     
-                                    ForEach(allExpenseTypes, id: \.self) { type in
+                                    ForEach(expenseTypes, id: \.self) { type in
                                         FilterButton(
                                             text: type,
                                             amount: formatAmount(expenseByType[type, default: 0]),
@@ -310,7 +310,7 @@ struct TransactionManagementView: View {
                                             .cornerRadius(16)
                                     }
                                     
-                                    ForEach(allGroups, id: \.self) { group in
+                                    ForEach(groupTypes, id: \.self) { group in
                                         FilterButton(
                                             text: group,
                                             amount: formatAmount(expenseByGroup[group, default: 0]),

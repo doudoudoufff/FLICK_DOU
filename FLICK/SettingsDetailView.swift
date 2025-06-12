@@ -171,16 +171,27 @@ struct SettingsDetailView: View {
                         CustomTagsSettingsView()
                     } label: {
                         Label {
-                            Text("自定义标签管理")
+                            Text("费用标签管理")
                         } icon: {
                             Image(systemName: "tag.fill")
                                 .foregroundStyle(.orange)
                         }
                     }
+                    
+                    NavigationLink {
+                        CommonInfoTagsSettingsView()
+                    } label: {
+                        Label {
+                            Text("常用信息标签管理")
+                        } icon: {
+                            Image(systemName: "tag.circle.fill")
+                                .foregroundStyle(.blue)
+                        }
+                    }
                 } header: {
-                    Text("账户与费用")
+                    Text("标签自定义")
                 } footer: {
-                    Text("管理自定义的费用类型和组别标签")
+                    Text("管理自定义的费用、组别和常用信息标签")
                 }
                 
                 // 外观设置
@@ -771,23 +782,25 @@ struct CreditsView: View {
             
             // 测试团队
             Section(header: Text("测试团队")) {
-                ContributorRow(name: "Zhang Jingrou", role: "测试")
+                ContributorRow(name: "Zhang Jingrou", role: "Friend")
                 
-                ContributorRow(name: "17", role: "测试")
+                ContributorRow(name: "17", role: "Friend")
 
-                ContributorRow(name: "Wei Wenjun", role: "测试")
+                ContributorRow(name: "Wei Wenjun", role: "Project Manager")
                 
-                ContributorRow(name: "Wang Xiaotiao", role: "测试")
+                ContributorRow(name: "Wang Xiaotiao", role: "Test")
                 
-                ContributorRow(name: "Yang Xinlei", role: "测试")
+                ContributorRow(name: "Yang Xinlei", role: "Test")
                 
-                ContributorRow(name: "Sun Shangqian", role: "测试")
+                ContributorRow(name: "Sun Shangqian", role: "Friend")
                 
-                ContributorRow(name: "Wu Hanzhen", role: "测试")
+                ContributorRow(name: "Wu Hanzhen", role: "Friend")
                 
-                ContributorRow(name: "Zhu Keen", role: "测试")
+                ContributorRow(name: "Zhu Keen", role: "Friend")
                 
-                ContributorRow(name: "Li XinYue", role: "测试")
+                ContributorRow(name: "Li XinYue", role: "Friend")
+
+                ContributorRow(name: "Jenny Yang", role: "Friend")
             }
         }
         .listStyle(InsetGroupedListStyle())

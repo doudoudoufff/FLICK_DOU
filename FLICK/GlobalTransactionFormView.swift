@@ -44,13 +44,14 @@ struct GlobalTransactionFormView: View {
         }
     }
     
-    // 费用类型和组别
-    private var expenseTypes: [String] {
-        return TagManager.shared.getAllExpenseTypes()
+    // 获取所有费用类型选项
+    var expenseTypeOptions: [String] {
+        return CustomTagManager.shared.getAllExpenseTypes()
     }
     
-    private var groupTypes: [String] {
-        return TagManager.shared.getAllGroupTypes()
+    // 获取所有组别选项
+    var groupOptions: [String] {
+        return CustomTagManager.shared.getAllGroupTypes()
     }
     
     var body: some View {
@@ -244,7 +245,7 @@ struct GlobalTransactionFormView: View {
                         
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                ForEach(groupTypes, id: \.self) { group in
+                                ForEach(groupOptions, id: \.self) { group in
                                     Button(action: {
                                         self.group = group
                                     }) {
@@ -345,8 +346,8 @@ struct GlobalTransactionFormView: View {
     
     // 切换项目时更新费用类型和组别
     private func updateExpenseTypeAndGroup() {
-        let availableTypes = TagManager.shared.getAllExpenseTypes()
-        let availableGroups = TagManager.shared.getAllGroupTypes()
+        let availableTypes = CustomTagManager.shared.getAllExpenseTypes()
+        let availableGroups = CustomTagManager.shared.getAllGroupTypes()
             
         // 确保选择的费用类型和组别在可选范围内
         if !availableTypes.contains(expenseType) {
@@ -392,15 +393,15 @@ struct GlobalTransactionFormView: View {
         
         if isExpenseType {
             // 添加费用类型
-            if !TagManager.shared.getAllExpenseTypes().contains(newTypeName) {
-                TagManager.shared.addExpenseType(newTypeName)
+            if !CustomTagManager.shared.getAllExpenseTypes().contains(newTypeName) {
+                CustomTagManager.shared.addExpenseType(newTypeName)
                 expenseType = newTypeName
             }
             showingExpenseTypeSheet = false
         } else {
             // 添加组别
-            if !TagManager.shared.getAllGroupTypes().contains(newTypeName) {
-                TagManager.shared.addGroupType(newTypeName)
+            if !CustomTagManager.shared.getAllGroupTypes().contains(newTypeName) {
+                CustomTagManager.shared.addGroupType(newTypeName)
                 group = newTypeName
             }
             showingGroupSheet = false

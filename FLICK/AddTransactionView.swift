@@ -46,14 +46,14 @@ struct AddTransactionView: View {
     @State private var showingAlert: Bool = false
     @State private var alertMessage: String = ""
     
-    // 获取可用的费用类型列表
-    private var availableExpenseTypes: [String] {
-        return TagManager.shared.getAllExpenseTypes()
+    // 获取所有费用类型选项
+    var expenseTypeOptions: [String] {
+        return CustomTagManager.shared.getAllExpenseTypes()
     }
     
-    // 获取可用的组别列表
-    private var availableGroups: [String] {
-        return TagManager.shared.getAllGroupTypes()
+    // 获取所有组别选项
+    var groupOptions: [String] {
+        return CustomTagManager.shared.getAllGroupTypes()
     }
     
     var body: some View {
@@ -180,7 +180,7 @@ struct AddTransactionView: View {
             }) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(["未分类"] + availableExpenseTypes, id: \.self) { type in
+                        ForEach(["未分类"] + expenseTypeOptions, id: \.self) { type in
                             Button(action: {
                                 expenseType = type
                             }) {
@@ -205,8 +205,8 @@ struct AddTransactionView: View {
                 }
                 
                 Button("添加") {
-                    if !newExpenseType.isEmpty && !availableExpenseTypes.contains(newExpenseType) {
-                        TagManager.shared.addExpenseType(newExpenseType)
+                    if !newExpenseType.isEmpty && !expenseTypeOptions.contains(newExpenseType) {
+                        CustomTagManager.shared.addExpenseType(newExpenseType)
                         expenseType = newExpenseType
                     }
                     newExpenseType = ""
@@ -225,7 +225,7 @@ struct AddTransactionView: View {
             }) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(["未分类"] + availableGroups, id: \.self) { group in
+                        ForEach(["未分类"] + groupOptions, id: \.self) { group in
                             Button(action: {
                                 self.group = group
                             }) {
@@ -250,8 +250,8 @@ struct AddTransactionView: View {
                 }
                 
                 Button("添加") {
-                    if !newGroup.isEmpty && !availableGroups.contains(newGroup) {
-                        TagManager.shared.addGroupType(newGroup)
+                    if !newGroup.isEmpty && !groupOptions.contains(newGroup) {
+                        CustomTagManager.shared.addGroupType(newGroup)
                         group = newGroup
                     }
                     newGroup = ""

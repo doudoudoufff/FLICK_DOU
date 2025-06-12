@@ -44,17 +44,4 @@ public class VenueEntity: NSManagedObject {
         let set = attachments as? Set<VenueAttachmentEntity> ?? []
         return set.sorted { $0.dateAdded ?? Date() < $1.dateAdded ?? Date() }
     }
-    
-    // 场地类型枚举
-    enum VenueType: String, CaseIterable {
-        case studio = "摄影棚"
-        case realLocation = "实景棚"
-        case outdoor = "户外场地"
-        case office = "办公场所"
-        case other = "其他"
-        
-        var localizedName: String {
-            rawValue
-        }
-    }
 }

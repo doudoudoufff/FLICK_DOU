@@ -16,7 +16,7 @@ struct AddEditVenueView: View {
     @State private var contactPhone: String = ""
     @State private var address: String = ""
     @State private var notes: String = ""
-    @State private var selectedType: String = VenueEntity.VenueType.studio.rawValue
+    @State private var selectedType: String = "摄影棚" // 默认类型
     
     // 图片和PDF附件
     @State private var selectedImage: UIImage?
@@ -43,13 +43,27 @@ struct AddEditVenueView: View {
             Form {
                 // 场地类型选择（顶部）
                 Section(header: Text("场地类型")) {
-                    Picker("", selection: $selectedType) {
-                        ForEach(venueManager.venueTypeOptions, id: \.self) { type in
-                            Text(type).tag(type)
+                    // 替换Picker为滑动选择UI
+                    VStack(alignment: .leading, spacing: 10) {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(venueManager.venueTypeOptions, id: \.self) { type in
+                                    Button(action: {
+                                        selectedType = type
+                                    }) {
+                                        Text(type)
+                                            .font(.system(size: 14))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(selectedType == type ? Color.accentColor : Color(.systemGray5))
+                                            .foregroundColor(selectedType == type ? .white : .primary)
+                                            .cornerRadius(16)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
                     }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .padding(.vertical, 4)
                 }
                 
                 // 基本信息

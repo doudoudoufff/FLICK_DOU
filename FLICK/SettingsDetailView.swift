@@ -10,7 +10,6 @@ struct SettingsDetailView: View {
     @State private var isSyncing = false
     @AppStorage("enableCloudSync") private var enableCloudSync = false
     @AppStorage("lastSyncTime") private var lastSyncTime: Double = 0
-    @AppStorage("appTheme") private var appTheme: String = "system"
     
     // 引导相关的状态
     @AppStorage("hasSeenFeatureTutorial") private var hasSeenFeatureTutorial = true
@@ -179,7 +178,7 @@ struct SettingsDetailView: View {
                     }
                     
                     NavigationLink {
-                        CommonInfoTagsSettingsView()
+                        CustomTagsSettingsView(initialTagType: .infoType)
                     } label: {
                         Label {
                             Text("常用信息标签管理")
@@ -188,42 +187,21 @@ struct SettingsDetailView: View {
                                 .foregroundStyle(.blue)
                         }
                     }
+                    
+                    NavigationLink {
+                        CustomTagsSettingsView(initialTagType: .venueType)
+                    } label: {
+                        Label {
+                            Text("场地类型管理")
+                        } icon: {
+                            Image(systemName: "building.2.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
                 } header: {
                     Text("标签自定义")
                 } footer: {
                     Text("管理自定义的费用、组别和常用信息标签")
-                }
-                
-                // 外观设置
-                Section {
-                    Picker("主题", selection: $appTheme) {
-                        Label {
-                            Text("跟随系统")
-                        } icon: {
-                            Image(systemName: "circle.lefthalf.filled")
-                                .foregroundStyle(.blue)
-                        }
-                        .tag("system")
-                        
-                        Label {
-                            Text("浅色模式")
-                        } icon: {
-                            Image(systemName: "sun.max.fill")
-                                .foregroundStyle(.yellow)
-                        }
-                        .tag("light")
-                        
-                        Label {
-                            Text("深色模式")
-                        } icon: {
-                            Image(systemName: "moon.fill")
-                                .foregroundStyle(.indigo)
-                        }
-                        .tag("dark")
-                    }
-                    .pickerStyle(.navigationLink)
-                } header: {
-                    Text("外观")
                 }
                 
                 // 通知设置
@@ -362,16 +340,17 @@ struct SettingsDetailView: View {
         // @AppStorage("hasSeenXXXTutorial") = false
     }
     
-    // 主题设置
+    // 主题设置 - 修改为始终返回浅色模式
     private var colorScheme: ColorScheme? {
-        switch appTheme {
-        case "light":
-            return .light
-        case "dark":
-            return .dark
-        default:
-            return nil // 跟随系统
-        }
+        return .light // 强制使用浅色模式
+        // switch appTheme {
+        // case "light":
+        //     return .light
+        // case "dark":
+        //     return .dark
+        // default:
+        //     return nil // 跟随系统
+        // }
     }
     
     // 添加格式化文件大小的函数
@@ -830,10 +809,13 @@ struct ContributorRow: View {
 // 关于应用视图
 struct AboutAppView: View {
     @Environment(\.openURL) private var openURL
-    @Environment(\.colorScheme) private var colorScheme
+    // 移除对系统颜色方案的依赖
+    // @Environment(\.colorScheme) private var colorScheme
     
     private var isDarkMode: Bool {
-        return colorScheme == .dark
+        // 强制返回false，表示始终使用浅色模式样式
+        return false
+        // return colorScheme == .dark
     }
     
     var body: some View {
@@ -854,9 +836,10 @@ struct AboutAppView: View {
                         // 添加纹理效果
                         Rectangle()
                             .fill(
-                                isDarkMode 
-                                ? Color.white.opacity(0.03) 
-                                : Color.black.opacity(0.05)
+                                // isDarkMode 
+                                // ? Color.white.opacity(0.03) 
+                                // : 
+                                Color.black.opacity(0.05)
                             )
                             .blendMode(.overlay)
                     )

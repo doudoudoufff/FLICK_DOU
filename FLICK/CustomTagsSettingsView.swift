@@ -4,12 +4,14 @@ struct CustomTagsSettingsView: View {
     @StateObject private var tagManager = CustomTagManager.shared
     
     enum TagUIType {
-        case expenseType, groupType
+        case expenseType, groupType, infoType, venueType
         
         var title: String {
             switch self {
             case .expenseType: return "费用类型"
             case .groupType: return "组别"
+            case .infoType: return "常用信息标签"
+            case .venueType: return "场地类型"
             }
         }
         
@@ -17,6 +19,8 @@ struct CustomTagsSettingsView: View {
             switch self {
             case .expenseType: return "设置交易记录中可选择的费用类型"
             case .groupType: return "设置交易记录中可选择的组别"
+            case .infoType: return "设置常用信息中可选择的标签类型"
+            case .venueType: return "设置场地管理中可选择的场地类型"
             }
         }
         
@@ -24,6 +28,8 @@ struct CustomTagsSettingsView: View {
             switch self {
             case .expenseType: return "dollarsign.circle.fill"
             case .groupType: return "person.2.fill"
+            case .infoType: return "tag.fill"
+            case .venueType: return "building.2.fill"
             }
         }
         
@@ -31,6 +37,8 @@ struct CustomTagsSettingsView: View {
             switch self {
             case .expenseType: return .blue
             case .groupType: return .green
+            case .infoType: return .blue
+            case .venueType: return .orange
             }
         }
         
@@ -38,11 +46,13 @@ struct CustomTagsSettingsView: View {
             switch self {
             case .expenseType: return .expenseType
             case .groupType: return .groupType
+            case .infoType: return .infoType
+            case .venueType: return .venueType
             }
         }
     }
     
-    @State private var selectedTagType: TagUIType = .expenseType
+    @State private var selectedTagType: TagUIType
     @State private var tags: [TagEntity] = []
     @State private var newTagName: String = ""
     @State private var showingResetAlert: Bool = false
@@ -52,14 +62,34 @@ struct CustomTagsSettingsView: View {
     @State private var selectedTag: TagEntity? = nil
     @State private var selectedColor: Color = .blue
     
+    // 添加初始化函数，支持指定初始标签类型
+    init(initialTagType: TagUIType = .expenseType) {
+        _selectedTagType = State(initialValue: initialTagType)
+    }
+    
+    // 获取导航标题
+    private var navigationTitle: String {
+        "自定义\(selectedTagType.title)"
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            // 分段控制器 - 选择管理费用类型或组别
-            Picker("标签类型", selection: $selectedTagType) {
-                Text("费用类型").tag(TagUIType.expenseType)
-                Text("组别").tag(TagUIType.groupType)
+            // 标签类型选择器
+            HStack {
+                Text("标签类型：")
+                    .font(.headline)
+                
+                Picker("选择标签类型", selection: $selectedTagType) {
+                    Text("费用类型").tag(TagUIType.expenseType)
+                    Text("组别").tag(TagUIType.groupType)
+                    Text("常用信息标签").tag(TagUIType.infoType)
+                    Text("场地类型").tag(TagUIType.venueType)
+                }
+                .pickerStyle(.menu)
+                .tint(selectedTagType.iconColor)
+                
+                Spacer()
             }
-            .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.top)
             
@@ -117,7 +147,7 @@ struct CustomTagsSettingsView: View {
             }
             .listStyle(.insetGrouped)
         }
-        .navigationTitle("自定义标签管理")
+        .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

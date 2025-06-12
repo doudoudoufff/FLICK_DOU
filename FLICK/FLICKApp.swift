@@ -51,6 +51,7 @@ struct FLICKApp: App {
             ContentView(context: self.persistenceController.container.viewContext)
                 .environmentObject(projectStore)
                 .environmentObject(notificationHandler)
+                .preferredColorScheme(.light)
                 .onAppear {
                     // 应用启动后，异步请求通知权限，避免阻塞UI
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {

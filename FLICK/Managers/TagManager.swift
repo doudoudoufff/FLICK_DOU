@@ -8,12 +8,14 @@ enum TagCategoryType: String, CaseIterable {
     case expenseType = "expense"   // 费用类型标签
     case groupType = "group"       // 组别标签
     case infoType = "info"         // 常用信息标签
+    case venueType = "venue"       // 场地类型标签
     
     var displayName: String {
         switch self {
         case .expenseType: return "费用类型"
         case .groupType: return "组别"
         case .infoType: return "常用信息"
+        case .venueType: return "场地类型"
         }
     }
     
@@ -25,6 +27,8 @@ enum TagCategoryType: String, CaseIterable {
             return ["制片组", "摄影组", "灯光组", "场务组", "道具组", "演员组", "美术组", "后期组", "导演组", "其他"]
         case .infoType:
             return ["银行账户", "发票", "地址", "常用供应商", "其他"]
+        case .venueType:
+            return ["摄影棚", "实景棚", "户外场地", "办公场所", "其他"]
         }
     }
 }

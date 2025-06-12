@@ -219,6 +219,6 @@ class VenueManager: ObservableObject {
     
     // 返回所有场地类型选项
     var venueTypeOptions: [String] {
-        VenueEntity.VenueType.allCases.map { $0.rawValue }
+        return CustomTagManager.shared.getAllTagNames(ofType: .venueType)
     }
 } 

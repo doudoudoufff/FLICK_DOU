@@ -107,6 +107,7 @@ struct VenueListView: View {
             }
         }
         .navigationTitle("场地管理")
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "搜索场地名称或地址")
         .onChange(of: searchText) { newValue in
             venueManager.searchText = newValue
@@ -114,20 +115,16 @@ struct VenueListView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showingAddVenue = true
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 10, weight: .bold))
-                        Text("添加场地")
-                            .font(.system(size: 12, weight: .medium))
+                HStack {
+                    NavigationLink(destination: CustomTagsSettingsView(initialTagType: .venueType)) {
+                        Image(systemName: "tag")
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(14)
+                    
+                    Button(action: {
+                        showingAddVenue = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }

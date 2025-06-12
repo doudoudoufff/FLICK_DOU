@@ -132,7 +132,7 @@ struct CommonInfoManagementView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
-                    NavigationLink(destination: CommonInfoTagsSettingsView()) {
+                    NavigationLink(destination: CustomTagsSettingsView(initialTagType: .infoType)) {
                         Image(systemName: "tag")
                     }
                     

@@ -26,6 +26,7 @@ extension TransactionEntity {
     @NSManaged public var name: String?
     @NSManaged public var paymentMethod: String?
     @NSManaged public var type: String?
+    @NSManaged public var projectPhase: String?
     @NSManaged public var attachments: NSSet?
     @NSManaged public var project: ProjectEntity?
 

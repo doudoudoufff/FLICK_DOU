@@ -35,6 +35,7 @@ struct EditTransactionView: View {
     @State private var description: String = ""
     @State private var expenseType: String = "未分类"
     @State private var group: String = "未分类"
+    @State private var projectPhase: ProjectPhase = .other
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var attachmentData: Data? = nil
     @State private var showingImagePreview: Bool = false
@@ -270,6 +271,32 @@ struct EditTransactionView: View {
                 }
             }
             
+            // 项目阶段选择
+            Section("项目阶段") {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(ProjectPhase.allCases, id: \.self) { phase in
+                            Button(action: {
+                                projectPhase = phase
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: phase.icon)
+                                        .font(.system(size: 12))
+                                    Text(phase.rawValue)
+                                        .font(.system(size: 14))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(projectPhase == phase ? phase.color : Color(.systemGray5))
+                                .foregroundColor(projectPhase == phase ? .white : .primary)
+                                .cornerRadius(16)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+            
             // 描述和附件
             Section("其他信息（选填）") {
                 // 描述
@@ -370,6 +397,7 @@ struct EditTransactionView: View {
         description = transaction.transactionDescription
         expenseType = transaction.expenseType
         group = transaction.group
+        projectPhase = transaction.projectPhase
         attachmentData = transaction.attachmentData
     }
     
@@ -416,6 +444,7 @@ struct EditTransactionView: View {
             expenseType: expenseType,
             group: group,
             paymentMethod: "现金", // 默认使用现金
+            projectPhase: projectPhase,
             attachmentData: attachmentData,
             isVerified: false
         )

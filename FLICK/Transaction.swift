@@ -1,6 +1,32 @@
 import Foundation
 import SwiftUI
 
+// 项目阶段枚举
+enum ProjectPhase: String, Codable, CaseIterable {
+    case preProduction = "筹备前期"
+    case production = "拍摄中期"
+    case postProduction = "制作后期"
+    case other = "其他"
+    
+    var color: Color {
+        switch self {
+        case .preProduction: return .blue
+        case .production: return .orange
+        case .postProduction: return .purple
+        case .other: return .gray
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .preProduction: return "doc.text"
+        case .production: return "camera"
+        case .postProduction: return "scissors"
+        case .other: return "ellipsis.circle"
+        }
+    }
+}
+
 // 交易记录模型
 struct Transaction: Identifiable, Codable, Hashable {
     var id: UUID
@@ -12,6 +38,7 @@ struct Transaction: Identifiable, Codable, Hashable {
     var group: String             // 组别（选填）
     var paymentMethod: String     // 支付方式（选填）
     var transactionType: TransactionType  // 交易类型
+    var projectPhase: ProjectPhase // 项目阶段（新增）
     var attachmentData: Data?     // 附件数据（选填）
     var isVerified: Bool          // 是否已核实
     
@@ -24,6 +51,7 @@ struct Transaction: Identifiable, Codable, Hashable {
          group: String = "未分类",
          paymentMethod: String = "现金",
          transactionType: TransactionType = .expense,
+         projectPhase: ProjectPhase = .other,
          attachmentData: Data? = nil,
          isVerified: Bool = false) {
         self.id = id
@@ -35,6 +63,7 @@ struct Transaction: Identifiable, Codable, Hashable {
         self.group = group
         self.paymentMethod = paymentMethod
         self.transactionType = transactionType
+        self.projectPhase = projectPhase
         self.attachmentData = attachmentData
         self.isVerified = isVerified
     }

@@ -126,6 +126,44 @@ struct FeatureView: View {
                                 ScoutingCameraView()
                                     .getFrame($scoutingFrame)
                             }
+                            
+                            // 第三排：财务分析
+                            HStack(spacing: 20) {
+                                NavigationLink(destination: GlobalFinanceAnalysisView().environmentObject(projectStore)) {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "chart.bar.doc.horizontal.fill")
+                                            .font(.system(size: 24, weight: .bold))
+                                            .foregroundColor(.blue)
+                                        
+                                        Text("财务分析")
+                                            .font(.headline)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primary)
+                                        
+                                        Text("项目成本分析、预算对比、阶段统计")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .multilineTextAlignment(.center)
+                                            .lineLimit(2)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 140)
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color(.systemBackground).opacity(0.95))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Spacer()
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
                         .padding(.horizontal)
                     }
@@ -648,6 +686,8 @@ struct BaiBaiCompactCard: View {
         }
     }
 }
+
+
 
 #Preview {
     FeatureView()

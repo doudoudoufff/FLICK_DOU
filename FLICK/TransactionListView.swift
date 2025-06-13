@@ -226,6 +226,7 @@ struct TransactionSummaryCard: View {
     @ObservedObject var projectStore: ProjectStore
     @State private var showingBudgetEditor = false
     @State private var isAddingTransaction = false
+    @State private var showingPhaseAnalysis = false
     
     // 计算总收入
     private var totalIncome: Double {
@@ -262,6 +263,14 @@ struct TransactionSummaryCard: View {
                     .font(.headline)
                 
                 Spacer()
+                
+                // 阶段分析按钮
+                Button(action: { showingPhaseAnalysis = true }) {
+                    Label("阶段", systemImage: "chart.pie")
+                        .labelStyle(.iconOnly)
+                        .foregroundColor(.accentColor)
+                }
+                .buttonStyle(.plain)
                 
                 NavigationLink(destination: TransactionManagementView(project: $project).environmentObject(projectStore)) {
                     Label("管理", systemImage: "chevron.right")
@@ -368,6 +377,48 @@ struct TransactionSummaryCard: View {
                     color: balance >= 0 ? .blue : .red
                 )
             }
+            
+            // 项目阶段快速统计
+            if !project.transactions.isEmpty {
+                Divider()
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("阶段支出分布")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                    
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
+                        ForEach(ProjectPhase.allCases, id: \.self) { phase in
+                            let phaseExpense = project.transactions
+                                .filter { $0.transactionType == .expense && $0.projectPhase == phase }
+                                .reduce(0) { $0 + abs($1.amount) }
+                            
+                            if phaseExpense > 0 {
+                                HStack(spacing: 6) {
+                                    Image(systemName: phase.icon)
+                                        .foregroundColor(phase.color)
+                                        .font(.caption)
+                                    
+                                    Text(phase.rawValue)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    
+                                    Spacer()
+                                    
+                                    Text(formatAmount(phaseExpense))
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(phase.color.opacity(0.1))
+                                .cornerRadius(6)
+                            }
+                        }
+                    }
+                }
+            }
         }
         .padding()
         .background(Color(.systemBackground))
@@ -384,6 +435,9 @@ struct TransactionSummaryCard: View {
         }
         .sheet(isPresented: $showingBudgetEditor) {
             BudgetEditorView(project: $project, projectStore: projectStore)
+        }
+        .sheet(isPresented: $showingPhaseAnalysis) {
+            ProjectPhaseAnalysisView(project: project)
         }
     }
 }

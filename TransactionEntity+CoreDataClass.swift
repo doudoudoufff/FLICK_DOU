@@ -28,6 +28,7 @@ public class TransactionEntity: NSManagedObject {
             group: self.group ?? "未分类",
             paymentMethod: self.paymentMethod ?? "现金",
             transactionType: TransactionType(rawValue: type) ?? .expense,
+            projectPhase: ProjectPhase(rawValue: self.projectPhase ?? "其他") ?? .other,
             isVerified: self.isVerified
         )
         

@@ -2095,6 +2095,7 @@ class ProjectStore: ObservableObject {
         transactionEntity.group = transaction.group
         transactionEntity.paymentMethod = transaction.paymentMethod
         transactionEntity.type = transaction.transactionType.rawValue
+        transactionEntity.projectPhase = transaction.projectPhase.rawValue
         transactionEntity.isVerified = transaction.isVerified
         
         // 如果有附件，创建附件实体
@@ -2191,6 +2192,7 @@ class ProjectStore: ObservableObject {
                 transactionEntity.group = transaction.group
                 transactionEntity.paymentMethod = transaction.paymentMethod
                 transactionEntity.type = transaction.transactionType.rawValue
+                transactionEntity.projectPhase = transaction.projectPhase.rawValue
                 transactionEntity.isVerified = transaction.isVerified
                 
                 // 处理附件更新

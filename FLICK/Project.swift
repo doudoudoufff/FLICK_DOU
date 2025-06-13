@@ -54,6 +54,21 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         case cancelled = "取消"
         
         public static var all: Self { .preProduction }  // 用于过滤器
+        
+        var color: Color {
+            switch self {
+            case .preProduction:
+                return .blue
+            case .production:
+                return .orange
+            case .postProduction:
+                return .purple
+            case .completed:
+                return .green
+            case .cancelled:
+                return .red
+            }
+        }
     }
     
     init(

@@ -41,6 +41,9 @@ struct TransactionManagementView: View {
     // 添加筛选区域展开/折叠状态
     @State private var isFilterExpanded: Bool = false
     
+    // 添加一个状态变量来强制重新计算filteredTransactions
+    @State private var forceRecalculate = false
+    
     // 获取所有可用的费用类型
     var expenseTypes: [String] {
         return CustomTagManager.shared.getAllExpenseTypes()
@@ -80,6 +83,9 @@ struct TransactionManagementView: View {
     
     // 过滤交易记录
     var filteredTransactions: [Transaction] {
+        // 使用forceRecalculate来强制重新计算，但不实际使用它
+        _ = forceRecalculate
+        
         var result = project.transactions
         
         // 搜索过滤
@@ -146,6 +152,43 @@ struct TransactionManagementView: View {
         formatter.numberStyle = .currency
         formatter.locale = Locale(identifier: "zh_CN")
         return formatter.string(from: NSNumber(value: amount)) ?? "¥\(amount)"
+    }
+    
+    // 强制刷新视图
+    private func forceRefresh() {
+        print("强制刷新账目管理视图")
+        DispatchQueue.main.async {
+            // 生成新的UUID强制刷新整个视图
+            self.refreshID = UUID()
+            
+            // 切换forceRecalculate的值，强制重新计算filteredTransactions
+            self.forceRecalculate.toggle()
+            
+            // 显式打印当前交易记录数量，用于调试
+            print("当前交易记录数量: \(self.project.transactions.count)")
+            print("过滤后交易记录数量: \(self.filteredTransactions.count)")
+            
+            // 打印所有交易记录，用于调试
+            print("当前所有交易记录:")
+            for (index, transaction) in self.project.transactions.enumerated() {
+                print("[\(index)] \(transaction.name): \(transaction.amount)")
+            }
+            
+            print("过滤后交易记录:")
+            for (index, transaction) in self.filteredTransactions.enumerated() {
+                print("[\(index)] \(transaction.name): \(transaction.amount)")
+            }
+            
+            // 打印日期范围，用于调试
+            print("当前日期范围: \(self.selectedDateRange.start) 到 \(self.selectedDateRange.end)")
+            
+            // 检查每个交易记录是否在日期范围内
+            print("检查交易记录是否在日期范围内:")
+            for (index, transaction) in self.project.transactions.enumerated() {
+                let isInRange = transaction.date >= self.selectedDateRange.start && transaction.date <= self.selectedDateRange.end
+                print("[\(index)] \(transaction.name): \(transaction.date) - 在范围内: \(isInRange)")
+            }
+        }
     }
     
     var body: some View {
@@ -466,6 +509,7 @@ struct TransactionManagementView: View {
                 .listStyle(PlainListStyle())
             }
         }
+        .id(refreshID)
         .navigationTitle("账目管理")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -489,13 +533,16 @@ struct TransactionManagementView: View {
             NavigationView {
                 AddTransactionView(
                     project: $project,
-                    isPresented: $showingAddTransaction
+                    isPresented: $showingAddTransaction,
+                    onTransactionAdded: forceRefresh
                 )
                 .environmentObject(projectStore)
             }
             .onDisappear {
                 // 当添加交易记录sheet关闭时刷新视图
-                refreshID = UUID()
+                // 确保日期范围包含所有交易记录
+                resetDateRangeIfNeeded()
+                forceRefresh()
             }
         }
         .sheet(item: $editingTransaction) { transaction in
@@ -509,13 +556,16 @@ struct TransactionManagementView: View {
                     isPresented: Binding(
                         get: { editingTransaction != nil },
                         set: { if !$0 { editingTransaction = nil } }
-                    )
+                    ),
+                    onTransactionUpdated: forceRefresh
                 )
                 .environmentObject(projectStore)
             }
             .onDisappear {
                 // 当编辑交易记录sheet关闭时刷新视图
-                refreshID = UUID()
+                // 确保日期范围包含所有交易记录
+                resetDateRangeIfNeeded()
+                forceRefresh()
             }
         }
         .sheet(isPresented: $showingFilterSheet) {
@@ -560,16 +610,70 @@ struct TransactionManagementView: View {
                 if let transaction = transactionToDelete {
                     projectStore.deleteTransaction(from: project, transactionId: transaction.id)
                     transactionToDelete = nil
-                    refreshID = UUID()
+                    forceRefresh()
                 }
             }
         } message: {
             Text("确定要删除这条交易记录吗？此操作无法撤销。")
         }
-        .id(refreshID)
-        // 直接监听project.transactions变化，这是关键
         .onChange(of: project.transactions) { _ in
-            refreshID = UUID()
+            forceRefresh()
+        }
+        .onAppear {
+            // 在视图出现时刷新
+            forceRefresh()
+            
+            // 添加通知监听
+            setupNotificationObservers()
+        }
+        .onDisappear {
+            // 移除通知监听
+            NotificationCenter.default.removeObserver(self)
+        }
+    }
+    
+    // 设置通知观察者
+    private func setupNotificationObservers() {
+        // 添加刷新账目列表的观察者
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("TransactionAdded"),
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            print("收到TransactionAdded通知，刷新账目列表")
+            print("收到通知时交易记录数量: \(self.project.transactions.count)")
+            self.forceRefresh()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("TransactionUpdated"),
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            print("收到TransactionUpdated通知，刷新账目列表")
+            self.forceRefresh()
+        }
+    }
+    
+    // 重置日期范围以包含所有交易记录
+    private func resetDateRangeIfNeeded() {
+        // 找到最早和最晚的交易记录日期
+        if let earliestDate = project.transactions.map({ $0.date }).min(),
+           let latestDate = project.transactions.map({ $0.date }).max() {
+            
+            // 如果有交易记录不在当前日期范围内，则重置日期范围
+            if earliestDate < selectedDateRange.start || latestDate > selectedDateRange.end {
+                print("重置日期范围以包含所有交易记录")
+                print("原日期范围: \(selectedDateRange.start) 到 \(selectedDateRange.end)")
+                
+                // 扩展日期范围，确保包含所有交易记录
+                let calendar = Calendar.current
+                let newStartDate = calendar.date(byAdding: .day, value: -1, to: earliestDate) ?? earliestDate
+                let newEndDate = calendar.date(byAdding: .day, value: 1, to: latestDate) ?? latestDate
+                
+                selectedDateRange = DateInterval(start: newStartDate, end: newEndDate)
+                print("新日期范围: \(selectedDateRange.start) 到 \(selectedDateRange.end)")
+            }
         }
     }
 }

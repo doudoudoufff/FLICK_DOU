@@ -6,6 +6,7 @@ struct AddTransactionView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @Binding var project: Project
     @Binding var isPresented: Bool
+    var onTransactionAdded: (() -> Void)? = nil
     
     // 交易类型
     enum TransactionType {
@@ -388,28 +389,46 @@ struct AddTransactionView: View {
             isVerified: false
         )
         
+        print("开始添加交易记录: \(transaction.name), 金额: \(transaction.amount)")
+        print("交易记录日期: \(transaction.date)")
+        print("添加前交易记录数量: \(project.transactions.count)")
+        
         // 使用ProjectStore的addTransaction方法添加到项目
         projectStore.addTransaction(to: project, transaction: transaction)
+        
+        // 不要在这里重复添加，让ProjectStore负责添加记录
+        // project.transactions.append(transaction)
+        
+        print("添加后交易记录数量: \(project.transactions.count)")
+        
+        // 立即发送通知，强制刷新所有相关视图
+        NotificationCenter.default.post(
+            name: NSNotification.Name("TransactionAdded"),
+            object: nil,
+            userInfo: ["projectId": project.id, "transactionId": transaction.id]
+        )
+        
+        print("已发送TransactionAdded通知")
+        
+        // 立即调用回调函数进行刷新
+        self.onTransactionAdded?()
+        print("已调用onTransactionAdded回调")
         
         // 确保数据更新后视图能正确刷新
         DispatchQueue.main.async {
             // 通知ProjectStore发生变化
             projectStore.objectWillChange.send()
+            print("已通知ProjectStore更新")
             
             // 通知Project对象发生变化
             project.objectWillChange.send()
+            print("已通知Project对象更新")
             
             // 延迟一小段时间以显示保存中状态
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isSaving = false
                 isPresented = false
-                
-                // 发送通知，告知交易记录已添加
-                NotificationCenter.default.post(
-                    name: NSNotification.Name("TransactionAdded"),
-                    object: nil,
-                    userInfo: ["projectId": project.id, "transactionId": transaction.id]
-                )
+                print("表单已关闭")
             }
         }
     }

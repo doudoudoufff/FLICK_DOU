@@ -7,6 +7,7 @@ struct EditTransactionView: View {
     @Binding var transaction: Transaction
     @Binding var project: Project
     @Binding var isPresented: Bool
+    var onTransactionUpdated: (() -> Void)? = nil
     
     // 交易类型
     enum TransactionType {
@@ -422,6 +423,13 @@ struct EditTransactionView: View {
         // 使用ProjectStore的updateTransaction方法更新项目中的交易记录
         projectStore.updateTransaction(in: project, transaction: updatedTransaction)
         
+        // 立即发送通知，强制刷新所有相关视图
+        NotificationCenter.default.post(
+            name: NSNotification.Name("TransactionUpdated"),
+            object: nil,
+            userInfo: ["projectId": project.id, "transactionId": updatedTransaction.id]
+        )
+        
         // 确保数据更新后视图能正确刷新
         DispatchQueue.main.async {
             // 通知ProjectStore发生变化
@@ -430,17 +438,13 @@ struct EditTransactionView: View {
             // 通知Project对象发生变化
             project.objectWillChange.send()
             
+            // 调用回调函数进行刷新
+            self.onTransactionUpdated?()
+            
             // 延迟一小段时间以显示保存中状态
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isSaving = false
                 isPresented = false
-                
-                // 发送通知，告知交易记录已更新
-                NotificationCenter.default.post(
-                    name: NSNotification.Name("TransactionUpdated"),
-                    object: nil,
-                    userInfo: ["projectId": project.id, "transactionId": transaction.id]
-                )
             }
         }
     }

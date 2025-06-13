@@ -2076,6 +2076,7 @@ class ProjectStore: ObservableObject {
         print("========== 添加交易记录 ==========")
         print("项目: \(project.name)")
         print("交易: \(transaction.name), 金额: \(transaction.amount)")
+        print("当前交易记录数量: \(project.transactions.count)")
         
         // 获取项目实体
         guard let projectEntity = fetchProjectEntity(id: project.id) else {
@@ -2117,9 +2118,36 @@ class ProjectStore: ObservableObject {
             if let index = projects.firstIndex(where: { $0.id == project.id }) {
                 // 直接添加到内存中的交易记录数组
                 projects[index].transactions.append(transaction)
+                print("✓ 已添加到内存中的项目数据，现有交易记录: \(projects[index].transactions.count)")
+                
+                // 同时更新传入的project对象
+                project.transactions.append(transaction)
+                print("✓ 已更新传入的project对象，现有交易记录: \(project.transactions.count)")
+                
                 // 通知视图更新
                 objectWillChange.send()
-                print("✓ 内存数据更新成功")
+                projects[index].objectWillChange.send()
+                project.objectWillChange.send()
+                print("✓ 已发送内存数据更新通知")
+            } else {
+                print("❌ 未找到对应的项目，无法更新内存数据")
+            }
+            
+            // 立即发送通知，以便所有相关视图都能刷新
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TransactionAdded"),
+                    object: nil,
+                    userInfo: ["projectId": project.id, "transactionId": transaction.id]
+                )
+                print("✓ 已发送交易记录添加通知")
+                
+                // 不再发送ProjectDataChanged通知，避免重新加载所有项目数据
+                // NotificationCenter.default.post(
+                //     name: NSNotification.Name("ProjectDataChanged"),
+                //     object: nil
+                // )
+                // print("✓ 已发送项目数据变更通知")
             }
             
             // 触发 CoreData 同步
@@ -2195,6 +2223,16 @@ class ProjectStore: ObservableObject {
                 
                 try context.save()
                 print("✓ CoreData 保存成功")
+                
+                // 立即发送通知，以便所有相关视图都能刷新
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("TransactionUpdated"),
+                        object: nil,
+                        userInfo: ["projectId": project.id, "transactionId": transaction.id]
+                    )
+                    print("✓ 已发送交易记录更新通知")
+                }
                 
                 // 触发 CoreData 同步
                 PersistenceController.shared.save()

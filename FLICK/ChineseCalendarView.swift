@@ -94,6 +94,9 @@ struct ChineseCalendarView: View {
     @State private var taskEndDate: Date? // 保存任务结束日期
     @EnvironmentObject private var projectStore: ProjectStore // 添加项目存储环境对象
     
+    // 用于全局控制任务展开/折叠状态
+    @State private var globalExpandedDayIndex: Int? = nil
+    
     // 使用 StateObject 管理拖拽状态
     @StateObject private var calendarState = ChineseCalendarState()
     
@@ -179,6 +182,17 @@ struct ChineseCalendarView: View {
                     }
                 }
         )
+        // 添加全局点击手势，用于折叠已展开的任务
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // 点击日历任何地方，折叠已展开的任务
+            if globalExpandedDayIndex != nil {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    globalExpandedDayIndex = nil
+                }
+            }
+        }
+        .environmentObject(ViewModelContainer(expandedDayIndex: $globalExpandedDayIndex)) // 传递全局展开状态
     }
     
     private var scrollableCalendarView: some View {
@@ -526,6 +540,9 @@ struct ChineseCalendarView: View {
         let onDragChanged: (Date, CGSize) -> Void // 拖拽变化回调，使用 CGSize
         let onDragEnd: (Date) -> Void // 拖拽结束回调
         
+        // 获取环境对象
+        @EnvironmentObject private var viewModelContainer: ViewModelContainer
+        
         var body: some View {
             VStack(spacing: 6) {
                 // 月份标题
@@ -555,11 +572,15 @@ struct ChineseCalendarView: View {
                         onDragChanged: onDragChanged,
                         onDragEnd: onDragEnd
                     )
+                    .id("week_\(weekIndex)_\(month.timeIntervalSince1970)")
+                    .animation(.easeInOut(duration: 0.2), value: getTasksForCalendar())
+                    .environmentObject(viewModelContainer) // 传递环境对象
                 }
             }
             .padding(.horizontal, 2) // 减少水平边距，让月视图更宽
             .padding(.bottom, 10)
             .background(Color.white)
+            .animation(.easeInOut(duration: 0.2), value: getTasksForCalendar().count)
         }
         
         private var monthString: String {
@@ -618,6 +639,9 @@ struct ChineseCalendarView: View {
     
         // 检查任务是否在本周内
         private func isTaskInWeek(_ task: ProjectTask, week: [Date?]) -> Bool {
+            // 如果任务已完成，直接返回 false
+            if task.isCompleted { return false }
+            
             let weekDates = week.compactMap { $0 }
             guard let weekStart = weekDates.first,
                   let weekEnd = weekDates.last else {
@@ -635,10 +659,15 @@ struct ChineseCalendarView: View {
     // 检查当前月是否有任务
     private func hasTasksInCurrentMonth() -> Bool {
         let tasks = getTasksForCalendar()
+        // 只考虑未完成的任务
+        let activeTasks = tasks.filter { !$0.isCompleted }
+        
+        if activeTasks.isEmpty { return false }
+        
         let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: currentMonth))!
         let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
         
-        return tasks.contains { task in
+        return activeTasks.contains { task in
             let taskEndDay = calendar.startOfDay(for: task.dueDate)
             let taskStartDay = calendar.startOfDay(for: task.startDate)
             
@@ -710,6 +739,9 @@ struct WeekView: View {
     // 从父组件传递拖拽状态
     @EnvironmentObject private var calendarState: ChineseCalendarState
     
+    // 获取环境对象
+    @EnvironmentObject private var viewModelContainer: ViewModelContainer
+    
     var body: some View {
         VStack(spacing: 0) {
             // 日期行
@@ -744,13 +776,12 @@ struct WeekView: View {
             ZStack(alignment: .top) {
                 // 原有任务
                 if !tasks.isEmpty {
-                    // 计算所有任务的高度需求
-                    let allTasksCount = min(4, tasks.count) // 最多显示4个任务
-                    let dynamicHeight = CGFloat(16 + allTasksCount * 20)
+                    // 动态计算任务区域高度
+                    let taskAreaHeight = calculateTaskAreaHeight()
                     
                     Rectangle()
                         .fill(Color.clear)
-                        .frame(height: dynamicHeight)
+                        .frame(height: taskAreaHeight)
                     
                     WeekTasksView(
                         week: week,
@@ -758,6 +789,7 @@ struct WeekView: View {
                         calendar: calendar
                     )
                     .padding(.top, 6)
+                    .environmentObject(viewModelContainer) // 传递环境对象
                 }
                 
                 // 拖拽中的临时任务条
@@ -781,6 +813,46 @@ struct WeekView: View {
         }
         .padding(.horizontal, 2) // 减少水平边距，让内容更宽
         .padding(.vertical, 3) // 统一上下间距
+    }
+    
+    // 计算任务区域的动态高度
+    private func calculateTaskAreaHeight() -> CGFloat {
+        // 过滤掉已完成的任务
+        let activeTasks = tasks.filter { !$0.isCompleted }
+        
+        // 如果没有未完成的任务，返回最小高度
+        if activeTasks.isEmpty { return 16 }
+        
+        // 统计单天任务数量
+        var maxTasksPerDay = 0
+        var dayTaskCounts: [Int: Int] = [:]
+        
+        // 计算每天的任务数量
+        for (i, date) in week.compactMap({ $0 }).enumerated() {
+            let dateDay = calendar.startOfDay(for: date)
+            let tasksOnDay = activeTasks.filter { task in
+                let taskStartDay = calendar.startOfDay(for: task.startDate)
+                let taskEndDay = calendar.startOfDay(for: task.dueDate)
+                return taskStartDay <= dateDay && taskEndDay >= dateDay
+            }
+            
+            dayTaskCounts[i] = tasksOnDay.count
+            maxTasksPerDay = max(maxTasksPerDay, tasksOnDay.count)
+        }
+        
+        // 跨天任务数量
+        let crossDayTasksCount = activeTasks.filter { !calendar.isDate($0.startDate, inSameDayAs: $0.dueDate) }.count
+        
+        // 每个任务占20像素高度，初始基础高度为16像素
+        // 单天任务最多显示3个，超过则显示"更多"指示器，所以最多需要4个位置（3个任务+1个更多指示器）
+        let maxDisplayTasks = min(4, maxTasksPerDay)
+        let baseHeight: CGFloat = 16
+        let taskHeight: CGFloat = 20
+        
+        // 计算总高度：基础高度 + 任务高度 * 最大任务数
+        let totalHeight = baseHeight + taskHeight * CGFloat(max(crossDayTasksCount, maxDisplayTasks))
+        
+        return totalHeight
     }
     
     // 检查是否应该在这一周显示拖拽任务条
@@ -814,11 +886,23 @@ struct WeekView: View {
     }
 }
 
+// 共享展开状态的容器
+class ViewModelContainer: ObservableObject {
+    @Binding var expandedDayIndex: Int?
+    
+    init(expandedDayIndex: Binding<Int?>) {
+        self._expandedDayIndex = expandedDayIndex
+    }
+}
+
 // 周任务时间线视图
 struct WeekTasksView: View {
     let week: [Date?]
     let tasks: [ProjectTask]
     let calendar: Calendar
+    
+    // 使用环境对象获取全局展开状态
+    @EnvironmentObject private var viewModelContainer: ViewModelContainer
     
     // 不同颜色系的淡色版本 - 稍微浓一些
     private let taskColors: [Color] = [
@@ -840,17 +924,45 @@ struct WeekTasksView: View {
         Color(hex: "8b5a3d") ?? .brown      // 深橙色/棕色
     ]
     
+    // 设置每天最多显示的任务数
+    private let maxTasksPerDay = 2
+    
     var body: some View {
         GeometryReader { geometry in
-            ForEach(tasksToDisplay(in: geometry)) { taskData in
-                TaskTimelineView(
-                    task: taskData.task,
-                    startPosition: taskData.startPosition,
-                    length: taskData.length,
-                    color: taskData.color,
-                    textColor: taskData.textColor,
-                    offsetIndex: taskData.offsetIndex
-                )
+            ZStack {
+                // 显示任务
+                ForEach(tasksToDisplay(in: geometry), id: \.id) { taskData in
+                    if taskData.isMoreIndicator {
+                        // 显示"更多"指示器
+                        MoreTasksIndicator(
+                            count: taskData.moreCount,
+                            position: taskData.startPosition,
+                            onTap: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    // 点击时切换展开状态
+                                    viewModelContainer.expandedDayIndex = viewModelContainer.expandedDayIndex == taskData.dayIndex ? nil : taskData.dayIndex
+                                }
+                            }
+                        )
+                        .contentShape(Rectangle())
+                        // 阻止点击事件冒泡，这样点击"更多"指示器时不会触发全局点击事件
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                viewModelContainer.expandedDayIndex = viewModelContainer.expandedDayIndex == taskData.dayIndex ? nil : taskData.dayIndex
+                            }
+                        }
+                    } else {
+                        // 显示普通任务
+                        TaskTimelineView(
+                            task: taskData.task,
+                            startPosition: taskData.startPosition,
+                            length: taskData.length,
+                            color: taskData.color,
+                            textColor: taskData.textColor,
+                            offsetIndex: taskData.offsetIndex
+                        )
+                    }
+                }
             }
         }
     }
@@ -864,6 +976,37 @@ struct WeekTasksView: View {
         let color: Color
         let textColor: Color
         let offsetIndex: Int
+        let isMoreIndicator: Bool
+        let moreCount: Int
+        let dayIndex: Int
+        
+        // 为普通任务初始化
+        init(task: ProjectTask, startPosition: CGPoint, length: Int, color: Color, textColor: Color, offsetIndex: Int) {
+            self.id = task.id
+            self.task = task
+            self.startPosition = startPosition
+            self.length = length
+            self.color = color
+            self.textColor = textColor
+            self.offsetIndex = offsetIndex
+            self.isMoreIndicator = false
+            self.moreCount = 0
+            self.dayIndex = 0
+        }
+        
+        // 为"更多"指示器初始化
+        init(id: UUID = UUID(), position: CGPoint, moreCount: Int, dayIndex: Int) {
+            self.id = id
+            self.task = ProjectTask(title: "", assignee: "", dueDate: Date())
+            self.startPosition = position
+            self.length = 1
+            self.color = .gray
+            self.textColor = .white
+            self.offsetIndex = 0
+            self.isMoreIndicator = true
+            self.moreCount = moreCount
+            self.dayIndex = dayIndex
+        }
     }
     
     // 计算要显示的任务
@@ -873,15 +1016,43 @@ struct WeekTasksView: View {
         
         if weekDates.isEmpty { return [] }
         
+        // 过滤掉已完成的任务
+        let activeTasks = tasks.filter { !$0.isCompleted }
+        
+        // 如果没有未完成的任务，直接返回空数组
+        if activeTasks.isEmpty { return [] }
+        
+        // 按日期分组任务
+        var tasksByDay: [Int: [ProjectTask]] = [:]
+        
+        // 首先，将任务按天分组
+        for task in activeTasks {
+            for (i, date) in weekDates.enumerated() {
+                let taskStartDay = calendar.startOfDay(for: task.startDate)
+                let taskEndDay = calendar.startOfDay(for: task.dueDate)
+                let dateDay = calendar.startOfDay(for: date)
+                
+                // 如果任务在这一天内或跨越这一天
+                if (taskStartDay <= dateDay && taskEndDay >= dateDay) {
+                    if tasksByDay[i] == nil {
+                        tasksByDay[i] = []
+                    }
+                    tasksByDay[i]?.append(task)
+                }
+            }
+        }
+        
         // 记录每行已被占用的位置
         var usedOffsets: Set<Int> = []
         
         let cellWidth = geometry.size.width / 7
         
-        // 处理所有任务，包括单天任务
-        let allTasks = tasks.sorted(by: { $0.durationDays > $1.durationDays })
+        // 处理跨天任务
+        let crossDayTasks = activeTasks.filter { !calendar.isDate($0.startDate, inSameDayAs: $0.dueDate) }
+                                .sorted(by: { $0.durationDays > $1.durationDays })
         
-        for (index, task) in allTasks.enumerated() {
+        // 先处理跨天任务
+        for (index, task) in crossDayTasks.enumerated() {
             // 计算任务在本周的开始和结束日期
             let taskStartDay = calendar.startOfDay(for: task.startDate)
             let taskEndDay = calendar.startOfDay(for: task.dueDate)
@@ -931,7 +1102,6 @@ struct WeekTasksView: View {
             usedOffsets.insert(offsetIndex)
             
             let taskData = TaskDisplayData(
-                id: task.id,
                 task: task,
                 startPosition: CGPoint(x: CGFloat(startIndex) * cellWidth, y: CGFloat(12 + offsetIndex * 20)),
                 length: length,
@@ -943,7 +1113,99 @@ struct WeekTasksView: View {
             result.append(taskData)
         }
         
+        // 然后处理单天任务，并应用折叠逻辑
+        for (dayIndex, dayTasks) in tasksByDay {
+            // 过滤出单天任务
+            let singleDayTasks = dayTasks.filter { calendar.isDate($0.startDate, inSameDayAs: $0.dueDate) }
+            
+            // 确定要显示的任务数量
+            let tasksToShow = viewModelContainer.expandedDayIndex == dayIndex ? singleDayTasks : Array(singleDayTasks.prefix(maxTasksPerDay))
+            
+            // 处理要显示的单天任务
+            for (index, task) in tasksToShow.enumerated() {
+                // 找一个未占用的垂直偏移
+                var offsetIndex = 0
+                while usedOffsets.contains(offsetIndex) {
+                    offsetIndex += 1
+                }
+                usedOffsets.insert(offsetIndex)
+                
+                let taskData = TaskDisplayData(
+                    task: task,
+                    startPosition: CGPoint(x: CGFloat(dayIndex) * cellWidth, y: CGFloat(12 + offsetIndex * 20)),
+                    length: 1,
+                    color: taskColors[(index + crossDayTasks.count) % taskColors.count],
+                    textColor: textColors[(index + crossDayTasks.count) % textColors.count],
+                    offsetIndex: offsetIndex
+                )
+                
+                result.append(taskData)
+            }
+            
+            // 如果有更多任务且该天未展开，添加"更多"指示器
+            if singleDayTasks.count > maxTasksPerDay && viewModelContainer.expandedDayIndex != dayIndex {
+                let moreCount = singleDayTasks.count - maxTasksPerDay
+                
+                // 找一个未占用的垂直偏移
+                var offsetIndex = 0
+                while usedOffsets.contains(offsetIndex) {
+                    offsetIndex += 1
+                }
+                usedOffsets.insert(offsetIndex)
+                
+                // 创建"更多"指示器
+                let moreIndicator = TaskDisplayData(
+                    position: CGPoint(x: CGFloat(dayIndex) * cellWidth, y: CGFloat(12 + offsetIndex * 20)),
+                    moreCount: moreCount,
+                    dayIndex: dayIndex
+                )
+                
+                result.append(moreIndicator)
+            }
+        }
+        
         return result
+    }
+}
+
+// "更多"任务指示器视图
+struct MoreTasksIndicator: View {
+    let count: Int
+    let position: CGPoint
+    let onTap: () -> Void
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let cellWidth = geometry.size.width / 7
+            
+            Button(action: onTap) {
+                ZStack {
+                    // 背景
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: cellWidth * 0.9, height: 18)
+                    
+                    // 文本
+                    HStack(spacing: 2) {
+                        Image(systemName: "ellipsis.circle.fill")
+                            .font(.system(size: 8))
+                            .foregroundColor(.gray)
+                        
+                        Text("更多\(count)项")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
+            .buttonStyle(PlainButtonStyle())
+            .position(
+                x: position.x + cellWidth / 2,
+                y: position.y
+            )
+            // 阻止事件冒泡
+            .contentShape(Rectangle())
+            .allowsHitTesting(true)
+        }
     }
 }
 

@@ -3,6 +3,7 @@ import PhotosUI
 import MapKit
 import PDFKit
 import CoreData
+import AVFoundation
 
 // MARK: - 视图模式
 enum ViewMode {
@@ -28,87 +29,186 @@ struct LocationDetailView: View {
     @State private var showingCopiedAlert = false
     @State private var copiedMessage = ""
     
+    // 照片添加相关状态
+    @State private var showingCamera = false
+    @State private var showingPhotosPicker = false
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var showingCameraAlert = false
+    @State private var cameraErrorMessage = ""
+    @State private var isUploading = false
+    @State private var uploadProgress: Float = 0.0
+    @State private var processedItems = 0
+    @State private var totalItems = 0
+    
     // 获取当前场地的所有照片
     private var locationPhotos: [(Location, LocationPhoto)] {
         return location.photos.map { (location, $0) }
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // 主要信息卡片
-                mainInfoCard
-                
-                // 照片部分卡片
-                photoSectionCard
-                
-                Spacer(minLength: 20)
+        ZStack {
+            // 主内容
+            ScrollView {
+                VStack(spacing: 20) {
+                    // 主要信息卡片
+                    mainInfoCard
+                    
+                    // 照片部分卡片
+                    photoSectionCard
+                    
+                    Spacer(minLength: 20)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(location.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button {
-                        showingEditView = true
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle(location.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button {
+                            showingEditView = true
+                        } label: {
+                            Label("编辑场地", systemImage: "pencil")
+                        }
+                        
+                        Button {
+                            prepareAndShowPDFReport()
+                        } label: {
+                            Label("生成报告", systemImage: "doc.text")
+                        }
+                        
+                        Divider()
+                        
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("删除场地", systemImage: "trash")
+                        }
                     } label: {
-                        Label("编辑场地", systemImage: "pencil")
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundColor(projectColor)
                     }
-                    
-                    Button {
-                        prepareAndShowPDFReport()
-                    } label: {
-                        Label("生成报告", systemImage: "doc.text")
-                    }
-                    
-                    Divider()
-                    
-                    Button(role: .destructive) {
-                        showDeleteConfirmation = true
-                    } label: {
-                        Label("删除场地", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .foregroundColor(projectColor)
                 }
             }
-        }
-        .sheet(isPresented: $showingEditView) {
-            NavigationStack {
-                EditLocationView(
-                    location: location,
-                    projectStore: projectStore,
-                    project: project
-                )
+            .sheet(isPresented: $showingEditView) {
+                NavigationStack {
+                    EditLocationView(
+                        location: location,
+                        projectStore: projectStore,
+                        project: project
+                    )
+                }
             }
-        }
-        .sheet(isPresented: $showingPDFReport) {
-            if let pdfData = reportPDFData {
-                PDFPreviewView(pdfData: pdfData, title: "\(project.name) - \(location.name) 场景报告")
+            .sheet(isPresented: $showingPDFReport) {
+                if let pdfData = reportPDFData {
+                    PDFPreviewView(pdfData: pdfData, title: "\(project.name) - \(location.name) 场景报告")
+                }
             }
-        }
-        .sheet(isPresented: $showingMap) {
-            if let coordinate = location.coordinate {
-                LocationMapView(location: location)
+            .sheet(isPresented: $showingMap) {
+                if let coordinate = location.coordinate {
+                    LocationMapView(location: location)
+                }
             }
-        }
-        .alert("已复制", isPresented: $showingCopiedAlert) {
-            Button("确定", role: .cancel) { }
-        } message: {
-            Text(copiedMessage)
-        }
-        .alert("确认删除场地", isPresented: $showDeleteConfirmation) {
-            Button("取消", role: .cancel) {}
-            Button("删除", role: .destructive) {
-                deleteLocation()
+            .alert("已复制", isPresented: $showingCopiedAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text(copiedMessage)
             }
-        } message: {
-            Text("确定要删除\"\(location.name)\"场地吗？此操作将删除所有相关照片，且无法撤销。")
+            .alert("确认删除场地", isPresented: $showDeleteConfirmation) {
+                Button("取消", role: .cancel) {}
+                Button("删除", role: .destructive) {
+                    deleteLocation()
+                }
+            } message: {
+                Text("确定要删除\"\(location.name)\"场地吗？此操作将删除所有相关照片，且无法撤销。")
+            }
+            .alert("相机错误", isPresented: $showingCameraAlert) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text(cameraErrorMessage)
+            }
+            .fullScreenCover(isPresented: $showingCamera) {
+                CameraView(projectStore: projectStore, project: project, location: location)
+            }
+            .photosPicker(
+                isPresented: $showingPhotosPicker,
+                selection: $selectedPhotos,
+                matching: .images
+            )
+            .onChange(of: selectedPhotos) { _, items in
+                Task {
+                    // 显示进度条
+                    totalItems = items.count
+                    processedItems = 0
+                    isUploading = totalItems > 0
+                    uploadProgress = 0.0
+                    
+                    // 批量处理照片
+                    if totalItems > 0 {
+                        // 创建一个临时数组存储处理好的照片，避免多次更新CoreData
+                        var processedPhotos: [LocationPhoto] = []
+                        
+                        for (index, item) in items.enumerated() {
+                            if let data = try? await item.loadTransferable(type: Data.self),
+                               let uiImage = UIImage(data: data) {
+                                // 修正图片方向
+                                let correctedImage = fixImageOrientation(uiImage)
+                                // 调整图片大小，降低内存占用
+                                let resizedImage = resizeImage(correctedImage, targetSize: 1200)
+                                let photo = LocationPhoto(image: resizedImage)
+                                processedPhotos.append(photo)
+                                
+                                // 更新进度
+                                processedItems = index + 1
+                                uploadProgress = Float(processedItems) / Float(totalItems)
+                                
+                                // 每处理10张或者是最后一批时保存到CoreData
+                                if processedPhotos.count >= 10 || index == items.count - 1 {
+                                    // 批量添加到CoreData
+                                    await projectStore.addPhotos(processedPhotos, to: location, in: project)
+                                    processedPhotos.removeAll()
+                                }
+                            }
+                        }
+                        
+                        // 完成上传
+                        isUploading = false
+                    }
+                    
+                    selectedPhotos.removeAll()
+                }
+            }
+            
+            // 悬浮拍照和相册按钮
+            if !isUploading && !isGeneratingPDF {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 20) {
+                        Spacer()
+                        Button(action: { checkCameraPermissionAndShow() }) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 64, height: 64)
+                                .background(projectColor)
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                        }
+                        Button(action: { showingPhotosPicker = true }) {
+                            Image(systemName: "photo.fill")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 64, height: 64)
+                                .background(projectColor)
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                        }
+                    }
+                    .padding([.trailing, .bottom], 24)
+                }
+            }
         }
         .overlay {
             if isGeneratingPDF {
@@ -135,6 +235,33 @@ struct LocationDetailView: View {
                     .background(Color(.systemBackground).opacity(0.8))
                     .cornerRadius(15)
                     .shadow(radius: 10)
+                }
+            } else if isUploading {
+                // 批量上传进度条
+                VStack {
+                    Spacer()
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("正在处理照片")
+                                .font(.headline)
+                            Spacer()
+                            Text("\(processedItems)/\(totalItems)")
+                                .font(.subheadline)
+                        }
+                        
+                        ProgressView(value: uploadProgress)
+                            .progressViewStyle(LinearProgressViewStyle())
+                            .tint(projectColor)
+                        
+                        Text("处理大量照片可能需要一些时间，请耐心等待...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+                    .padding()
                 }
             }
         }
@@ -354,7 +481,7 @@ struct LocationDetailView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    Text("在编辑模式下可以添加场地照片")
+                    Text("点击右下角按钮添加照片")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -511,6 +638,81 @@ struct LocationDetailView: View {
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])
+    }
+    
+    // MARK: - 照片添加相关方法
+    
+    // 检查相机权限并显示相机
+    private func checkCameraPermissionAndShow() {
+        // 首先检查相机硬件是否可用
+        if !UIImagePickerController.isSourceTypeAvailable(.camera) {
+            cameraErrorMessage = "相机不可用或无法访问"
+            showingCameraAlert = true
+            return
+        }
+        
+        // 检查相机权限状态
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            // 已授权，可以显示相机
+            showingCamera = true
+        case .notDetermined:
+            // 尚未请求权限，请求权限
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self.showingCamera = true
+                    } else {
+                        self.cameraErrorMessage = "需要相机权限才能拍摄照片"
+                        self.showingCameraAlert = true
+                    }
+                }
+            }
+        case .denied, .restricted:
+            // 权限被拒绝或受限
+            cameraErrorMessage = "需要相机权限才能拍摄照片，请在设置中允许访问相机"
+            showingCameraAlert = true
+        @unknown default:
+            cameraErrorMessage = "无法访问相机"
+            showingCameraAlert = true
+        }
+    }
+    
+    // 调整图片大小
+    private func resizeImage(_ image: UIImage, targetSize: CGFloat) -> UIImage {
+        let size = image.size
+        let widthRatio = targetSize / size.width
+        let heightRatio = targetSize / size.height
+        let ratio = min(widthRatio, heightRatio)
+        
+        // 如果图片已经小于目标尺寸，直接返回
+        if ratio >= 1.0 {
+            return image
+        }
+        
+        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage ?? image
+    }
+    
+    // 添加图片方向修正方法
+    private func fixImageOrientation(_ image: UIImage) -> UIImage {
+        if image.imageOrientation == .up {
+            return image
+        }
+        
+        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return normalizedImage ?? image
     }
 }
 

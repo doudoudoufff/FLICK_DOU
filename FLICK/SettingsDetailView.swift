@@ -10,6 +10,7 @@ struct SettingsDetailView: View {
     @State private var isSyncing = false
     @AppStorage("enableCloudSync") private var enableCloudSync = false
     @AppStorage("lastSyncTime") private var lastSyncTime: Double = 0
+    @AppStorage("appTheme") private var appTheme: String = "system"
     
     // 引导相关的状态
     @AppStorage("hasSeenFeatureTutorial") private var hasSeenFeatureTutorial = true
@@ -204,6 +205,28 @@ struct SettingsDetailView: View {
                     Text("管理自定义的费用、组别和常用信息标签")
                 }
                 
+                // 外观设置
+                Section {
+                    // 强制使用浅色模式提示
+                    HStack {
+                        Label {
+                            Text("浅色模式")
+                        } icon: {
+                            Image(systemName: "sun.max.fill")
+                                .foregroundStyle(.yellow)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("已启用")
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("外观")
+                } footer: {
+                    Text("应用使用浅色模式以确保最佳显示效果")
+                }
+                
                 // 通知设置
                 Section {
                     Toggle(isOn: $enableNotifications) {
@@ -328,7 +351,7 @@ struct SettingsDetailView: View {
                 Text("这将重置所有功能页面的引导状态，下次进入相应页面时将重新显示引导。")
             }
         }
-        .preferredColorScheme(colorScheme)
+        .preferredColorScheme(.light) // 强制使用浅色模式
     }
     
     // 重置所有引导状态
@@ -338,19 +361,6 @@ struct SettingsDetailView: View {
         
         // 这里可以添加其他页面的引导状态重置
         // @AppStorage("hasSeenXXXTutorial") = false
-    }
-    
-    // 主题设置 - 修改为始终返回浅色模式
-    private var colorScheme: ColorScheme? {
-        return .light // 强制使用浅色模式
-        // switch appTheme {
-        // case "light":
-        //     return .light
-        // case "dark":
-        //     return .dark
-        // default:
-        //     return nil // 跟随系统
-        // }
     }
     
     // 添加格式化文件大小的函数
@@ -809,14 +819,6 @@ struct ContributorRow: View {
 // 关于应用视图
 struct AboutAppView: View {
     @Environment(\.openURL) private var openURL
-    // 移除对系统颜色方案的依赖
-    // @Environment(\.colorScheme) private var colorScheme
-    
-    private var isDarkMode: Bool {
-        // 强制返回false，表示始终使用浅色模式样式
-        return false
-        // return colorScheme == .dark
-    }
     
     var body: some View {
         ScrollView {
@@ -835,12 +837,7 @@ struct AboutAppView: View {
                     .overlay(
                         // 添加纹理效果
                         Rectangle()
-                            .fill(
-                                // isDarkMode 
-                                // ? Color.white.opacity(0.03) 
-                                // : 
-                                Color.black.opacity(0.05)
-                            )
+                            .fill(Color.black.opacity(0.05))
                             .blendMode(.overlay)
                     )
                     .ignoresSafeArea()
@@ -1054,6 +1051,7 @@ struct AboutAppView: View {
         }
         .background(Color(.systemGroupedBackground))
         .edgesIgnoringSafeArea(.top)
+        .preferredColorScheme(.light) // 强制使用浅色模式
         .navigationTitle("关于应用")
         .navigationBarTitleDisplayMode(.inline)
     }

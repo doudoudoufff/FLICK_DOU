@@ -63,7 +63,6 @@ struct ScoutingArchiveSheet: View {
     let image: UIImage
     let onComplete: () -> Void
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var projectStore: ProjectStore
     @State private var selectedProject: Project?
     @State private var selectedLocation: Location?
@@ -254,6 +253,7 @@ struct ScoutingArchiveSheet: View {
                 }
             }
         }
+        .preferredColorScheme(.light) // 强制使用浅色模式
         .onAppear {
             // 设置最近使用的项目和场景
             selectMostRecentProject()

@@ -25,5 +25,6 @@ struct MainTabView: View {
                 Label("项目", systemImage: "folder")
             }
         }
+        .preferredColorScheme(.light)
     }
 } 

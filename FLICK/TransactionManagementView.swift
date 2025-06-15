@@ -34,6 +34,12 @@ struct TransactionManagementView: View {
     )
     @State private var showingBudgetEditor = false
     
+    // Excel导出相关状态
+    @State private var showingExportSheet = false
+    @State private var exportFileName = ""
+    @State private var isExporting = false
+    @State private var exportStatus = "准备导出数据..."
+    
     // 筛选相关状态
     @State private var selectedExpenseType: String? = nil
     @State private var selectedGroup: String? = nil
@@ -522,10 +528,19 @@ struct TransactionManagementView: View {
             }
             
             ToolbarItem(placement: .primaryAction) {
-                Button(action: {
-                    showingAddTransaction = true
-                }) {
-                    Image(systemName: "plus")
+                HStack {
+                    Button(action: {
+                        exportFileName = "\(project.name)"
+                        showingExportSheet = true
+                    }) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    
+                    Button(action: {
+                        showingAddTransaction = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
@@ -601,6 +616,158 @@ struct TransactionManagementView: View {
         }
         .sheet(isPresented: $showingBudgetEditor) {
             BudgetEditorView(project: $project, projectStore: projectStore)
+        }
+        .sheet(isPresented: $showingExportSheet) {
+            NavigationView {
+                VStack(spacing: 20) {
+                    Text("导出Excel文件")
+                        .font(.headline)
+                        .padding(.top)
+                    
+                    VStack(alignment: .leading) {
+                        Text("文件名前缀")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
+                        TextField("项目名称", text: $exportFileName)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .padding(.bottom)
+                        
+                        Text("最终文件名将为：\(exportFileName)_yyyymmdd.zip")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            
+                        Text("(Excel文件将打包为ZIP格式，便于分享和传输)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal)
+                    
+                    if isExporting {
+                        VStack(spacing: 10) {
+                            // 添加导出进度条
+                            ProgressView("正在生成Excel文件...")
+                                .progressViewStyle(LinearProgressViewStyle())
+                                .padding()
+                            
+                            // 添加导出状态文本
+                            Text(exportStatus)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                    } else {
+                        Button(action: {
+                            isExporting = true
+                            exportStatus = "准备导出数据..."
+                            
+                            // 使用后台线程生成Excel文件
+                            DispatchQueue.global(qos: .userInitiated).async {
+                                // 使用文件名前缀
+                                let fileName = exportFileName
+                                
+                                // 创建带有项目名称的交易记录副本
+                                var transactionsWithProject = filteredTransactions
+                                
+                                // 更新状态
+                                DispatchQueue.main.async {
+                                    exportStatus = "正在处理交易数据..."
+                                }
+                                
+                                // 模拟一些预处理时间
+                                Thread.sleep(forTimeInterval: 0.5)
+                                
+                                // 更新状态
+                                DispatchQueue.main.async {
+                                    exportStatus = "正在生成Excel文件..."
+                                }
+                                
+                                // 导出文件
+                                TransactionExcelExporter.exportTransactions(transactionsWithProject, fileName: fileName, progressHandler: { status in
+                                    // 更新UI中的状态
+                                    DispatchQueue.main.async {
+                                        exportStatus = status
+                                    }
+                                }, completion: { fileURL in
+                                    DispatchQueue.main.async {
+                                        if let fileURL = fileURL {
+                                            exportStatus = "Excel文件已生成，准备分享..."
+                                            
+                                            // 延迟一小段时间确保文件准备好
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                isExporting = false
+                                                showingExportSheet = false
+                                                
+                                                // 确认文件存在
+                                                if FileManager.default.fileExists(atPath: fileURL.path) {
+                                                    print("文件已准备好分享: \(fileURL.path)")
+                                                    
+                                                    // 分享文件
+                                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                                       let rootViewController = windowScene.windows.first?.rootViewController {
+                                                        TransactionExcelExporter.shareExcelFile(from: rootViewController, fileURL: fileURL)
+                                                    }
+                                                } else {
+                                                    print("错误：文件不存在: \(fileURL.path)")
+                                                    
+                                                    // 显示错误提示
+                                                    let alert = UIAlertController(
+                                                        title: "导出错误",
+                                                        message: "文件已生成但无法访问，请稍后重试",
+                                                        preferredStyle: .alert
+                                                    )
+                                                    alert.addAction(UIAlertAction(title: "确定", style: .default))
+                                                    
+                                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                                       let rootViewController = windowScene.windows.first?.rootViewController {
+                                                        rootViewController.present(alert, animated: true)
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            isExporting = false
+                                            
+                                            // 显示导出失败的提示
+                                            let alert = UIAlertController(
+                                                title: "导出失败",
+                                                message: "无法生成文件，请稍后重试",
+                                                preferredStyle: .alert
+                                            )
+                                            alert.addAction(UIAlertAction(title: "确定", style: .default))
+                                            
+                                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                               let rootViewController = windowScene.windows.first?.rootViewController {
+                                                rootViewController.present(alert, animated: true)
+                                            }
+                                        }
+                                    }
+                                })
+                            }
+                        }) {
+                            Text("导出为ZIP")
+                                .frame(minWidth: 100)
+                                .padding()
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        .padding()
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("取消") {
+                            showingExportSheet = false
+                        }
+                        .disabled(isExporting)
+                    }
+                }
+            }
         }
         .alert("确认删除", isPresented: $showingDeleteAlert) {
             Button("取消", role: .cancel) {

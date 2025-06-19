@@ -521,7 +521,7 @@ struct BaiBaiCompactCard: View {
                             .symbolRenderingMode(.multicolor)
                             .font(.title2)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(weather.condition == "Cloudy" ? "多云" : weather.condition)
+                            Text(weather.condition)
                                 .font(.headline)
                             Text(String(format: "%.1f°C", weather.temperature))
                                 .font(.subheadline)

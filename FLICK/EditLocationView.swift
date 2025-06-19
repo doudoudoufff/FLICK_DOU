@@ -19,6 +19,12 @@ struct EditLocationView: View {
     @State private var addressFromCoordinate = ""
     @StateObject private var locationManager = LocationManager()
     
+    // 新增状态
+    @State private var isAutoLocating = false
+    @State private var selectedCoordinate: CLLocationCoordinate2D?
+    @State private var selectedAddress: String?
+    @State private var isGeocodingAddress = false
+    
     init(location: Location, projectStore: ProjectStore, project: Project) {
         self.location = location
         self.projectStore = projectStore
@@ -38,13 +44,16 @@ struct EditLocationView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
-                Section("基本信息") {
-                    TextField("场地名称", text: Binding(
-                        get: { editedLocation.name },
-                        set: { editedLocation.name = $0 }
-                    ))
+                Section(header: Text("基本信息")) {
+                    HStack {
+                        Text("场地名称")
+                        Text("*")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        TextField("", text: $editedLocation.name)
+                    }
                     
                     // 场地类型选择器
                     VStack(alignment: .leading, spacing: 10) {
@@ -78,20 +87,25 @@ struct EditLocationView: View {
                         }
                     }
                     
-                    TextField("详细地址", text: Binding(
-                        get: { editedLocation.address },
-                        set: { editedLocation.address = $0 }
-                    ))
+                    TextField("详细地址", text: $editedLocation.address)
                 }
                 
-                // 位置信息部分
                 Section("位置定位") {
                     // 显示当前坐标状态
                     HStack {
                         Text("定位状态")
                         Spacer()
-                        Text(editedLocation.hasCoordinates ? "已设置" : "未设置")
-                            .foregroundStyle(editedLocation.hasCoordinates ? .green : .secondary)
+                        if isAutoLocating {
+                            HStack {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                Text("定位中...")
+                                    .foregroundStyle(.blue)
+                            }
+                        } else {
+                            Text(editedLocation.hasCoordinates ? "已设置" : "未设置")
+                                .foregroundStyle(editedLocation.hasCoordinates ? .green : .secondary)
+                        }
                     }
                     
                     // 地图设置按钮
@@ -121,7 +135,7 @@ struct EditLocationView: View {
                     }
                 }
                 
-                Section("联系方式") {
+                Section(header: Text("联系方式")) {
                     TextField("联系人", text: Binding(
                         get: { editedLocation.contactName ?? "" },
                         set: { editedLocation.contactName = $0.isEmpty ? nil : $0 }
@@ -130,66 +144,39 @@ struct EditLocationView: View {
                         get: { editedLocation.contactPhone ?? "" },
                         set: { editedLocation.contactPhone = $0.isEmpty ? nil : $0 }
                     ))
-                        .keyboardType(.phonePad)
+                    .keyboardType(.phonePad)
                 }
                 
-                Section("备注") {
+                Section(header: Text("备注")) {
                     TextEditor(text: Binding(
                         get: { editedLocation.notes ?? "" },
                         set: { editedLocation.notes = $0.isEmpty ? nil : $0 }
                     ))
-                        .frame(height: 100)
+                    .frame(height: 100)
                 }
             }
             .navigationTitle("编辑场地")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
+                    Button("取消") {
+                        dismiss()
+                    }
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
                         Task {
-                            // 保存前打印调试信息
-                            print("保存前的位置信息:")
-                            print("- 名称: \(editedLocation.name)")
-                            print("- 地址: \(editedLocation.address)")
-                            print("- 坐标: \(editedLocation.hasCoordinates ? "有坐标" : "无坐标")")
-                            if editedLocation.hasCoordinates {
-                                print("- 纬度: \(editedLocation.latitude!), 经度: \(editedLocation.longitude!)")
-                            }
-                            
-                            // 确保 hasCoordinates 属性与实际值一致
-                            let hasCoordinates = editedLocation.latitude != nil && editedLocation.longitude != nil
-                            if hasCoordinates != editedLocation.hasCoordinates {
-                                print("警告：hasCoordinates 不一致，修正中...")
-                                // 如果不一致，我们创建一个新的 Location 对象保持一致性
-                                var updatedLocation = editedLocation
-                                // 如果应该有坐标但 hasCoordinates 是 false，则不需要修复
-                                // 如果不应该有坐标但 hasCoordinates 是 true，则清理坐标
-                                if !hasCoordinates && editedLocation.hasCoordinates {
-                                    print("- 清除坐标信息")
-                                    updatedLocation.latitude = nil
-                                    updatedLocation.longitude = nil
-                                }
-                                editedLocation = updatedLocation
-                            }
-                            
-                            // 进行保存操作
                             await projectStore.updateLocation(editedLocation, in: project)
-                            
-                            await MainActor.run {
-                                dismiss()
-                            }
+                            dismiss()
                         }
                     }
-                    .disabled(editedLocation.name.isEmpty || editedLocation.address.isEmpty)
+                    .disabled(editedLocation.name.isEmpty)
                 }
             }
             .sheet(isPresented: $showMapPicker) {
                 NavigationStack {
-                    VStack {
+                    VStack(spacing: 0) {
                         // 搜索区域
                         VStack {
                             HStack {
@@ -223,19 +210,8 @@ struct EditLocationView: View {
                             }
                         }
                         .padding([.horizontal, .top])
-                        .onAppear {
-                            // 打开地图时，如果已经有坐标，更新地图位置
-                            if let coordinate = editedLocation.coordinate {
-                                let newRegion = MKCoordinateRegion(
-                                    center: coordinate,
-                                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                                )
-                                region = newRegion
-                                mapPosition = .region(newRegion)
-                            }
-                        }
                         
-                        // 搜索结果列表
+                        // 搜索结果列表或地图视图
                         if !searchResults.isEmpty {
                             List {
                                 Section("搜索结果") {
@@ -255,99 +231,314 @@ struct EditLocationView: View {
                                 }
                             }
                         } else {
-                            // 地图视图
-                            Map(position: $mapPosition, interactionModes: .all) {
-                                if let coordinate = editedLocation.coordinate {
-                                    Marker("所选位置", coordinate: coordinate)
-                                        .tint(.red)
+                            // 改进的地图视图
+                            ZStack {
+                                Map(position: $mapPosition, interactionModes: .all) {
+                                    // 显示选中的位置
+                                    if let coordinate = selectedCoordinate {
+                                        Marker("选中位置", coordinate: coordinate)
+                                            .tint(.red)
+                                    }
+                                    // 显示已保存的位置
+                                    if let coordinate = editedLocation.coordinate, selectedCoordinate == nil {
+                                        Marker("当前位置", coordinate: coordinate)
+                                            .tint(.blue)
+                                    }
                                 }
-                            }
-                            .overlay(alignment: .center) {
-                                // 长按时的视觉指示
-                                if editedLocation.hasCoordinates {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.largeTitle)
-                                        .foregroundColor(.green)
-                                        .padding(8)
-                                        .background(Color.white.opacity(0.7))
-                                        .clipShape(Circle())
-                                        .opacity(0.8)
+                                .mapControls {
+                                    MapCompass()
+                                    MapScaleView()
+                                    MapUserLocationButton()
                                 }
-                            }
-                            .overlay(alignment: .bottom) {
-                                VStack(spacing: 10) {
-                                    // 使用当前位置按钮
-                                    HStack {
-                                        Button {
-                                            useCurrentLocation()
-                                        } label: {
-                                            Label("定位当前位置", systemImage: "location.fill")
-                                                .padding(10)
-                                                .frame(maxWidth: .infinity)
-                                                .background(Color.blue.opacity(0.2))
+                                .onMapCameraChange { context in
+                                    region = context.region
+                                }
+                                .onTapGesture { screenPoint in
+                                    handleMapTap(at: screenPoint)
+                                }
+                                
+                                // 地图中心十字线指示器
+                                if selectedCoordinate == nil && !editedLocation.hasCoordinates {
+                                    Image(systemName: "plus")
+                                        .font(.title2)
+                                        .foregroundColor(.red)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.white)
+                                                .frame(width: 30, height: 30)
+                                        )
+                                        .shadow(radius: 2)
+                                }
+                                
+                                // 底部操作面板
+                                VStack {
+                                    Spacer()
+                                    
+                                    VStack(spacing: 12) {
+                                        // 位置信息显示
+                                        if let coord = selectedCoordinate {
+                                            Text("已选择位置")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            
+                                            if isGeocodingAddress {
+                                                HStack {
+                                                    ProgressView()
+                                                        .scaleEffect(0.7)
+                                                    Text("获取地址中...")
+                                                        .font(.caption2)
+                                                        .foregroundColor(.secondary)
+                                                }
+                                            } else if let address = selectedAddress {
+                                                Text(address)
+                                                    .font(.caption2)
+                                                    .foregroundColor(.primary)
+                                                    .multilineTextAlignment(.center)
+                                                    .lineLimit(2)
+                                            } else {
+                                                Text("纬度: \(coord.latitude, specifier: "%.6f")")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                                Text("经度: \(coord.longitude, specifier: "%.6f")")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        } else if editedLocation.hasCoordinates {
+                                            Text("当前已设置位置")
+                                                .font(.caption)
                                                 .foregroundColor(.blue)
-                                                .cornerRadius(10)
+                                        } else {
+                                            Text("点击地图选择位置或使用下方按钮")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
                                         }
                                         
-                                        if editedLocation.hasCoordinates {
+                                        // 操作按钮
+                                        HStack(spacing: 12) {
+                                            // 使用当前位置按钮
                                             Button {
-                                                showMapPicker = false
+                                                useCurrentLocation()
                                             } label: {
-                                                Label("确认使用", systemImage: "checkmark")
-                                                    .padding(10)
-                                                    .frame(maxWidth: .infinity)
-                                                    .background(Color.green.opacity(0.2))
+                                                HStack {
+                                                    if isAutoLocating {
+                                                        ProgressView()
+                                                            .scaleEffect(0.8)
+                                                    } else {
+                                                        Image(systemName: "location.fill")
+                                                    }
+                                                    Text("当前位置")
+                                                }
+                                                .font(.system(size: 14, weight: .medium))
+                                                .padding(.horizontal, 16)
+                                                .padding(.vertical, 10)
+                                                .background(Color.blue.opacity(0.1))
+                                                .foregroundColor(.blue)
+                                                .cornerRadius(20)
+                                            }
+                                            .disabled(isAutoLocating)
+                                            
+                                            // 使用地图中心按钮
+                                            if selectedCoordinate == nil && !editedLocation.hasCoordinates {
+                                                Button {
+                                                    useMapCenter()
+                                                } label: {
+                                                    HStack {
+                                                        Image(systemName: "scope")
+                                                        Text("使用中心点")
+                                                    }
+                                                    .font(.system(size: 14, weight: .medium))
+                                                    .padding(.horizontal, 16)
+                                                    .padding(.vertical, 10)
+                                                    .background(Color.orange.opacity(0.1))
+                                                    .foregroundColor(.orange)
+                                                    .cornerRadius(20)
+                                                }
+                                            }
+                                            
+                                            // 确认按钮
+                                            if selectedCoordinate != nil {
+                                                Button {
+                                                    confirmSelectedLocation()
+                                                } label: {
+                                                    HStack {
+                                                        Image(systemName: "checkmark")
+                                                        Text("确认")
+                                                    }
+                                                    .font(.system(size: 14, weight: .medium))
+                                                    .padding(.horizontal, 16)
+                                                    .padding(.vertical, 10)
+                                                    .background(Color.green.opacity(0.1))
                                                     .foregroundColor(.green)
-                                                    .cornerRadius(10)
+                                                    .cornerRadius(20)
+                                                }
                                             }
                                         }
                                     }
-                                    
-                                    Text("提示：点击地图任意位置可直接选取坐标")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(Color(.systemBackground))
+                                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -2)
+                                    )
+                                    .padding(.horizontal)
+                                    .padding(.bottom)
                                 }
-                                .padding()
-                                .background(Color(.systemBackground).opacity(0.9))
-                                .cornerRadius(10)
-                                .padding()
-                            }
-                            .overlay(alignment: .top) {
-                                if editedLocation.hasCoordinates {
-                                    Text("已选择位置：\(editedLocation.address)")
-                                        .font(.caption)
-                                        .padding(8)
-                                        .background(Color(.systemBackground).opacity(0.8))
-                                        .cornerRadius(8)
-                                        .padding(.top, 10)
-                                }
-                            }
-                            .mapControls {
-                                MapCompass()
-                                MapScaleView()
-                            }
-                            
-                            // 长按选择位置
-                            .onTapGesture { location in
-                                getCoordinateFromTapLocation(location)
                             }
                         }
-                        
-                        Spacer()
                     }
                     .navigationTitle("选择位置")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
                             Button("取消") {
+                                selectedCoordinate = nil
                                 showMapPicker = false
                             }
                         }
+                        
+                        if editedLocation.hasCoordinates || selectedCoordinate != nil {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("完成") {
+                                    if selectedCoordinate != nil {
+                                        confirmSelectedLocation()
+                                    }
+                                    showMapPicker = false
+                                }
+                            }
+                        }
+                    }
+                    .onAppear {
+                        setupMapOnAppear()
                     }
                 }
             }
         }
     }
+    
+    // MARK: - 新的地图相关方法
+    
+    private func setupMapOnAppear() {
+        // 如果已经有坐标，更新地图位置
+        if let coordinate = editedLocation.coordinate {
+            let newRegion = MKCoordinateRegion(
+                center: coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+            region = newRegion
+            mapPosition = .region(newRegion)
+        } else {
+            // 如果没有坐标，尝试自动定位
+            autoLocateForMap()
+        }
+    }
+    
+    private func autoLocateForMap() {
+        guard locationManager.hasLocationPermission else { return }
+        
+        if let coordinate = locationManager.currentCoordinate {
+            let newRegion = MKCoordinateRegion(
+                center: coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+            region = newRegion
+            mapPosition = .region(newRegion)
+        }
+    }
+    
+    private func handleMapTap(at screenPoint: CGPoint) {
+        // 使用地图中心作为选中点（更准确的方法）
+        let centerCoordinate = region.center
+        selectedCoordinate = centerCoordinate
+        selectedAddress = nil
+        
+        // 获取地址信息
+        isGeocodingAddress = true
+        reverseGeocodeCoordinate(centerCoordinate) { addressString in
+            self.selectedAddress = addressString ?? "无法获取地址信息"
+            self.isGeocodingAddress = false
+        }
+    }
+    
+    private func useMapCenter() {
+        selectedCoordinate = region.center
+        selectedAddress = nil
+        
+        isGeocodingAddress = true
+        reverseGeocodeCoordinate(region.center) { addressString in
+            self.selectedAddress = addressString ?? "无法获取地址信息"
+            self.isGeocodingAddress = false
+        }
+    }
+    
+    private func confirmSelectedLocation() {
+        guard let coord = selectedCoordinate else { return }
+        setLocationFromCoordinate(coord)
+        selectedCoordinate = nil
+        selectedAddress = nil
+        isGeocodingAddress = false
+        showMapPicker = false
+    }
+    
+    private func setLocationFromCoordinate(_ coordinate: CLLocationCoordinate2D) {
+        editedLocation.latitude = coordinate.latitude
+        editedLocation.longitude = coordinate.longitude
+        
+        // 更新地图位置
+        let newRegion = MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        )
+        region = newRegion
+        mapPosition = .region(newRegion)
+        
+        // 获取地址信息
+        reverseGeocodeCoordinate(coordinate) { addressString in
+            if let addressString = addressString, !addressString.isEmpty {
+                self.editedLocation.address = addressString
+            }
+        }
+        
+        print("设置位置: 纬度 \(coordinate.latitude), 经度 \(coordinate.longitude)")
+        print("editedLocation.hasCoordinates = \(editedLocation.hasCoordinates)")
+    }
+    
+    private func reverseGeocodeCoordinate(_ coordinate: CLLocationCoordinate2D, completion: @escaping (String?) -> Void) {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let geocoder = CLGeocoder()
+        
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            guard let placemark = placemarks?.first, error == nil else {
+                print("反向地理编码失败: \(error?.localizedDescription ?? "未知错误")")
+                DispatchQueue.main.async {
+                    completion(nil)
+                }
+                return
+            }
+            
+            // 格式化地址
+            var addressComponents: [String] = []
+            
+            if let name = placemark.name { addressComponents.append(name) }
+            if let street = placemark.thoroughfare { addressComponents.append(street) }
+            if let subArea = placemark.subLocality { addressComponents.append(subArea) }
+            if let area = placemark.locality { addressComponents.append(area) }
+            if let city = placemark.administrativeArea { addressComponents.append(city) }
+            if let country = placemark.country { addressComponents.append(country) }
+            
+            let formattedAddress = addressComponents.joined(separator: ", ")
+            
+            DispatchQueue.main.async {
+                if !formattedAddress.isEmpty {
+                    print("获取到地址: \(formattedAddress)")
+                    completion(formattedAddress)
+                } else {
+                    completion(nil)
+                }
+            }
+        }
+    }
+    
+    // MARK: - 原有方法的优化版本
     
     private func searchLocations() {
         guard !searchText.isEmpty else {
@@ -378,12 +569,7 @@ struct EditLocationView: View {
         selectedMapItem = item
         let coordinate = item.placemark.coordinate
         
-        editedLocation.latitude = coordinate.latitude
-        editedLocation.longitude = coordinate.longitude
-        
-        // 打印调试信息
-        print("设置位置坐标: 纬度 \(coordinate.latitude), 经度 \(coordinate.longitude)")
-        print("editedLocation.hasCoordinates = \(editedLocation.hasCoordinates)")
+        setLocationFromCoordinate(coordinate)
         
         // 更新地址
         if let name = item.name, !name.isEmpty,
@@ -392,14 +578,6 @@ struct EditLocationView: View {
         } else if let address = formatDetailedAddress(for: item) {
             editedLocation.address = address
         }
-        
-        // 更新地图位置
-        let newRegion = MKCoordinateRegion(
-            center: coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-        )
-        region = newRegion
-        mapPosition = .region(newRegion)
         
         // 清除搜索状态
         searchResults = []
@@ -411,124 +589,47 @@ struct EditLocationView: View {
         }
     }
     
-    private func getCoordinateFromTapLocation(_ tapLocation: CGPoint) {
-        // 由于SwiftUI的Map组件限制，我们需要使用一个近似的方法
-        // 在实际应用中，可以考虑使用MapKit的MKMapView来获得更精确的坐标转换
+    private func useCurrentLocation() {
+        guard locationManager.hasLocationPermission else {
+            // 如果没有权限，请求权限
+            locationManager.requestLocationPermission()
+            return
+        }
         
-        // 获取当前地图的可见区域
-        let mapCenter = region.center
-        let mapSpan = region.span
+        isAutoLocating = true
+        locationManager.requestLocation()
         
-        // 假设地图视图的大小（这里需要根据实际情况调整）
-        let mapViewSize = CGSize(width: UIScreen.main.bounds.width - 40, height: 400) // 减去padding
-        
-        // 计算点击位置相对于地图中心的偏移
-        let centerX = mapViewSize.width / 2
-        let centerY = mapViewSize.height / 2
-        
-        let offsetX = tapLocation.x - centerX
-        let offsetY = tapLocation.y - centerY
-        
-        // 将像素偏移转换为经纬度偏移
-        let latitudeOffset = -(offsetY / mapViewSize.height) * mapSpan.latitudeDelta
-        let longitudeOffset = (offsetX / mapViewSize.width) * mapSpan.longitudeDelta
-        
-        // 计算实际坐标
-        let actualLatitude = mapCenter.latitude + latitudeOffset
-        let actualLongitude = mapCenter.longitude + longitudeOffset
-        
-        // 更新场地信息
-        editedLocation.latitude = actualLatitude
-        editedLocation.longitude = actualLongitude
-        
-        print("用户点击位置: 屏幕坐标(\(tapLocation.x), \(tapLocation.y))")
-        print("转换后的地图坐标: 纬度 \(actualLatitude), 经度 \(actualLongitude)")
-        print("editedLocation.hasCoordinates = \(editedLocation.hasCoordinates)")
-        
-        // 反向地理编码获取地址
-        let location = CLLocation(latitude: actualLatitude, longitude: actualLongitude)
-        let geocoder = CLGeocoder()
-        
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            guard let placemark = placemarks?.first, error == nil else {
-                print("反向地理编码失败: \(error?.localizedDescription ?? "未知错误")")
-                return
-            }
-            
-            // 格式化地址
-            var addressComponents: [String] = []
-            
-            if let name = placemark.name { addressComponents.append(name) }
-            if let street = placemark.thoroughfare { addressComponents.append(street) }
-            if let subArea = placemark.subLocality { addressComponents.append(subArea) }
-            if let area = placemark.locality { addressComponents.append(area) }
-            if let city = placemark.administrativeArea { addressComponents.append(city) }
-            if let country = placemark.country { addressComponents.append(country) }
-            
-            let formattedAddress = addressComponents.joined(separator: ", ")
-            
-            DispatchQueue.main.async {
-                if !formattedAddress.isEmpty {
-                    self.editedLocation.address = formattedAddress
-                    print("获取到地址: \(formattedAddress)")
+        // 延迟检查位置更新
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            if let coordinate = locationManager.currentCoordinate {
+                // 设置为选中的坐标，让用户确认
+                selectedCoordinate = coordinate
+                selectedAddress = nil
+                
+                // 更新地图位置到当前位置
+                let newRegion = MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )
+                region = newRegion
+                mapPosition = .region(newRegion)
+                
+                // 获取当前位置的地址
+                isGeocodingAddress = true
+                reverseGeocodeCoordinate(coordinate) { addressString in
+                    self.selectedAddress = addressString ?? "无法获取地址信息"
+                    self.isGeocodingAddress = false
                 }
+                
+                print("✓ 定位成功，请确认是否使用此位置")
+            } else if let error = locationManager.locationError {
+                print("定位失败: \(error)")
             }
+            isAutoLocating = false
         }
     }
     
-    private func useCurrentLocation() {
-        locationManager.requestLocation()
-        
-        // 使用 locationManager 的位置
-        if let coordinate = locationManager.location?.coordinate {
-            editedLocation.latitude = coordinate.latitude
-            editedLocation.longitude = coordinate.longitude
-            
-            // 打印调试信息
-            print("设置当前位置: 纬度 \(coordinate.latitude), 经度 \(coordinate.longitude)")
-            print("editedLocation.hasCoordinates = \(editedLocation.hasCoordinates)")
-            
-            // 更新地图位置
-            let newRegion = MKCoordinateRegion(
-                center: coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-            )
-            region = newRegion
-            mapPosition = .region(newRegion)
-            
-            // 反向地理编码获取地址
-            let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            let geocoder = CLGeocoder()
-            
-            geocoder.reverseGeocodeLocation(location) { placemarks, error in
-                guard let placemark = placemarks?.first, error == nil else {
-                    return
-                }
-                
-                // 格式化地址
-                var addressComponents: [String] = []
-                
-                if let name = placemark.name { addressComponents.append(name) }
-                if let street = placemark.thoroughfare { addressComponents.append(street) }
-                if let subArea = placemark.subLocality { addressComponents.append(subArea) }
-                if let area = placemark.locality { addressComponents.append(area) }
-                if let city = placemark.administrativeArea { addressComponents.append(city) }
-                if let country = placemark.country { addressComponents.append(country) }
-                
-                let address = addressComponents.joined(separator: ", ")
-                
-                if !address.isEmpty {
-                    editedLocation.address = address
-                    print("更新地址: \(address)")
-                    
-                    // 自动关闭地图选择器，简化用户操作
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        showMapPicker = false
-                    }
-                }
-            }
-        }
-    }
+    // MARK: - 辅助方法
     
     private func formatAddress(for mapItem: MKMapItem) -> String {
         let placemark = mapItem.placemark

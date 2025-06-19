@@ -174,7 +174,7 @@ class WeatherManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 // 构建我们的天气数据模型
                 let weatherInfo = WeatherInfo(
                     temperature: currentWeather.currentWeather.temperature.value,
-                    condition: currentWeather.currentWeather.condition.description,
+                    condition: translateWeatherCondition(currentWeather.currentWeather.condition.description),
                     symbolName: safeSymbolName,
                     windSpeed: currentWeather.currentWeather.wind.speed.value,
                     windDirection: formatWindDirection(currentWeather.currentWeather.wind.direction),
@@ -245,5 +245,74 @@ class WeatherManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         let directions = ["北", "东北", "东", "东南", "南", "西南", "西", "西北"]
         let index = Int(round(degrees / 45.0).truncatingRemainder(dividingBy: 8))
         return directions[index]
+    }
+    
+    // 将英文天气条件翻译为中文
+    private func translateWeatherCondition(_ englishCondition: String) -> String {
+        let condition = englishCondition.lowercased()
+        
+        // 晴天相关
+        if condition.contains("clear") || condition.contains("sunny") {
+            return "晴朗"
+        }
+        // 多云相关
+        else if condition.contains("mostly cloudy") {
+            return "多云"
+        }
+        else if condition.contains("partly cloudy") {
+            return "少云"
+        }
+        else if condition.contains("cloudy") {
+            return "阴天"
+        }
+        // 雨天相关
+        else if condition.contains("heavy rain") || condition.contains("heavy shower") {
+            return "大雨"
+        }
+        else if condition.contains("moderate rain") {
+            return "中雨"
+        }
+        else if condition.contains("light rain") || condition.contains("drizzle") {
+            return "小雨"
+        }
+        else if condition.contains("rain") || condition.contains("shower") {
+            return "雨"
+        }
+        // 雪天相关
+        else if condition.contains("heavy snow") {
+            return "大雪"
+        }
+        else if condition.contains("moderate snow") {
+            return "中雪"
+        }
+        else if condition.contains("light snow") {
+            return "小雪"
+        }
+        else if condition.contains("snow") {
+            return "雪"
+        }
+        // 雷暴相关
+        else if condition.contains("thunderstorm") {
+            return "雷暴"
+        }
+        // 雾霾相关
+        else if condition.contains("fog") {
+            return "雾"
+        }
+        else if condition.contains("haze") {
+            return "霾"
+        }
+        else if condition.contains("mist") {
+            return "薄雾"
+        }
+        // 风相关
+        else if condition.contains("windy") {
+            return "大风"
+        }
+        // 其他情况
+        else {
+            // 如果没有匹配到，返回原文但首字母大写
+            return englishCondition.capitalized
+        }
     }
 } 

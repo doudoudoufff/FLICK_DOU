@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0FCB5AE62DFF16450027A230 /* SwiftXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = 0FCB5AE52DFF16450027A230 /* SwiftXLSX */; };
 		0FDD604B2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */; };
 		0FDD604C2DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */; };
 		9E10368F2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E10368D2DE5EB8200156AB4 /* VenueEntity+CoreDataClass.swift */; };
@@ -118,6 +119,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9EE021442D64FDC300C45E79 /* ZIPFoundation in Frameworks */,
+				0FCB5AE62DFF16450027A230 /* SwiftXLSX in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,6 +291,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				9EE021422D64FDC300C45E79 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				0FCB5AE42DFF16450027A230 /* XCRemoteSwiftPackageReference "SwiftXLSX" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0FE011132D3F8916007A7B5B /* Products */;
@@ -716,6 +719,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		0FCB5AE42DFF16450027A230 /* XCRemoteSwiftPackageReference "SwiftXLSX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/3973770/SwiftXLSX";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		9EE021422D64FDC300C45E79 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
@@ -727,6 +738,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0FCB5AE52DFF16450027A230 /* SwiftXLSX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0FCB5AE42DFF16450027A230 /* XCRemoteSwiftPackageReference "SwiftXLSX" */;
+			productName = SwiftXLSX;
+		};
 		9EE021432D64FDC300C45E79 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9EE021422D64FDC300C45E79 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;

@@ -173,6 +173,18 @@ class ProjectStore: ObservableObject {
     
     func loadProjects() {
         print("开始加载项目数据...")
+        
+        // 确保在主队列上执行，避免线程安全问题
+        if Thread.isMainThread {
+            performLoadProjects()
+        } else {
+            DispatchQueue.main.async {
+                self.performLoadProjects()
+            }
+        }
+    }
+    
+    private func performLoadProjects() {
         let request = ProjectEntity.fetchRequest()
         
         // 使用创建日期作为排序依据，确保稳定排序
@@ -199,22 +211,21 @@ class ProjectStore: ObservableObject {
                 loadedProjects.append(project)
             }
             
-            // 确保UI更新在主线程进行
-            DispatchQueue.main.async {
-                // 直接替换整个数组，避免部分更新
-                self.projects = loadedProjects
-                print("✓ 成功加载 \(loadedProjects.count) 个项目")
-                
-                // 最终验证
-                for project in self.projects {
-                    print("最终验证 - 项目 '\(project.name)' 预算值: \(project.budget)")
-                }
-                
-                // 显式通知视图更新
-                self.objectWillChange.send()
+            // 直接替换整个数组，避免部分更新
+            self.projects = loadedProjects
+            print("✓ 成功加载 \(loadedProjects.count) 个项目")
+            
+            // 最终验证
+            for project in self.projects {
+                print("最终验证 - 项目 '\(project.name)' 预算值: \(project.budget)")
             }
+            
+            // 显式通知视图更新
+            self.objectWillChange.send()
         } catch {
             print("❌ 加载项目失败: \(error)")
+            // 发生错误时也要通知UI更新
+            self.objectWillChange.send()
         }
     }
     
@@ -582,6 +593,12 @@ class ProjectStore: ObservableObject {
         // 保持数据引用，避免在处理过程中其他地方修改数据
         let projectId = project.id
         
+        // 先从内存中移除项目，避免UI数据不一致
+        DispatchQueue.main.async {
+            self.projects.removeAll { $0.id == projectId }
+            print("✓ 已从内存中移除项目")
+        }
+        
         // 从 CoreData 中删除
         let fetchRequest = ProjectEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "id == %@", projectId as CVarArg)
@@ -667,19 +684,14 @@ class ProjectStore: ObservableObject {
                 try self.context.save()
                 print("✓ CoreData 删除成功")
                 
-                // 从内存中移除项目
-                self.projects.removeAll { $0.id == projectId }
-                
-                // 通知UI更新
+                // 发送删除完成通知
                 DispatchQueue.main.async {
-                    self.objectWillChange.send()
-                    
-                    // 发送项目删除完成通知
                     NotificationCenter.default.post(
                         name: Notification.Name("ProjectDeleted"),
                         object: nil,
                         userInfo: ["projectId": projectId]
                     )
+                    print("✓ 删除通知已发送")
                 }
                 
                 // 触发 CloudKit 同步
@@ -689,6 +701,10 @@ class ProjectStore: ObservableObject {
                 print("✓ 项目删除完成")
             } else {
                 print("❌ 未找到项目实体")
+                // 如果CoreData中没有找到，也要恢复内存数据
+                DispatchQueue.main.async {
+                    self.loadProjects()
+                }
             }
         } catch {
             print("❌ 删除项目失败: \(error)")
@@ -702,8 +718,18 @@ class ProjectStore: ObservableObject {
                 }
             }
             
-            // 恢复内存中的项目数据
-            self.loadProjects()
+            // 在主线程上恢复数据和通知UI
+            DispatchQueue.main.async {
+                // 恢复内存中的项目数据
+                self.loadProjects()
+                
+                // 发送删除失败通知
+                NotificationCenter.default.post(
+                    name: Notification.Name("ProjectDeleted"),
+                    object: nil,
+                    userInfo: ["projectId": projectId, "error": error]
+                )
+            }
         }
         
         print("================================")
@@ -1168,28 +1194,33 @@ class ProjectStore: ObservableObject {
         request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", 
             location.id as CVarArg, project.id as CVarArg)
         
+        // 2. 先更新内存中的数据
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[projectIndex].locations.removeAll { $0.id == location.id }
+            print("✓ 内存数据更新成功")
+        }
+        
         do {
             if let entity = try context.fetch(request).first {
                 print("✓ 找到场地实体")
                 
-                // 2. 删除实体
+                // 3. 删除实体
                 context.delete(entity)
                 try context.save()
                 print("✓ CoreData 删除成功")
                 
-                // 3. 更新内存中的数据
-                if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
-                    projects[projectIndex].locations.removeAll { $0.id == location.id }
-                    print("✓ 内存数据更新成功")
-                    objectWillChange.send()
-                    print("✓ 发送视图更新通知")
-                }
+                objectWillChange.send()
+                print("✓ 发送视图更新通知")
             } else {
                 print("❌ 错误：找不到场地实体")
+                // 如果找不到实体，恢复内存数据
+                loadProjects()
             }
         } catch {
             print("❌ 删除失败:")
             print("- 错误信息: \(error)")
+            // 删除失败，恢复内存数据
+            loadProjects()
         }
         print("================================")
     }
@@ -1288,11 +1319,20 @@ class ProjectStore: ObservableObject {
     // 删除发票
     func deleteInvoice(_ invoice: Invoice, from project: Project) {
         print("开始删除发票...")
+        
+        // 1. 先更新内存中的项目数据
+        if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[index].invoices.removeAll { $0.id == invoice.id }
+            print("✓ 内存数据更新成功")
+        }
+        
         guard let projectEntity = project.fetchEntity(in: context),
               let invoiceEntity = projectEntity.invoices?
                 .first(where: { ($0 as? InvoiceEntity)?.id == invoice.id }) as? InvoiceEntity
         else {
             print("错误：找不到发票实体")
+            // 如果找不到实体，恢复内存数据
+            loadProjects()
             return
         }
         
@@ -1301,17 +1341,11 @@ class ProjectStore: ObservableObject {
         do {
             try context.save()
             print("发票删除成功：\(invoice.name)")
-            
-            // 更新内存中的项目数据
-            if let index = projects.firstIndex(where: { $0.id == project.id }) {
-                // 从内存中移除已删除的发票
-                projects[index].invoices.removeAll { $0.id == invoice.id }
-                objectWillChange.send()  // 通知视图更新
-            }
-            // 强制刷新所有项目数据
-            self.loadProjects()
+            objectWillChange.send()  // 通知视图更新
         } catch {
             print("发票删除失败：\(error)")
+            // 删除失败，恢复内存数据
+            loadProjects()
         }
     }
     
@@ -1327,36 +1361,33 @@ class ProjectStore: ObservableObject {
         let fetchRequest: NSFetchRequest<AccountEntity> = AccountEntity.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "id == %@ AND project.id == %@", account.id as CVarArg, project.id as CVarArg)
         
+        // 2. 先更新内存中的项目数据
+        if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            let oldCount = projects[index].accounts.count
+            projects[index].accounts.removeAll { $0.id == account.id }
+            let newCount = projects[index].accounts.count
+            print("账户数量变化: \(oldCount) -> \(newCount)")
+            print("✓ 内存数据更新完成")
+        }
+        
         do {
             let results = try context.fetch(fetchRequest)
             if let accountEntity = results.first {
-                // 2. 删除找到的实体
+                // 3. 删除找到的实体
                 context.delete(accountEntity)
                 try context.save()
                 print("✓ CoreData 删除成功")
                 
-                // 3. 更新内存中的项目数据
-                if let index = projects.firstIndex(where: { $0.id == project.id }) {
-                    let oldCount = projects[index].accounts.count
-                    projects[index].accounts.removeAll { $0.id == account.id }
-                    let newCount = projects[index].accounts.count
-                    print("账户数量变化: \(oldCount) -> \(newCount)")
-                    
-                    // 4. 确保项目数据也被更新
-                    let updatedProject = projects[index]
-                    DispatchQueue.main.async {
-                        self.projects[index] = updatedProject
-                        self.objectWillChange.send()
-                        print("✓ 内存数据更新完成")
-                    }
-                } else {
-                    print("❌ 找不到对应的项目")
-                }
+                objectWillChange.send()
             } else {
                 print("❌ 错误：找不到账户实体")
+                // 如果找不到实体，恢复内存数据
+                loadProjects()
             }
         } catch {
             print("❌ 删除失败：\(error)")
+            // 删除失败，恢复内存数据
+            loadProjects()
         }
         print("================================")
     }
@@ -1632,11 +1663,23 @@ class ProjectStore: ObservableObject {
         print("场地: \(location.name)")
         print("照片ID: \(photo.id)")
         
+        // 先更新内存中的数据
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
+           let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }) {
+            projects[projectIndex].locations[locationIndex].photos.removeAll { $0.id == photo.id }
+            print("✓ 内存数据更新成功")
+            print("当前场地照片总数: \(projects[projectIndex].locations[locationIndex].photos.count)")
+        }
+        
         guard let projectEntity = project.fetchEntity(in: context),
               let locationEntity = location.fetchEntity(in: context),
               let photoEntity = (locationEntity.photos?.allObjects as? [LocationPhotoEntity])?
                 .first(where: { $0.id == photo.id }) else {
             print("❌ 错误：找不到照片实体")
+            // 如果找不到实体，恢复内存数据
+            await MainActor.run {
+                loadProjects()
+            }
             return
         }
         print("✓ 已找到照片实体")
@@ -1649,18 +1692,18 @@ class ProjectStore: ObservableObject {
             try context.save()
             print("✓ CoreData 保存成功")
             
-            if let projectIndex = projects.firstIndex(where: { $0.id == project.id }),
-               let locationIndex = projects[projectIndex].locations.firstIndex(where: { $0.id == location.id }) {
-                // 更新内存中的数据
-                projects[projectIndex].locations[locationIndex].photos.removeAll { $0.id == photo.id }
+            await MainActor.run {
                 objectWillChange.send()
-                print("✓ 内存数据更新成功")
-                print("当前场地照片总数: \(projects[projectIndex].locations[locationIndex].photos.count)")
             }
         } catch {
             print("❌ 删除照片失败:")
             print("错误类型: \(type(of: error))")
             print("错误描述: \(error.localizedDescription)")
+            
+            // 删除失败，恢复内存数据
+            await MainActor.run {
+                loadProjects()
+            }
         }
         print("================================")
     }
@@ -2255,6 +2298,12 @@ class ProjectStore: ObservableObject {
         print("项目: \(project.name)")
         print("交易ID: \(transactionId)")
         
+        // 先从内存中删除交易记录
+        if let projectIndex = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[projectIndex].transactions.removeAll { $0.id == transactionId }
+            print("✓ 内存数据更新成功")
+        }
+        
         // 获取交易实体
         let request = TransactionEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@ AND project.id == %@", transactionId as CVarArg, project.id as CVarArg)
@@ -2267,15 +2316,17 @@ class ProjectStore: ObservableObject {
                 // 保存上下文
                 saveContext()
                 
-                // 从内存中删除交易记录
-                project.transactions.removeAll { $0.id == transactionId }
-                
+                objectWillChange.send()
                 print("✓ 成功删除交易记录")
             } else {
                 print("⚠️ 找不到要删除的交易记录")
+                // 如果找不到实体，恢复内存数据
+                loadProjects()
             }
         } catch {
             print("❌ 删除交易记录时出错: \(error)")
+            // 删除失败，恢复内存数据
+            loadProjects()
         }
         
         print("================================")

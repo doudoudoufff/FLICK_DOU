@@ -117,15 +117,23 @@ struct ProjectsView: View {
                     } else {
                     // 项目列表
                 List {
-                    ForEach(searchedProjects) { project in
+                    ForEach(searchedProjects, id: \.id) { project in
                         ProjectListRow(project: project)
                             .listRowSeparator(.hidden)
-                                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .listRowBackground(Color.clear)
+                            .id(project.id) // 确保每个项目有唯一ID
                     }
-                                }
+                    .onDelete { indexSet in
+                        // 使用SwiftUI原生的删除方法，更安全
+                        for index in indexSet {
+                            let project = searchedProjects[index]
+                            projectToDelete = project
+                        }
+                    }
+                }
                 .listStyle(.plain)
-                        .background(Color.clear)
+                .background(Color.clear)
                 .scrollContentBackground(.hidden)
                     }
                 }
@@ -154,23 +162,17 @@ struct ProjectsView: View {
                 }
                 Button("删除", role: .destructive) {
                     if let project = projectToDelete {
-                        // 保存项目ID用于后续通知
-                        let projectId = project.id
-                        
                         // 清空删除项目引用，防止重复操作
                         projectToDelete = nil
                         
                         // 禁用UI交互，减少用户点击
                         isRefreshing = true
                         
-                        // 延迟执行删除操作，确保UI已更新
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            // 执行删除操作
-                            projectStore.deleteProject(project)
-                            
-                            // 完成后恢复UI交互
-                            isRefreshing = false
-                        }
+                        // 立即执行删除操作
+                        projectStore.deleteProject(project)
+                        
+                        // 立即恢复UI状态
+                        isRefreshing = false
                     }
                 }
             } message: {
@@ -473,12 +475,14 @@ struct ProjectListRow: View {
                     isDeleting = true
                 }
                 
-                // 直接发送删除通知，不使用异步延迟
-                NotificationCenter.default.post(
-                    name: Notification.Name("DeleteProject"),
-                    object: nil,
-                    userInfo: ["project": project]
-                )
+                // 使用更安全的方式发送删除通知
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: Notification.Name("DeleteProject"),
+                        object: nil,
+                        userInfo: ["project": project]
+                    )
+                }
             } label: {
                 Label("删除", systemImage: "trash")
             }
@@ -490,6 +494,12 @@ struct ProjectListRow: View {
                deletedProjectId == project.id {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isDeleting = false
+                }
+                
+                // 检查是否有错误
+                if let error = notification.userInfo?["error"] {
+                    print("项目删除失败: \(error)")
+                    // 这里可以显示错误提示给用户
                 }
             }
         }

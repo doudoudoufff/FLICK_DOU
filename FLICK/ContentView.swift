@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreData
+import MultipeerConnectivity
 
 struct ContentView: View {
     @EnvironmentObject private var projectStore: ProjectStore
@@ -14,6 +15,8 @@ struct ContentView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var selectedProject: Project?
     @State private var isAddAccountPresented = false
+    @State private var showingVenueReceive = false
+    @State private var pendingVenueShare: (VenueSharePackage, MCPeerID, (Bool) -> Void)?
     
     init(context: NSManagedObjectContext) {
         // 注意：ProjectStore将从FLICKApp通过environmentObject传入，
@@ -34,6 +37,7 @@ struct ContentView: View {
             }
             .onAppear {
                 print("ContentView已加载，项目数: \(projectStore.projects.count)")
+                setupVenueShareReceiver()
             }
             .onChange(of: notificationHandler.showAddAccountView) { show in
                 if show {
@@ -49,6 +53,39 @@ struct ContentView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingVenueReceive) {
+                if let (package, sender, onResponse) = pendingVenueShare {
+                    VenueReceiveView(sharePackage: package, sender: sender, onResponse: onResponse)
+                }
+            }
+    }
+    
+    private func setupVenueShareReceiver() {
+        VenueShareManager.shared.onVenueShareReceived = { package, sender, onResponse in
+            DispatchQueue.main.async {
+                pendingVenueShare = (package, sender, onResponse)
+                showingVenueReceive = true
+            }
+        }
+        
+        // 监听场地导入通知
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ImportSharedVenue"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let package = notification.userInfo?["package"] as? VenueSharePackage,
+                  let senderName = notification.userInfo?["sender"] as? String else { return }
+            
+            // 导入场地到数据库
+            let venueManager = VenueManager(context: PersistenceController.shared.container.viewContext)
+            let importedVenue = venueManager.importSharedVenue(package)
+            
+            if let venue = importedVenue {
+                print("成功导入场地: \(venue.wrappedName)")
+                // 可以在这里显示成功提示
+            }
+        }
     }
 }
 

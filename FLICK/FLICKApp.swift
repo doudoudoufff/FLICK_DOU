@@ -20,6 +20,9 @@ struct FLICKApp: App {
     // 添加通知处理器
     @StateObject private var notificationHandler = AppNotificationHandler()
     
+    // 初始化场地分享管理器，确保它在应用启动时就被创建
+    private let venueShareManager = VenueShareManager.shared
+    
     init() {
         // 确保 PersistenceController 完全初始化
         persistenceController = PersistenceController.shared
@@ -46,6 +49,27 @@ struct FLICKApp: App {
         // 因为这可能会触发系统权限弹窗
     }
     
+    // 设置定期检查场地分享服务的状态
+    func setupPeriodicServiceCheck() {
+        // 每2分钟检查一次服务状态
+        DispatchQueue.main.asyncAfter(deadline: .now() + 120) {
+            print("🔄 定期检查场地分享服务状态")
+            
+            // 如果没有发现设备，重新启动搜索
+            if VenueShareManager.shared.discoveredPeers.isEmpty {
+                print("⚠️ 未发现设备，重启场地分享服务")
+                VenueShareManager.shared.stopSearching()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    VenueShareManager.shared.startSearching()
+                }
+            }
+            
+            // 继续下一次检查
+            self.setupPeriodicServiceCheck()
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView(context: self.persistenceController.container.viewContext)
@@ -70,6 +94,15 @@ struct FLICKApp: App {
                     // 强制加载项目数据
                     print("🔄 应用启动后强制重新加载项目数据")
                     projectStore.loadProjects()
+                    
+                    // 启动场地分享服务，确保应用一启动就可以发现附近设备
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        print("🔍 启动场地分享服务，开始搜索附近设备")
+                        VenueShareManager.shared.startSearching()
+                        
+                        // 添加定期检查机制，确保服务持续运行
+                        self.setupPeriodicServiceCheck()
+                    }
                 }
         }
         .onChange(of: scenePhase) { newPhase in

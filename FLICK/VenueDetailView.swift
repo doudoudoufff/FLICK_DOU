@@ -16,6 +16,7 @@ struct VenueDetailView: View {
     @State private var previewURL: URL?
     @State private var isShowingPreview = false
     @State private var previewAttachment: VenueAttachmentEntity?
+    @State private var showingVenueShare = false
     
     // 添加初始化诊断
     init(venue: VenueEntity, venueManager: VenueManager) {
@@ -260,23 +261,22 @@ struct VenueDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack {
-                    Button(action: {
-                        showingEditSheet = true
-                    }) {
-                        Text("编辑场地")
+                Menu {
+                    Button("碰一碰分享", systemImage: "wifi.square") {
+                        showingVenueShare = true
                     }
                     
-                    Menu {
-                        Button(role: .destructive, action: {
-                            showingDeleteAlert = true
-                        }) {
-                            Label("删除场地", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .padding(8)
+                    Divider()
+                    
+                    Button("编辑场地", systemImage: "pencil") {
+                        showingEditSheet = true
                     }
+                    
+                    Button("删除场地", systemImage: "trash", role: .destructive) {
+                        showingDeleteAlert = true
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
@@ -318,6 +318,9 @@ struct VenueDetailView: View {
             if let url = previewURL {
                 QuickLookPreview(url: url)
             }
+        }
+        .sheet(isPresented: $showingVenueShare) {
+            VenueShareView(venue: venue)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .onAppear {

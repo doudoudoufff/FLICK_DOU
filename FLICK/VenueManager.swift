@@ -217,6 +217,113 @@ class VenueManager: ObservableObject {
         }
     }
     
+    // MARK: - 场地分享导入
+    
+    /// 导入分享的场地
+    func importSharedVenue(_ package: VenueSharePackage, overwriteExisting: Bool = false) -> VenueEntity? {
+        print("导入分享的场地: \(package.venue.name)")
+        
+        // 检查是否存在冲突
+        if let existingVenue = detectVenueConflict(package.venue) {
+            if overwriteExisting {
+                // 更新现有场地
+                updateVenueFromShare(existingVenue, with: package)
+                return existingVenue
+            } else {
+                // 创建新场地（在名称后添加标识）
+                return createVenueFromShare(package, withNameSuffix: " (副本)")
+            }
+        } else {
+            // 直接创建新场地
+            return createVenueFromShare(package)
+        }
+    }
+    
+    /// 检测场地冲突
+    func detectVenueConflict(_ shareData: VenueShareData) -> VenueEntity? {
+        for venue in venues {
+            let nameMatch = venue.wrappedName.lowercased() == shareData.name.lowercased()
+            let addressMatch = venue.wrappedAddress.lowercased().contains(shareData.address.lowercased()) ||
+                              shareData.address.lowercased().contains(venue.wrappedAddress.lowercased())
+            
+            if nameMatch || addressMatch {
+                return venue
+            }
+        }
+        return nil
+    }
+    
+    /// 从分享包创建新场地
+    private func createVenueFromShare(_ package: VenueSharePackage, withNameSuffix suffix: String = "") -> VenueEntity? {
+        let venueData = package.venue
+        let venue = VenueEntity(context: context)
+        
+        venue.id = UUID()
+        venue.name = venueData.name + suffix
+        venue.address = venueData.address
+        venue.contactName = venueData.contactName
+        venue.contactPhone = venueData.contactPhone
+        venue.type = venueData.type
+        venue.notes = venueData.notes
+        venue.dateAdded = Date() // 使用当前时间作为导入时间
+        
+        // 导入附件
+        for attachmentData in package.attachments {
+            let attachment = VenueAttachmentEntity(context: context)
+            attachment.id = UUID()
+            attachment.data = attachmentData.data
+            attachment.fileName = attachmentData.fileName
+            attachment.fileType = attachmentData.fileType
+            attachment.dateAdded = Date()
+            attachment.venue = venue
+            
+            venue.addToAttachments(attachment)
+        }
+        
+        saveContext()
+        fetchVenues()
+        
+        print("成功导入场地: \(venue.wrappedName)，包含 \(package.attachments.count) 个附件")
+        return venue
+    }
+    
+    /// 更新现有场地
+    private func updateVenueFromShare(_ venue: VenueEntity, with package: VenueSharePackage) {
+        let venueData = package.venue
+        
+        venue.name = venueData.name
+        venue.address = venueData.address
+        venue.contactName = venueData.contactName
+        venue.contactPhone = venueData.contactPhone
+        venue.type = venueData.type
+        venue.notes = venueData.notes
+        
+        // 清除现有附件
+        if let existingAttachments = venue.attachments as? Set<VenueAttachmentEntity> {
+            for attachment in existingAttachments {
+                context.delete(attachment)
+            }
+        }
+        
+        // 添加新附件
+        for attachmentData in package.attachments {
+            let attachment = VenueAttachmentEntity(context: context)
+            attachment.id = UUID()
+            attachment.data = attachmentData.data
+            attachment.fileName = attachmentData.fileName
+            attachment.fileType = attachmentData.fileType
+            attachment.dateAdded = Date()
+            attachment.venue = venue
+            
+            venue.addToAttachments(attachment)
+        }
+        
+        saveContext()
+        fetchVenues()
+        
+        print("成功更新场地: \(venue.wrappedName)")
+    }
+    
     // 返回所有场地类型选项
     var venueTypeOptions: [String] {
         return CustomTagManager.shared.getAllTagNames(ofType: .venueType)

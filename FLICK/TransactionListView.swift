@@ -50,7 +50,7 @@ struct TransactionListView: View {
     private var totalIncome: Double {
         project.transactions
             .filter { $0.transactionType == .income }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + abs($1.amount) }  // 使用绝对值确保收入为正
     }
     
     // 计算总支出（取绝对值，因为支出在数据库中是负数）
@@ -114,7 +114,7 @@ struct TransactionListView: View {
             // 预算卡片
             BudgetCard(
                 budget: project.budget,
-                spent: totalExpense,
+                spent: totalExpense, // 传递支出总额
                 usagePercentage: project.budgetUsagePercentage,
                 onEditBudget: { showingBudgetEditor = true }
             )
@@ -231,7 +231,7 @@ struct TransactionSummaryCard: View {
     private var totalIncome: Double {
         project.transactions
             .filter { $0.transactionType == .income }
-            .reduce(0) { $0 + $1.amount }
+            .reduce(0) { $0 + abs($1.amount) }  // 使用绝对值确保收入为正
     }
     
     // 计算总支出（取绝对值，因为支出在数据库中是负数）

@@ -26,9 +26,8 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             .filter { $0.transactionType == .expense }
             .reduce(0) { $0 + abs($1.amount) }  // 支出amount为负值，取绝对值
         
-        // 考虑总预算和收入的情况下计算使用比例
-        let adjustedBudget = budget + totalIncome
-        return min((totalExpense / adjustedBudget) * 100, 100)  // 限制最大值为100%
+        // 预算使用百分比只考虑支出占预算的比例，不考虑收入
+        return min((totalExpense / budget) * 100, 100)  // 限制最大值为100%
     }
     
     // 计算总收入
@@ -43,7 +42,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         let totalExpense = transactions
             .filter { $0.transactionType == .expense }
             .reduce(0) { $0 + abs($1.amount) }  // 支出amount为负值，取绝对值
-        return budget + totalIncome - totalExpense
+        return budget - totalExpense  // 剩余预算只考虑支出，不考虑收入
     }
     
     public enum Status: String, Codable, CaseIterable {

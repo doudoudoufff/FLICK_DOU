@@ -9,26 +9,8 @@ struct EditTransactionView: View {
     @Binding var isPresented: Bool
     var onTransactionUpdated: (() -> Void)? = nil
     
-    // 交易类型
-    enum TransactionType {
-        case expense, income
-        
-        var title: String {
-            switch self {
-            case .expense: return "支出"
-            case .income: return "收入"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .expense: return .red
-            case .income: return .green
-            }
-        }
-    }
-    
-    @State private var transactionType: TransactionType = .expense
+    // 使用视图本地变量来跟踪UI状态
+    @State private var isExpense: Bool = true
     @State private var name: String = ""
     @State private var amount: String = ""
     @State private var date: Date = Date()
@@ -64,9 +46,8 @@ struct EditTransactionView: View {
             Section {
                 HStack(spacing: 0) {
                     Button(action: {
-                        print("切换到支出，当前类型: \(transactionType)")
-                        transactionType = .expense
-                        print("切换后类型: \(transactionType)")
+                        print("切换到支出")
+                        isExpense = true
                         // 自动调整金额的正负值
                         if let value = Double(amount) {
                             let absValue = abs(value)
@@ -81,8 +62,8 @@ struct EditTransactionView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(transactionType == .expense ? Color.red.opacity(0.9) : Color(.systemGray5))
-                        .foregroundColor(transactionType == .expense ? .white : .primary)
+                        .background(isExpense ? Color.red.opacity(0.9) : Color(.systemGray5))
+                        .foregroundColor(isExpense ? .white : .primary)
                         .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
@@ -91,9 +72,8 @@ struct EditTransactionView: View {
                         .frame(width: 10)
                     
                     Button(action: {
-                        print("切换到收入，当前类型: \(transactionType)")
-                        transactionType = .income
-                        print("切换后类型: \(transactionType)")
+                        print("切换到收入")
+                        isExpense = false
                         // 自动调整金额的正负值
                         if let value = Double(amount) {
                             let absValue = abs(value)
@@ -108,8 +88,8 @@ struct EditTransactionView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(transactionType == .income ? Color.green.opacity(0.9) : Color(.systemGray5))
-                        .foregroundColor(transactionType == .income ? .white : .primary)
+                        .background(!isExpense ? Color.green.opacity(0.9) : Color(.systemGray5))
+                        .foregroundColor(!isExpense ? .white : .primary)
                         .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
@@ -160,7 +140,7 @@ struct EditTransactionView: View {
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 120)
-                        .foregroundColor(transactionType.color)
+                        .foregroundColor(isExpense ? .red : .green)
                         .fontWeight(.semibold)
                 }
                 
@@ -361,9 +341,9 @@ struct EditTransactionView: View {
     private func loadTransactionData() {
         name = transaction.name
         
-        // 根据金额的正负值确定交易类型
+        // 根据交易类型确定是支出还是收入
         let absAmount = abs(transaction.amount)
-        transactionType = transaction.amount < 0 ? .expense : .income
+        isExpense = transaction.transactionType == .expense
         amount = String(format: "%.2f", absAmount)
         
         date = transaction.date
@@ -410,12 +390,13 @@ struct EditTransactionView: View {
         let updatedTransaction = Transaction(
             id: transaction.id,
             name: name,
-            amount: transactionType == .expense ? -abs(amountValue) : abs(amountValue),
+            amount: abs(amountValue),  // 始终存储为正值
             date: date,
             transactionDescription: description,
             expenseType: expenseType,
             group: group,
             paymentMethod: "现金", // 默认使用现金
+            transactionType: isExpense ? .expense : .income, // 根据UI状态设置交易类型
             attachmentData: attachmentData,
             isVerified: false
         )

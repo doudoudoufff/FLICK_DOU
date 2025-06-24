@@ -158,8 +158,8 @@ class TransactionExcelExporter {
             totalCell.Cols(txt: .white, bg: .systemBlue)
             
             // 计算收入和支出
-            let totalIncome = transactions.filter { $0.transactionType == .income }.reduce(0) { $0 + $1.amount }
-            let totalExpense = transactions.filter { $0.transactionType == .expense }.reduce(0) { $0 + $1.amount }
+            let totalIncome = transactions.filter { $0.transactionType == .income }.reduce(0) { $0 + abs($1.amount) }  // 使用绝对值确保收入为正
+            let totalExpense = transactions.filter { $0.transactionType == .expense }.reduce(0) { $0 + abs($1.amount) }
             
             // 添加收入合计
             let incomeCell = sheet.AddCell(XCoords(row: totalRow, col: 3))

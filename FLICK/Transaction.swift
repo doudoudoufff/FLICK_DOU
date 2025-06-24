@@ -44,7 +44,10 @@ struct Transaction: Identifiable, Codable, Hashable {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: NSNumber(value: amount)) ?? "¥\(amount)"
+        
+        // 根据交易类型处理金额显示（确保收入显示为正数，支出显示为负数）
+        let displayAmount = transactionType == .income ? abs(amount) : -abs(amount)
+        return formatter.string(from: NSNumber(value: displayAmount)) ?? "¥\(displayAmount)"
     }
     
     // 交易展示颜色

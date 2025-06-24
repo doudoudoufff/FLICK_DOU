@@ -141,11 +141,11 @@ struct TransactionManagementView: View {
     
     // 计算统计数据
     var totalIncome: Double {
-        filteredTransactions.filter { $0.transactionType == .income }.reduce(0) { $0 + $1.amount }
+        filteredTransactions.filter { $0.transactionType == .income }.reduce(0) { $0 + abs($1.amount) }  // 使用绝对值确保收入为正
     }
     
     var totalExpense: Double {
-        filteredTransactions.filter { $0.transactionType == .expense }.reduce(0) { $0 + $1.amount }
+        filteredTransactions.filter { $0.transactionType == .expense }.reduce(0) { $0 + abs($1.amount) }
     }
     
     var balance: Double {
@@ -201,9 +201,13 @@ struct TransactionManagementView: View {
         VStack(spacing: 0) {
             // 预算信息
             if project.budget > 0 {
+                let totalExpense = filteredTransactions
+                    .filter { $0.transactionType == .expense }
+                    .reduce(0) { $0 + abs($1.amount) }
+                
                 BudgetInfoView(
                     budget: project.budget,
-                    spent: project.remainingBudget,
+                    spent: totalExpense, // 传递支出总额
                     usagePercentage: project.budgetUsagePercentage,
                     onEditBudget: { showingBudgetEditor = true }
                 )
@@ -848,13 +852,18 @@ struct TransactionManagementView: View {
 // 预算信息视图
 struct BudgetInfoView: View {
     let budget: Double
-    let spent: Double // 这个参数现在应该是剩余预算 (budget + income - expense)
+    let spent: Double // 这个参数现在是已使用的预算（支出总额）
     let usagePercentage: Double // 使用百分比
     let onEditBudget: () -> Void
     
-    // 我们不在这里计算 remainingBudget，而是直接使用传入的参数
+    // 计算剩余预算
+    private var remainingBudget: Double {
+        budget - spent
+    }
+    
+    // 判断是否超出预算
     private var isOverBudget: Bool {
-        spent < 0
+        remainingBudget < 0
     }
     
     private func formatAmount(_ amount: Double) -> String {
@@ -887,8 +896,8 @@ struct BudgetInfoView: View {
                 Spacer()
                 
                 Text(isOverBudget ? "超出预算: " : "剩余预算: ")
-                Text(formatAmount(abs(spent)))
-                    .foregroundColor(isOverBudget ? .red : (spent > budget * 0.2 ? .green : .orange))
+                Text(formatAmount(abs(remainingBudget)))
+                    .foregroundColor(isOverBudget ? .red : (remainingBudget > budget * 0.2 ? .green : .orange))
                 
                 if isOverBudget {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -928,7 +937,7 @@ struct BudgetInfoView: View {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.red)
-                    Text("已超出预算 \(formatAmount(abs(spent)))")
+                    Text("已超出预算 \(formatAmount(abs(remainingBudget)))")
                         .font(.caption)
                         .foregroundColor(.red)
                 }

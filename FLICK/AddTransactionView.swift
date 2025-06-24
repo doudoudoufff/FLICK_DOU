@@ -8,26 +8,8 @@ struct AddTransactionView: View {
     @Binding var isPresented: Bool
     var onTransactionAdded: (() -> Void)? = nil
     
-    // 交易类型
-    enum TransactionType {
-        case expense, income
-        
-        var title: String {
-            switch self {
-            case .expense: return "支出"
-            case .income: return "收入"
-            }
-        }
-        
-        var color: Color {
-            switch self {
-            case .expense: return .red
-            case .income: return .green
-            }
-        }
-    }
-    
-    @State private var transactionType: TransactionType = .expense
+    // 使用视图本地变量来跟踪UI状态
+    @State private var isExpense: Bool = true
     @State private var name: String = ""
     @State private var amount: String = ""
     @State private var date: Date = Date()
@@ -63,9 +45,8 @@ struct AddTransactionView: View {
             Section {
                 HStack(spacing: 0) {
                     Button(action: {
-                        print("切换到支出，当前类型: \(transactionType)")
-                        transactionType = .expense
-                        print("切换后类型: \(transactionType)")
+                        print("切换到支出")
+                        isExpense = true
                     }) {
                         VStack {
                             Image(systemName: "arrow.down.circle.fill")
@@ -75,8 +56,8 @@ struct AddTransactionView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(transactionType == .expense ? Color.red.opacity(0.9) : Color(.systemGray5))
-                        .foregroundColor(transactionType == .expense ? .white : .primary)
+                        .background(isExpense ? Color.red.opacity(0.9) : Color(.systemGray5))
+                        .foregroundColor(isExpense ? .white : .primary)
                         .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
@@ -85,9 +66,8 @@ struct AddTransactionView: View {
                         .frame(width: 10)
                     
                     Button(action: {
-                        print("切换到收入，当前类型: \(transactionType)")
-                        transactionType = .income
-                        print("切换后类型: \(transactionType)")
+                        print("切换到收入")
+                        isExpense = false
                     }) {
                         VStack {
                             Image(systemName: "arrow.up.circle.fill")
@@ -97,8 +77,8 @@ struct AddTransactionView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(transactionType == .income ? Color.green.opacity(0.9) : Color(.systemGray5))
-                        .foregroundColor(transactionType == .income ? .white : .primary)
+                        .background(!isExpense ? Color.green.opacity(0.9) : Color(.systemGray5))
+                        .foregroundColor(!isExpense ? .white : .primary)
                         .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
@@ -149,7 +129,7 @@ struct AddTransactionView: View {
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 120)
-                        .foregroundColor(transactionType.color)
+                        .foregroundColor(isExpense ? .red : .green)
                         .fontWeight(.semibold)
                 }
                 
@@ -379,12 +359,13 @@ struct AddTransactionView: View {
         // 创建新的交易记录
         let transaction = Transaction(
             name: name,
-            amount: transactionType == .expense ? -amountValue : amountValue,
+            amount: amountValue,  // 存储原始金额值，不再在这里处理正负
             date: date,
             transactionDescription: description,
             expenseType: expenseType,
             group: group,
             paymentMethod: "现金", // 默认使用现金
+            transactionType: isExpense ? .expense : .income, // 根据UI状态设置交易类型
             attachmentData: attachmentData,
             isVerified: false
         )

@@ -15,17 +15,31 @@ struct AccountListView: View {
                 
                 Spacer()
                 
-                if showManagement {
-                    NavigationLink(destination: AccountManagementView(project: $project).environmentObject(projectStore)) {
-                        Label("管理", systemImage: "chevron.right")
-                            .labelStyle(.iconOnly)
-                            .foregroundColor(.accentColor)
+                // 胶囊形UI按钮设计
+                HStack(spacing: 8) {
+                    // 添加账户按钮
+                    Button(action: { showingAddAccount = true }) {
+                        Label("添加", systemImage: "plus")
+                            .font(.system(size: 14, weight: .medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .foregroundColor(.white)
+                            .background(Color.accentColor)
+                            .clipShape(Capsule())
                     }
-                }
-                
-                Button(action: { showingAddAccount = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.accentColor)
+                    
+                    // 管理按钮
+                    if showManagement {
+                        NavigationLink(destination: AccountManagementView(project: $project).environmentObject(projectStore)) {
+                            Label("管理", systemImage: "list.bullet")
+                                .font(.system(size: 14, weight: .medium))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .foregroundColor(.accentColor)
+                                .background(Color.accentColor.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
+                    }
                 }
             }
             

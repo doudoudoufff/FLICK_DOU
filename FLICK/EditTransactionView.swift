@@ -22,8 +22,6 @@ struct EditTransactionView: View {
     @State private var showingImagePreview: Bool = false
     @State private var showingAddExpenseType: Bool = false
     @State private var showingAddGroup: Bool = false
-    @State private var newExpenseType: String = ""
-    @State private var newGroup: String = ""
     @State private var isSaving: Bool = false
     
     // 错误处理
@@ -31,13 +29,18 @@ struct EditTransactionView: View {
     @State private var alertMessage: String = ""
     
     // 获取所有费用类型选项
-    var expenseTypeOptions: [String] {
-        return CustomTagManager.shared.getAllExpenseTypes()
-    }
+    @State private var expenseTypeOptions: [String] = []
     
     // 获取所有组别选项
-    var groupOptions: [String] {
-        return CustomTagManager.shared.getAllGroupTypes()
+    @State private var groupOptions: [String] = []
+    
+    // 刷新标签选项
+    private func refreshTagOptions() {
+        print("刷新标签选项")
+        expenseTypeOptions = CustomTagManager.shared.getAllExpenseTypes()
+        groupOptions = CustomTagManager.shared.getAllGroupTypes()
+        print("刷新后的费用类型: \(expenseTypeOptions)")
+        print("刷新后的组别: \(groupOptions)")
     }
     
     var body: some View {
@@ -164,7 +167,7 @@ struct EditTransactionView: View {
             Section(header: HStack {
                 Text("费用类型")
                 Spacer()
-                Button("添加") {
+                Button("管理") {
                     showingAddExpenseType = true
                 }
                 .font(.caption)
@@ -189,19 +192,9 @@ struct EditTransactionView: View {
                     .padding(.vertical, 8)
                 }
             }
-            .alert("添加新费用类型", isPresented: $showingAddExpenseType) {
-                TextField("费用类型名称", text: $newExpenseType)
-                
-                Button("取消", role: .cancel) {
-                    newExpenseType = ""
-                }
-                
-                Button("添加") {
-                    if !newExpenseType.isEmpty && !expenseTypeOptions.contains(newExpenseType) {
-                        CustomTagManager.shared.addExpenseType(newExpenseType)
-                        expenseType = newExpenseType
-                    }
-                    newExpenseType = ""
+            .sheet(isPresented: $showingAddExpenseType) {
+                NavigationStack {
+                    CustomTagsSettingsView(initialTagType: .expenseType)
                 }
             }
             
@@ -209,7 +202,7 @@ struct EditTransactionView: View {
             Section(header: HStack {
                 Text("组别")
                 Spacer()
-                Button("添加") {
+                Button("管理") {
                     showingAddGroup = true
                 }
                 .font(.caption)
@@ -234,19 +227,9 @@ struct EditTransactionView: View {
                     .padding(.vertical, 8)
                 }
             }
-            .alert("添加新组别", isPresented: $showingAddGroup) {
-                TextField("组别名称", text: $newGroup)
-                
-                Button("取消", role: .cancel) {
-                    newGroup = ""
-                }
-                
-                Button("添加") {
-                    if !newGroup.isEmpty && !groupOptions.contains(newGroup) {
-                        CustomTagManager.shared.addGroupType(newGroup)
-                        group = newGroup
-                    }
-                    newGroup = ""
+            .sheet(isPresented: $showingAddGroup) {
+                NavigationStack {
+                    CustomTagsSettingsView(initialTagType: .groupType)
                 }
             }
             
@@ -335,6 +318,11 @@ struct EditTransactionView: View {
         .onAppear {
             // 加载现有交易记录的数据
             loadTransactionData()
+            // 刷新标签选项
+            refreshTagOptions()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TagsUpdated"))) { _ in
+            refreshTagOptions()
         }
     }
     

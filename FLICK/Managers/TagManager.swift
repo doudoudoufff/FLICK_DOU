@@ -118,16 +118,28 @@ class CustomTagManager: ObservableObject {
     
     // 保存上下文
     private func saveContext() {
+        print("保存CoreData上下文")
         if context.hasChanges {
             do {
                 try context.save()
+                print("✅ 成功保存CoreData上下文")
                 // 触发UI更新
                 objectWillChange.send()
+                print("已发送objectWillChange通知")
                 // 同步到iCloud
                 PersistenceController.shared.save()
+                print("已同步到iCloud")
+                
+                // 发送通知以更新所有视图
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: NSNotification.Name("TagsUpdated"), object: nil)
+                    print("已发送TagsUpdated通知")
+                }
             } catch {
                 print("❌ 保存标签失败: \(error.localizedDescription)")
             }
+        } else {
+            print("⚠️ CoreData上下文没有变化，无需保存")
         }
     }
     
@@ -135,12 +147,18 @@ class CustomTagManager: ObservableObject {
     
     // 获取指定类型的所有标签
     func getAllTags(ofType type: TagCategoryType) -> [TagEntity] {
+        print("获取所有标签，类型: \(type.rawValue)")
         let request: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
         request.predicate = NSPredicate(format: "tagType == %@", type.rawValue)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \TagEntity.order, ascending: true)]
         
         do {
-            return try context.fetch(request)
+            let results = try context.fetch(request)
+            print("查询到 \(results.count) 个标签")
+            for (index, tag) in results.enumerated() {
+                print("标签 \(index+1): \(tag.name ?? "无名称"), ID: \(tag.id?.uuidString ?? "无ID")")
+            }
+            return results
         } catch {
             print("❌ 获取标签失败: \(error.localizedDescription)")
             return []
@@ -149,7 +167,11 @@ class CustomTagManager: ObservableObject {
     
     // 获取指定类型的所有标签名称
     func getAllTagNames(ofType type: TagCategoryType) -> [String] {
-        return getAllTags(ofType: type).compactMap { $0.name }
+        print("获取所有标签名称，类型: \(type.rawValue)")
+        let tags = getAllTags(ofType: type)
+        let names = tags.compactMap { $0.name }
+        print("获取到 \(names.count) 个标签名称: \(names)")
+        return names
     }
     
     // 计算指定类型的标签数量
@@ -189,6 +211,12 @@ class CustomTagManager: ObservableObject {
         
         // 保存上下文
         saveContext()
+        
+        // 发送通知以更新所有视图
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: NSNotification.Name("TagsUpdated"), object: nil)
+        }
+        
         return newTag
     }
     
@@ -200,11 +228,14 @@ class CustomTagManager: ObservableObject {
     
     // 检查标签是否已存在
     func tagExists(name: String, type: TagCategoryType) -> Bool {
+        print("检查标签是否存在: \(name), 类型: \(type.rawValue)")
         let request: NSFetchRequest<TagEntity> = TagEntity.fetchRequest()
         request.predicate = NSPredicate(format: "name == %@ AND tagType == %@", name, type.rawValue)
         
         do {
-            return try context.count(for: request) > 0
+            let count = try context.count(for: request)
+            print("查询结果: 找到 \(count) 个匹配的标签")
+            return count > 0
         } catch {
             print("❌ 检查标签是否存在失败: \(error.localizedDescription)")
             return false
@@ -308,35 +339,59 @@ class CustomTagManager: ObservableObject {
     
     // 费用类型相关方法
     func getAllExpenseTypes() -> [String] {
-        return getAllTagNames(ofType: .expenseType)
+        print("获取所有费用类型")
+        let types = getAllTagNames(ofType: .expenseType)
+        print("获取到的费用类型: \(types)")
+        return types
     }
     
     func addExpenseType(_ type: String) {
-        _ = addTag(name: type, type: .expenseType)
+        print("添加费用类型: \(type)")
+        let tag = addTag(name: type, type: .expenseType)
+        if let tag = tag {
+            print("成功添加费用类型: \(tag.name ?? "")")
+        } else {
+            print("添加费用类型失败: \(type)")
+        }
     }
     
     func removeExpenseType(_ type: String) {
-        _ = removeTag(name: type, type: .expenseType)
+        print("删除费用类型: \(type)")
+        let success = removeTag(name: type, type: .expenseType)
+        print("删除费用类型结果: \(success ? "成功" : "失败")")
     }
     
     func resetExpenseTypes() {
+        print("重置所有费用类型")
         resetTags(forType: .expenseType)
     }
     
     // 组别相关方法
     func getAllGroupTypes() -> [String] {
-        return getAllTagNames(ofType: .groupType)
+        print("获取所有组别")
+        let groups = getAllTagNames(ofType: .groupType)
+        print("获取到的组别: \(groups)")
+        return groups
     }
     
     func addGroupType(_ group: String) {
-        _ = addTag(name: group, type: .groupType)
+        print("添加组别: \(group)")
+        let tag = addTag(name: group, type: .groupType)
+        if let tag = tag {
+            print("成功添加组别: \(tag.name ?? "")")
+        } else {
+            print("添加组别失败: \(group)")
+        }
     }
     
     func removeGroupType(_ group: String) {
-        _ = removeTag(name: group, type: .groupType)
+        print("删除组别: \(group)")
+        let success = removeTag(name: group, type: .groupType)
+        print("删除组别结果: \(success ? "成功" : "失败")")
     }
     
     func resetGroupTypes() {
+        print("重置所有组别")
         resetTags(forType: .groupType)
     }
     

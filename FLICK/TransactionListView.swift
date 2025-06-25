@@ -263,16 +263,30 @@ struct TransactionSummaryCard: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: TransactionManagementView(project: $project).environmentObject(projectStore)) {
-                    Label("管理", systemImage: "chevron.right")
-                        .labelStyle(.iconOnly)
-                        .foregroundColor(.accentColor)
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: { isAddingTransaction = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.accentColor)
+                // 胶囊形UI按钮设计
+                HStack(spacing: 8) {
+                    // 添加交易按钮
+                    Button(action: { isAddingTransaction = true }) {
+                        Label("添加", systemImage: "plus")
+                            .font(.system(size: 14, weight: .medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .foregroundColor(.white)
+                            .background(Color.accentColor)
+                            .clipShape(Capsule())
+                    }
+                    
+                    // 管理按钮
+                    NavigationLink(destination: TransactionManagementView(project: $project).environmentObject(projectStore)) {
+                        Label("管理", systemImage: "list.bullet")
+                            .font(.system(size: 14, weight: .medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .foregroundColor(.accentColor)
+                            .background(Color.accentColor.opacity(0.15))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             

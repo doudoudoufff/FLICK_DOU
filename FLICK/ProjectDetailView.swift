@@ -453,27 +453,44 @@ struct TaskListCard: View {
                 
                 Spacer()
                 
-                // 添加管理按钮
-                if isIPad {
-                    Button(action: { showingTaskManagement = true }) {
-                        Label("管理", systemImage: "chevron.right")
-                            .labelStyle(.iconOnly)
-                            .foregroundColor(.accentColor)
+                // 胶囊形UI按钮设计
+                HStack(spacing: 8) {
+                    // 添加任务按钮
+                    Button(action: {
+                        showingAddTask = true
+                    }) {
+                        Label("添加", systemImage: "plus")
+                            .font(.system(size: 14, weight: .medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .foregroundColor(.white)
+                            .background(Color.accentColor)
+                            .clipShape(Capsule())
                     }
-                } else {
-                    NavigationLink(destination: TaskManagementView(project: $project).environmentObject(projectStore)) {
-                        Label("管理", systemImage: "chevron.right")
-                            .labelStyle(.iconOnly)
-                            .foregroundColor(.accentColor)
+                    
+                    // 管理按钮
+                    if isIPad {
+                        Button(action: { showingTaskManagement = true }) {
+                            Label("管理", systemImage: "list.bullet")
+                                .font(.system(size: 14, weight: .medium))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .foregroundColor(.accentColor)
+                                .background(Color.accentColor.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
+                    } else {
+                        NavigationLink(destination: TaskManagementView(project: $project).environmentObject(projectStore)) {
+                            Label("管理", systemImage: "list.bullet")
+                                .font(.system(size: 14, weight: .medium))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .foregroundColor(.accentColor)
+                                .background(Color.accentColor.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                }
-                
-                Button(action: {
-                    showingAddTask = true
-                }) {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.accentColor)
                 }
             }
             

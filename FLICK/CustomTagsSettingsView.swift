@@ -74,73 +74,60 @@ struct CustomTagsSettingsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 标签类型选择器
-            HStack {
-                Text("标签类型：")
-                    .font(.headline)
-                
-                Picker("选择标签类型", selection: $selectedTagType) {
-                    Text("费用类型").tag(TagUIType.expenseType)
-                    Text("组别").tag(TagUIType.groupType)
-                    Text("常用信息标签").tag(TagUIType.infoType)
-                    Text("场地类型").tag(TagUIType.venueType)
-                }
-                .pickerStyle(.menu)
-                .tint(selectedTagType.iconColor)
-                
-                Spacer()
+            // 标签类型选择器 - 简约分段控制器
+            Picker("标签类型", selection: $selectedTagType) {
+                Text("费用类型").tag(TagUIType.expenseType)
+                Text("组别").tag(TagUIType.groupType)
+                Text("信息").tag(TagUIType.infoType)
+                Text("场地").tag(TagUIType.venueType)
             }
-            .padding(.horizontal)
-            .padding(.top)
-            
-            // 标签说明
-            HStack {
-                Image(systemName: selectedTagType.iconName)
-                    .foregroundColor(selectedTagType.iconColor)
-                Text(selectedTagType.description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            
-            Divider()
+            .pickerStyle(.segmented)
+            .padding()
             
             // 标签列表
             List {
                 Section {
-                    // 新增标签输入框
+                    // 新增标签输入框 - 简约设计
                     HStack {
                         TextField("添加新\(selectedTagType.title)", text: $newTagName)
                         
                         Button(action: {
                             addNewTag()
                         }) {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.accentColor)
+                            Image(systemName: "plus")
+                                .foregroundColor(.white)
+                                .padding(6)
+                                .background(newTagName.isEmpty ? Color.gray : .blue)
+                                .cornerRadius(8)
                         }
                         .disabled(newTagName.isEmpty)
                     }
                 } header: {
-                    Text("新增\(selectedTagType.title)")
+                    Text("添加")
                 }
                 
                 Section {
-                    ForEach(tags, id: \.id) { tag in
-                        tagRow(for: tag)
-                    }
-                    .onDelete { indexSet in
-                        deleteTags(at: indexSet)
+                    if tags.isEmpty {
+                        Text("暂无\(selectedTagType.title)")
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical)
+                    } else {
+                        ForEach(tags, id: \.id) { tag in
+                            tagRow(for: tag)
+                        }
+                        .onDelete { indexSet in
+                            deleteTags(at: indexSet)
+                        }
                     }
                 } header: {
                     HStack {
-                        Text("已有\(selectedTagType.title)")
+                        Text("已有标签")
                         Spacer()
-                        Button("重置为默认") {
+                        Button("重置") {
                             showingResetAlert = true
                         }
-                        .font(.caption)
+                        .font(.footnote)
                         .foregroundColor(.blue)
                     }
                 }
@@ -187,17 +174,27 @@ struct CustomTagsSettingsView: View {
         }
     }
     
-    // 标签行视图
+    // 标签行视图 - 简约版
     private func tagRow(for tag: TagEntity) -> some View {
         HStack {
+            // 标签颜色指示器
             Circle()
                 .fill(tagManager.color(from: tag.colorHex))
-                .frame(width: 12, height: 12)
+                .frame(width: 14, height: 14)
             
+            // 标签名称
             Text(tag.name ?? "")
             
             Spacer()
             
+            // 默认标签指示器
+            if tag.isDefault {
+                Text("默认")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            // 颜色选择按钮
             Button(action: {
                 selectedTag = tag
                 selectedColor = tagManager.color(from: tag.colorHex)
@@ -207,6 +204,7 @@ struct CustomTagsSettingsView: View {
                     .foregroundColor(.blue)
             }
             
+            // 删除按钮 - 只对非默认标签显示
             if !tag.isDefault {
                 Button(action: {
                     tagToDelete = tag.name ?? ""
@@ -220,23 +218,42 @@ struct CustomTagsSettingsView: View {
     }
     
     // 颜色选择器视图
+    // 颜色选择器视图 - 极简版本
     private func colorPickerView(for tag: TagEntity) -> some View {
         NavigationView {
-            VStack {
-                ColorPicker("选择颜色", selection: $selectedColor)
-                    .padding()
+            Form {
+                // 颜色选择器
+                Section(header: Text("选择颜色")) {
+                    ColorPicker("颜色", selection: $selectedColor)
+                }
                 
-                Button("保存") {
-                    if let name = tag.name {
-                        tagManager.updateTagColor(name: name, type: selectedTagType.tagType, color: selectedColor)
-                        refreshData()
-                        showingColorPicker = false
+                // 预设颜色
+                Section(header: Text("预设颜色")) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            ForEach([Color.red, Color.orange, Color.yellow, Color.green, Color.blue, Color.purple], id: \.self) { color in
+                                Circle()
+                                    .fill(color)
+                                    .frame(width: 30, height: 30)
+                                    .onTapGesture {
+                                        selectedColor = color
+                                    }
+                            }
+                        }
+                        .padding(.vertical, 8)
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .padding()
                 
-                Spacer()
+                // 保存按钮
+                Section {
+                    Button("保存") {
+                        if let name = tag.name {
+                            tagManager.updateTagColor(name: name, type: selectedTagType.tagType, color: selectedColor)
+                            refreshData()
+                            showingColorPicker = false
+                        }
+                    }
+                }
             }
             .navigationTitle("标签颜色")
             .navigationBarTitleDisplayMode(.inline)

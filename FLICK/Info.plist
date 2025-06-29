@@ -8,6 +8,8 @@
 	<array>
 		<string>_flickvenue._tcp</string>
 		<string>_flickvenue._udp</string>
+		<string>_flick-baibai._tcp</string>
+		<string>_flick-baibai._udp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>FLICK需要使用本地网络来发现附近的设备，以便进行场地信息分享</string>

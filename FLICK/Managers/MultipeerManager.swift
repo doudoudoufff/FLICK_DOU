@@ -39,10 +39,18 @@ class MultipeerManager: NSObject, ObservableObject {
     static let shared = MultipeerManager()
     
     // 服务类型标识符 - 用于发现和浏览服务
+    // 注意：MultipeerConnectivity要求服务类型格式为：不超过15个字符的小写ASCII字符串
+    // 不要包含下划线前缀和协议后缀，这些会由框架自动添加
     private let serviceType = "flick-baibai"
     
     // 当前设备的ID和角色
-    private let myPeerId = MCPeerID(displayName: UIDevice.current.name)
+    private let myPeerId: MCPeerID = {
+        // 限制设备名称长度，避免过长导致问题
+        let deviceName = UIDevice.current.name
+        let maxLength = 63 // MultipeerConnectivity的限制
+        let truncatedName = deviceName.count <= maxLength ? deviceName : String(deviceName.prefix(maxLength))
+        return MCPeerID(displayName: truncatedName)
+    }()
     @Published var deviceRole: DeviceRole = .leaf
     
     // 会话和连接管理
@@ -69,12 +77,29 @@ class MultipeerManager: NSObject, ObservableObject {
     // 已处理的消息ID集合，用于去重
     private var processedMessages: Set<String> = []
     
-    // 回调函数
-    var onBaiSignalReceived: (() -> Void)?
-    var onConnectionStatusChanged: ((Bool) -> Void)?
-    var onBowActionReceived: ((Bool) -> Void)?  // 接收到鞠躬动作信号的回调，参数表示是否开始鞠躬
+    // 回调函数 - 使用弱引用避免循环引用
+    private var _onBaiSignalReceived: (() -> Void)?
+    var onBaiSignalReceived: (() -> Void)? {
+        get { return _onBaiSignalReceived }
+        set { _onBaiSignalReceived = newValue }
+    }
     
-    // 私有初始化方法
+    private var _onConnectionStatusChanged: ((Bool) -> Void)?
+    var onConnectionStatusChanged: ((Bool) -> Void)? {
+        get { return _onConnectionStatusChanged }
+        set { _onConnectionStatusChanged = newValue }
+    }
+    
+    private var _onBowActionReceived: ((Bool) -> Void)?
+    var onBowActionReceived: ((Bool) -> Void)? {
+        get { return _onBowActionReceived }
+        set { _onBowActionReceived = newValue }
+    }
+    
+    // 用于同步访问共享数据的队列
+    private let queue = DispatchQueue(label: "com.flick.multipeerManager", attributes: .concurrent)
+    
+    // 私有初始化方法，防止外部创建实例
     private override init() {
         super.init()
     }
@@ -93,12 +118,17 @@ class MultipeerManager: NSObject, ObservableObject {
         
         // 开始广播服务
         let discoveryInfo = ["roomCode": roomCode]
+        
+        // 确保serviceType与Info.plist中的NSBonjourServices匹配
+        // 注意：服务类型必须遵循格式：_servicename._tcp
         serviceAdvertiser = MCNearbyServiceAdvertiser(peer: myPeerId, discoveryInfo: discoveryInfo, serviceType: serviceType)
         serviceAdvertiser?.delegate = self
+        
+        // 开始广播
         serviceAdvertiser?.startAdvertisingPeer()
         
         // 打印调试信息
-        print("创建房间成功，房间码: \(roomCode)")
+        print("创建房间成功，房间码: \(roomCode), 服务类型: \(serviceType)")
     }
     
     // 加入房间（作为二级节点或叶子节点）
@@ -122,7 +152,7 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // 发送拜拜信号
     func sendBaiSignal() {
-        guard session != nil, !connectedPeers.isEmpty else {
+        guard let session = session, !connectedPeers.isEmpty else {
             print("没有连接的设备，无法发送拜拜信号")
             return
         }
@@ -142,13 +172,15 @@ class MultipeerManager: NSObject, ObservableObject {
         
         // 如果是主设备，同时自己也执行拜拜动作
         if deviceRole == .main {
-            onBaiSignalReceived?()
+            DispatchQueue.main.async { [weak self] in
+                self?._onBaiSignalReceived?()
+            }
         }
     }
     
     // 发送鞠躬动作信号
     func sendBowAction(isBowing: Bool) {
-        guard session != nil, !connectedPeers.isEmpty else {
+        guard let session = session, !connectedPeers.isEmpty else {
             print("没有连接的设备，无法发送鞠躬动作信号")
             return
         }
@@ -178,15 +210,19 @@ class MultipeerManager: NSObject, ObservableObject {
         session?.disconnect()
         session = nil
         
-        connectedPeers = []
-        childPeers = []
-        parentPeer = nil
-        processedMessages.removeAll()
-        
-        isConnected = false
-        isSearching = false
-        
-        onConnectionStatusChanged?(false)
+        queue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            self.connectedPeers = []
+            self.childPeers = []
+            self.parentPeer = nil
+            self.processedMessages.removeAll()
+            
+            DispatchQueue.main.async {
+                self.isConnected = false
+                self.isSearching = false
+                self._onConnectionStatusChanged?(false)
+            }
+        }
         
         // 打印调试信息
         print("断开所有连接")
@@ -196,34 +232,47 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // 初始化会话
     private func setupSession() {
+        // 先清理旧的会话
+        session?.disconnect()
+        
+        // 创建新会话
         session = MCSession(peer: myPeerId, securityIdentity: nil, encryptionPreference: .required)
         session?.delegate = self
     }
     
     // 广播消息给所有子节点
     private func broadcastMessage(_ message: BaiMessage) {
+        guard let session = session else { return }
+        
         do {
             // 将消息编码为Data
             let data = try JSONEncoder().encode(message)
             
-            // 记录已处理的消息ID
-            processedMessages.insert(message.messageId)
+            // 在同步队列中安全地更新已处理消息集合
+            queue.async(flags: .barrier) { [weak self] in
+                self?.processedMessages.insert(message.messageId)
+            }
             
             if deviceRole == .main {
                 // 主设备：发送给所有直接连接的二级节点
-                if !connectedPeers.isEmpty {
-                    try session?.send(data, toPeers: connectedPeers, with: .reliable)
+                let peers = connectedPeers
+                if !peers.isEmpty {
+                    try session.send(data, toPeers: peers, with: .reliable)
                 }
             } else if deviceRole == .secondary {
                 // 二级节点：转发给所有子节点，但不包括父节点
-                let targets = childPeers.filter { $0 != parentPeer }
+                var targets: [MCPeerID] = []
+                queue.sync {
+                    targets = childPeers.filter { $0 != parentPeer }
+                }
+                
                 if !targets.isEmpty {
-                    try session?.send(data, toPeers: targets, with: .reliable)
+                    try session.send(data, toPeers: targets, with: .reliable)
                 }
                 
                 // 如果消息不是从父节点来的，也发送给父节点
                 if let parent = parentPeer, message.sender != parent.displayName {
-                    try session?.send(data, toPeers: [parent], with: .reliable)
+                    try session.send(data, toPeers: [parent], with: .reliable)
                 }
             }
             
@@ -236,22 +285,31 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // 处理收到的消息
     private func handleReceivedMessage(_ message: BaiMessage, from peer: MCPeerID) {
-        // 检查消息是否已经处理过
-        guard !processedMessages.contains(message.messageId) else {
+        // 在同步队列中安全地检查和更新已处理消息集合
+        var shouldProcess = false
+        
+        queue.sync {
+            if !processedMessages.contains(message.messageId) {
+                shouldProcess = true
+            }
+        }
+        
+        guard shouldProcess else {
             print("忽略重复消息: \(message.messageId)")
             return
         }
         
-        // 记录已处理的消息ID
-        processedMessages.insert(message.messageId)
+        queue.async(flags: .barrier) { [weak self] in
+            self?.processedMessages.insert(message.messageId)
+        }
         
         // 根据消息类型处理
         switch message.type {
         case .roleAssignment:
             // 处理角色分配消息
             if let roleString = message.content["role"], let role = DeviceRole(rawValue: roleString) {
-                DispatchQueue.main.async {
-                    self.deviceRole = role
+                DispatchQueue.main.async { [weak self] in
+                    self?.deviceRole = role
                     print("角色已分配: \(role.rawValue)")
                 }
             }
@@ -266,8 +324,8 @@ class MultipeerManager: NSObject, ObservableObject {
             }
             
             // 触发拜拜动作
-            DispatchQueue.main.async {
-                self.onBaiSignalReceived?()
+            DispatchQueue.main.async { [weak self] in
+                self?._onBaiSignalReceived?()
             }
             
         case .statusUpdate:
@@ -289,8 +347,8 @@ class MultipeerManager: NSObject, ObservableObject {
                 }
                 
                 // 触发鞠躬动作回调
-                DispatchQueue.main.async {
-                    self.onBowActionReceived?(isBowing)
+                DispatchQueue.main.async { [weak self] in
+                    self?._onBowActionReceived?(isBowing)
                 }
             }
         }
@@ -298,7 +356,7 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // 分配角色给新加入的设备
     private func assignRole(to peer: MCPeerID) {
-        guard deviceRole == .main else { return }
+        guard deviceRole == .main, let session = session else { return }
         
         let role: DeviceRole
         
@@ -321,7 +379,7 @@ class MultipeerManager: NSObject, ObservableObject {
         // 发送给特定设备
         do {
             let data = try JSONEncoder().encode(message)
-            try session?.send(data, toPeers: [peer], with: .reliable)
+            try session.send(data, toPeers: [peer], with: .reliable)
         } catch {
             print("发送角色分配消息失败: \(error.localizedDescription)")
         }
@@ -329,18 +387,22 @@ class MultipeerManager: NSObject, ObservableObject {
     
     // 更新拓扑结构
     private func updateTopology() {
-        // 对于非主设备，在连接成功后，需要设置父节点
-        if !isHost && parentPeer == nil {
-            parentPeer = connectedPeers.first
-            print("设置父节点: \(parentPeer?.displayName ?? "未知")")
-        }
-        
-        // 更新子节点列表
-        let newChildPeers = connectedPeers.filter { $0 != parentPeer }
-        childPeers = newChildPeers
-        
-        if !childPeers.isEmpty {
-            print("子节点: \(childPeers.map { $0.displayName }.joined(separator: ", "))")
+        queue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            
+            // 对于非主设备，在连接成功后，需要设置父节点
+            if !self.isHost && self.parentPeer == nil {
+                self.parentPeer = self.connectedPeers.first
+                print("设置父节点: \(self.parentPeer?.displayName ?? "未知")")
+            }
+            
+            // 更新子节点列表
+            let newChildPeers = self.connectedPeers.filter { $0 != self.parentPeer }
+            self.childPeers = newChildPeers
+            
+            if !self.childPeers.isEmpty {
+                print("子节点: \(self.childPeers.map { $0.displayName }.joined(separator: ", "))")
+            }
         }
     }
 }
@@ -348,14 +410,27 @@ class MultipeerManager: NSObject, ObservableObject {
 // MARK: - MCSessionDelegate
 extension MultipeerManager: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
             switch state {
             case .connected:
                 print("设备已连接: \(peerID.displayName)")
                 
                 // 更新连接的设备列表
-                if !self.connectedPeers.contains(peerID) {
-                    self.connectedPeers.append(peerID)
+                self.queue.async(flags: .barrier) {
+                    if !self.connectedPeers.contains(peerID) {
+                        self.connectedPeers.append(peerID)
+                    }
+                    
+                    // 更新拓扑结构
+                    self.updateTopology()
+                    
+                    DispatchQueue.main.async {
+                        // 更新连接状态
+                        self.isConnected = !self.connectedPeers.isEmpty
+                        self._onConnectionStatusChanged?(self.isConnected)
+                    }
                 }
                 
                 // 如果是主设备，为新加入的设备分配角色
@@ -363,39 +438,36 @@ extension MultipeerManager: MCSessionDelegate {
                     self.assignRole(to: peerID)
                 }
                 
-                // 更新拓扑结构
-                self.updateTopology()
-                
-                // 更新连接状态
-                self.isConnected = !self.connectedPeers.isEmpty
-                self.onConnectionStatusChanged?(self.isConnected)
-                
             case .connecting:
                 print("设备正在连接: \(peerID.displayName)")
                 
             case .notConnected:
                 print("设备已断开连接: \(peerID.displayName)")
                 
-                // 从连接的设备列表中移除
-                self.connectedPeers.removeAll { $0 == peerID }
-                
-                // 如果是父节点断开，需要重新寻找父节点
-                if self.parentPeer == peerID {
-                    self.parentPeer = nil
+                self.queue.async(flags: .barrier) {
+                    // 从连接的设备列表中移除
+                    self.connectedPeers.removeAll { $0 == peerID }
                     
-                    // 如果还有其他连接的设备，选择一个作为新的父节点
-                    if !self.connectedPeers.isEmpty {
-                        self.parentPeer = self.connectedPeers.first
-                        print("重新设置父节点: \(self.parentPeer?.displayName ?? "未知")")
+                    // 如果是父节点断开，需要重新寻找父节点
+                    if self.parentPeer == peerID {
+                        self.parentPeer = nil
+                        
+                        // 如果还有其他连接的设备，选择一个作为新的父节点
+                        if !self.connectedPeers.isEmpty {
+                            self.parentPeer = self.connectedPeers.first
+                            print("重新设置父节点: \(self.parentPeer?.displayName ?? "未知")")
+                        }
+                    }
+                    
+                    // 从子节点列表中移除
+                    self.childPeers.removeAll { $0 == peerID }
+                    
+                    DispatchQueue.main.async {
+                        // 更新连接状态
+                        self.isConnected = !self.connectedPeers.isEmpty
+                        self._onConnectionStatusChanged?(self.isConnected)
                     }
                 }
-                
-                // 从子节点列表中移除
-                self.childPeers.removeAll { $0 == peerID }
-                
-                // 更新连接状态
-                self.isConnected = !self.connectedPeers.isEmpty
-                self.onConnectionStatusChanged?(self.isConnected)
                 
             @unknown default:
                 print("未知的连接状态: \(peerID.displayName)")
@@ -438,8 +510,20 @@ extension MultipeerManager: MCNearbyServiceAdvertiserDelegate {
     
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
         DispatchQueue.main.async {
-            self.connectionError = "广播服务失败: \(error.localizedDescription)"
-            print("广播服务失败: \(error.localizedDescription)")
+            // 详细记录错误信息
+            let errorMessage = "广播服务失败: \(error.localizedDescription)"
+            self.connectionError = errorMessage
+            
+            // 打印详细错误信息和调试数据
+            print("❌ \(errorMessage)")
+            print("- 错误详情: \(error)")
+            print("- 服务类型: \(self.serviceType)")
+            print("- 设备ID: \(self.myPeerId.displayName)")
+            print("- Info.plist中的NSBonjourServices是否包含 _\(self.serviceType)._tcp?")
+            
+            // 尝试恢复
+            self.serviceAdvertiser?.stopAdvertisingPeer()
+            self.serviceAdvertiser = nil
         }
     }
 }

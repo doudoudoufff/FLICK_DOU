@@ -197,25 +197,15 @@ struct MultipeerBaiBaiView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("结束") {
                     // 断开连接并返回
-                    multipeerManager.disconnect()
-                    dismiss()
+                    cleanupAndDismiss()
                 }
             }
         }
         .onAppear {
-            // 设置回调函数
-            multipeerManager.onBaiSignalReceived = {
-                // 非主设备接收到信号时，显示全屏拜拜
-                if multipeerManager.deviceRole != .main {
-                    showFullscreenBai = true
-                }
-            }
+            setupCallbacks()
         }
         .onDisappear {
-            // 清理
-            particleTimer?.invalidate()
-            particleTimer = nil
-            multipeerManager.onBaiSignalReceived = nil
+            cleanup()
         }
         .fullScreenCover(isPresented: $showFullscreenBai) {
             // 根据设备角色决定是否使用自动模式
@@ -225,6 +215,43 @@ struct MultipeerBaiBaiView: View {
                 isAutoMode: multipeerManager.deviceRole != .main
             )
         }
+    }
+    
+    // 设置回调
+    private func setupCallbacks() {
+        // 设置回调函数
+        multipeerManager.onBaiSignalReceived = {
+            // 非主设备接收到信号时，显示全屏拜拜
+            if self.multipeerManager.deviceRole != .main {
+                self.showFullscreenBai = true
+            }
+        }
+        
+        // 设置断开连接回调
+        multipeerManager.onConnectionStatusChanged = { isConnected in
+            if !isConnected {
+                // 如果连接断开，返回设置页面
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.dismiss()
+                }
+            }
+        }
+    }
+    
+    // 清理资源
+    private func cleanup() {
+        particleTimer?.invalidate()
+        particleTimer = nil
+        multipeerManager.onBaiSignalReceived = nil
+        multipeerManager.onConnectionStatusChanged = nil
+        multipeerManager.onBowActionReceived = nil
+    }
+    
+    // 断开连接并返回
+    private func cleanupAndDismiss() {
+        cleanup()
+        multipeerManager.disconnect()
+        dismiss()
     }
     
     // 执行拜拜动画
@@ -246,15 +273,15 @@ struct MultipeerBaiBaiView: View {
         // 回弹动画
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                isBowing = false
+                self.isBowing = false
             }
         }
         
         // 显示祈福语
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            currentBlessing = blessings.randomElement()
+            self.currentBlessing = self.blessings.randomElement()
             withAnimation(.spring(response: 0.6, dampingFraction: 0.6)) {
-                showingBlessing = true
+                self.showingBlessing = true
             }
         }
     }
@@ -283,11 +310,11 @@ struct MultipeerBaiBaiView: View {
         // 开始粒子动画
         if particleTimer == nil {
             particleTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                updateParticles()
+                self.updateParticles()
                 
-                if particles.isEmpty {
+                if self.particles.isEmpty {
                     timer.invalidate()
-                    particleTimer = nil
+                    self.particleTimer = nil
                 }
             }
         }

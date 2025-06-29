@@ -30,6 +30,15 @@
         <attribute name="type" optional="YES" attributeType="String"/>
         <attribute name="userData" optional="YES" attributeType="Binary"/>
     </entity>
+    <entity name="DrawingElementEntity" representedClassName=".DrawingElementEntity" syncable="YES">
+        <attribute name="color" optional="YES" attributeType="String" defaultValueString="#000000"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="lineWidth" attributeType="Double" defaultValueString="2.0" usesScalarValueType="YES"/>
+        <attribute name="pointsData" optional="YES" attributeType="Binary"/>
+        <attribute name="text" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String" defaultValueString="line"/>
+        <relationship name="roadbookPhoto" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="RoadbookPhotoEntity" inverseName="drawingElements" inverseEntity="RoadbookPhotoEntity"/>
+    </entity>
     <entity name="InvoiceEntity" representedClassName=".InvoiceEntity" syncable="YES">
         <attribute name="amount" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="bankAccount" optional="YES" attributeType="String"/>
@@ -95,8 +104,31 @@
         <relationship name="accounts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="AccountEntity" inverseName="project" inverseEntity="AccountEntity"/>
         <relationship name="invoices" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="InvoiceEntity" inverseName="project" inverseEntity="InvoiceEntity"/>
         <relationship name="locations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LocationEntity" inverseName="project" inverseEntity="LocationEntity"/>
+        <relationship name="roadbooks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="RoadbookEntity" inverseName="project" inverseEntity="RoadbookEntity"/>
         <relationship name="tasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TaskEntity" inverseName="project" inverseEntity="TaskEntity"/>
         <relationship name="transactions" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TransactionEntity" inverseName="project" inverseEntity="TransactionEntity"/>
+    </entity>
+    <entity name="RoadbookEntity" representedClassName=".RoadbookEntity" syncable="YES">
+        <attribute name="creationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="modificationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String" defaultValueString="未命名路书"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <relationship name="photos" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="RoadbookPhotoEntity" inverseName="roadbook" inverseEntity="RoadbookPhotoEntity"/>
+        <relationship name="project" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ProjectEntity" inverseName="roadbooks" inverseEntity="ProjectEntity"/>
+    </entity>
+    <entity name="RoadbookPhotoEntity" representedClassName=".RoadbookPhotoEntity" syncable="YES">
+        <attribute name="captureDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="editedImageData" optional="YES" attributeType="Binary"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="latitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="longitude" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="orderIndex" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="originalImageData" optional="YES" attributeType="Binary"/>
+        <attribute name="thumbnailData" optional="YES" attributeType="Binary"/>
+        <relationship name="drawingElements" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="DrawingElementEntity" inverseName="roadbookPhoto" inverseEntity="DrawingElementEntity"/>
+        <relationship name="roadbook" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="RoadbookEntity" inverseName="photos" inverseEntity="RoadbookEntity"/>
     </entity>
     <entity name="TagEntity" representedClassName=".TagEntity" syncable="YES">
         <attribute name="colorHex" optional="YES" attributeType="String"/>

@@ -74,57 +74,77 @@ struct FeatureView: View {
                                 .getFrame($recordExpenseFrame)
                             }
                             
-                            // 第二排：常用信息+收藏地址（左侧），堪景（右侧）
+                            // 第二排：常用信息（左侧），堪景（右侧）
                             HStack(spacing: 20) {
-                                // 左侧：常用信息和收藏地址的水平布局
-                                HStack(spacing: 12) {
-                                    // 常用信息（小按钮）
-                                    NavigationLink(destination: CommonInfoManagementView()) {
-                                        VStack(spacing: 8) {
-                                            Image(systemName: "doc.text.magnifyingglass")
-                                                .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(Color.blue.opacity(0.85))
-                                            Text("常用信息")
-                                                .font(.subheadline)
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.primary)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 100)
-                                        .background(Color(.systemBackground).opacity(0.95))
-                                        .cornerRadius(16)
-                                        .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
+                                // 常用信息（小按钮）
+                                NavigationLink(destination: CommonInfoManagementView()) {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "doc.text.magnifyingglass")
+                                            .font(.system(size: 20, weight: .bold))
+                                            .foregroundColor(Color.blue.opacity(0.85))
+                                        Text("常用信息")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primary)
                                     }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .getFrame($commonInfoFrame)
-                                    
-                                    // 收藏场地管理（小按钮）
-                                    NavigationLink(destination: {
-                                        let context = PersistenceController.shared.container.viewContext
-                                        return VenueListView(context: context)
-                                    }) {
-                                        VStack(spacing: 8) {
-                                            Image(systemName: "building.2.fill")
-                                                .font(.system(size: 20, weight: .bold))
-                                                .foregroundColor(Color.blue.opacity(0.85))
-                                            Text("收藏场地")
-                                                .font(.subheadline)
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.primary)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 100)
-                                        .background(Color(.systemBackground).opacity(0.95))
-                                        .cornerRadius(16)
-                                        .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-                                    .getFrame($favoriteVenueFrame)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 100)
+                                    .background(Color(.systemBackground).opacity(0.95))
+                                    .cornerRadius(16)
+                                    .shadow(color: Color.blue.opacity(0.10), radius: 4, x: 0, y: 2)
                                 }
+                                .buttonStyle(PlainButtonStyle())
+                                .getFrame($commonInfoFrame)
                                 
-                                // 右侧：堪景（大按钮）
+                                // 堪景（大按钮）
                                 ScoutingCameraView()
                                     .getFrame($scoutingFrame)
+                            }
+                            
+                            // 第三排：收藏场地和路书功能并排
+                            HStack(spacing: 20) {
+                                // 收藏场地按钮
+                                NavigationLink(destination: {
+                                    let context = PersistenceController.shared.container.viewContext
+                                    return VenueListView(context: context)
+                                }) {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "building.2.fill")
+                                            .font(.system(size: 34, weight: .bold))
+                                            .foregroundColor(Color.blue.opacity(0.85))
+                                        Text("收藏场地")
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 100)
+                                    .background(Color(.systemBackground).opacity(0.95))
+                                    .cornerRadius(22)
+                                    .shadow(color: Color.blue.opacity(0.10), radius: 8, x: 0, y: 4)
+                                }
+                                .buttonStyle(.plain)
+                                .getFrame($favoriteVenueFrame)
+                                
+                                // 路书功能按钮
+                                NavigationLink(destination: {
+                                    // 导航到RoadbookView
+                                    RoadbookView()
+                                        .environmentObject(projectStore)
+                                        .environment(\.managedObjectContext, persistenceContext)
+                                }) {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "map.fill")
+                                            .font(.system(size: 34, weight: .bold))
+                                            .foregroundColor(Color.blue.opacity(0.85))
+                                        Text("路书")
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 100)
+                                    .background(Color(.systemBackground).opacity(0.95))
+                                    .cornerRadius(22)
+                                    .shadow(color: Color.blue.opacity(0.10), radius: 8, x: 0, y: 4)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal)

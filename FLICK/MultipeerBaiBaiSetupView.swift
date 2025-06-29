@@ -174,16 +174,48 @@ struct MultipeerBaiBaiSetupView: View {
             if isConnected && !multipeerManager.isHost {
                 // 给一点延迟，确保角色分配已完成
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    navigateToMainView = true
+                    self.navigateToMainView = true
                 }
             }
         }
         // 页面消失时断开连接
         .onDisappear {
             if !navigateToMainView {
-                multipeerManager.disconnect()
+                cleanup()
             }
         }
+        .onAppear {
+            // 确保在视图出现时重置所有状态
+            resetState()
+        }
+    }
+    
+    // 重置状态
+    private func resetState() {
+        // 如果之前有连接，先断开
+        if multipeerManager.isConnected {
+            multipeerManager.disconnect()
+        }
+        
+        // 重置本地状态
+        inputCode = ""
+        isJoining = false
+        showRoomInfo = false
+        
+        // 确保回调被清理
+        multipeerManager.onConnectionStatusChanged = nil
+        multipeerManager.onBaiSignalReceived = nil
+        multipeerManager.onBowActionReceived = nil
+    }
+    
+    // 清理资源
+    private func cleanup() {
+        multipeerManager.disconnect()
+        
+        // 清理回调
+        multipeerManager.onConnectionStatusChanged = nil
+        multipeerManager.onBaiSignalReceived = nil
+        multipeerManager.onBowActionReceived = nil
     }
     
     // 加入房间方法

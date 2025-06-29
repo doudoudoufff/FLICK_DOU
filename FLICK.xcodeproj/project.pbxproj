@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0F4F59752E0CEECE00F832C8 /* DrawingElementEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F59702E0CEECE00F832C8 /* DrawingElementEntity+CoreDataProperties.swift */; };
+		0F4F59762E0CEECE00F832C8 /* RoadbookEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F59722E0CEECE00F832C8 /* RoadbookEntity+CoreDataProperties.swift */; };
+		0F4F59772E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F59732E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataClass.swift */; };
+		0F4F59782E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F59742E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataProperties.swift */; };
+		0F4F59792E0CEECE00F832C8 /* DrawingElementEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F596F2E0CEECE00F832C8 /* DrawingElementEntity+CoreDataClass.swift */; };
+		0F4F597A2E0CEECE00F832C8 /* RoadbookEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F4F59712E0CEECE00F832C8 /* RoadbookEntity+CoreDataClass.swift */; };
 		0FCB5AE62DFF16450027A230 /* SwiftXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = 0FCB5AE52DFF16450027A230 /* SwiftXLSX */; };
 		0FDD604B2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */; };
 		0FDD604C2DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */; };
@@ -53,6 +59,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0F4F596F2E0CEECE00F832C8 /* DrawingElementEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DrawingElementEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		0F4F59702E0CEECE00F832C8 /* DrawingElementEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DrawingElementEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		0F4F59712E0CEECE00F832C8 /* RoadbookEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RoadbookEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		0F4F59722E0CEECE00F832C8 /* RoadbookEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RoadbookEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		0F4F59732E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RoadbookPhotoEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
+		0F4F59742E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RoadbookPhotoEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TagEntity+CoreDataClass.swift"; sourceTree = "<group>"; };
 		0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TagEntity+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		0FE011122D3F8916007A7B5B /* FLICK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FLICK.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -143,6 +155,12 @@
 		0FE011092D3F8916007A7B5B = {
 			isa = PBXGroup;
 			children = (
+				0F4F596F2E0CEECE00F832C8 /* DrawingElementEntity+CoreDataClass.swift */,
+				0F4F59702E0CEECE00F832C8 /* DrawingElementEntity+CoreDataProperties.swift */,
+				0F4F59712E0CEECE00F832C8 /* RoadbookEntity+CoreDataClass.swift */,
+				0F4F59722E0CEECE00F832C8 /* RoadbookEntity+CoreDataProperties.swift */,
+				0F4F59732E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataClass.swift */,
+				0F4F59742E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataProperties.swift */,
 				0FDD60492DFB1DDF0059FD79 /* TagEntity+CoreDataClass.swift */,
 				0FDD604A2DFB1DDF0059FD79 /* TagEntity+CoreDataProperties.swift */,
 				9E10374E2DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift */,
@@ -342,6 +360,12 @@
 				9E3F08312D6AE23400E2EC1B /* AccountEntity+CoreDataClass.swift in Sources */,
 				9E3F08322D6AE23400E2EC1B /* TaskEntity+CoreDataProperties.swift in Sources */,
 				9E5E41B32DDB992B0003A6EB /* TransactionEntity+CoreDataProperties.swift in Sources */,
+				0F4F59752E0CEECE00F832C8 /* DrawingElementEntity+CoreDataProperties.swift in Sources */,
+				0F4F59762E0CEECE00F832C8 /* RoadbookEntity+CoreDataProperties.swift in Sources */,
+				0F4F59772E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataClass.swift in Sources */,
+				0F4F59782E0CEECE00F832C8 /* RoadbookPhotoEntity+CoreDataProperties.swift in Sources */,
+				0F4F59792E0CEECE00F832C8 /* DrawingElementEntity+CoreDataClass.swift in Sources */,
+				0F4F597A2E0CEECE00F832C8 /* RoadbookEntity+CoreDataClass.swift in Sources */,
 				9E5E41B42DDB992B0003A6EB /* TransactionEntity+CoreDataClass.swift in Sources */,
 				9E1037502DE61D7E00156AB4 /* CommonInfoEntity+CoreDataClass.swift in Sources */,
 				9E1037512DE61D7E00156AB4 /* CommonInfoEntity+CoreDataProperties.swift in Sources */,

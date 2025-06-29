@@ -238,6 +238,36 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             budget: 0.0
         )
     }
+    
+    // 从 CoreData 实体初始化
+    convenience init(entity: ProjectEntity) {
+        guard let id = entity.id,
+              let name = entity.name,
+              let status = entity.status,
+              let startDate = entity.startDate
+        else {
+            self.init(name: "无效项目")
+            return
+        }
+        
+        self.init(
+            id: id,
+            name: name,
+            director: entity.director ?? "",
+            producer: entity.producer ?? "",
+            startDate: startDate,
+            status: Status(rawValue: status) ?? .preProduction,
+            color: entity.color.flatMap(Color.init(data:)) ?? .blue,
+            tasks: [],
+            invoices: [],
+            locations: [],
+            accounts: [],
+            transactions: [],
+            isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
+            logoData: entity.logoData,
+            budget: entity.budget
+        )
+    }
 }
 
 // 添加 Color 扩展来支持十六进制转换

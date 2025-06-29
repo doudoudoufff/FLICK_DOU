@@ -106,7 +106,7 @@ struct QuickProjectCreationView: View {
             director: "",
             producer: "",
             startDate: Date(),
-            status: .preProduction,
+            status: .inProgress,
             color: .blue
         )
         

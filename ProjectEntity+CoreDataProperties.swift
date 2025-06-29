@@ -17,7 +17,7 @@ extension ProjectEntity {
     }
 
     @NSManaged public var budget: Double
-    @NSManaged public var color: Data?
+    @NSManaged public var color: String?
     @NSManaged public var director: String?
     @NSManaged public var id: UUID?
     @NSManaged public var isLocationScoutingEnabled: Bool

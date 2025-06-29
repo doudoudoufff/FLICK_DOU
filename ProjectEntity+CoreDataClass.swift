@@ -44,9 +44,8 @@ public class ProjectEntity: NSManagedObject {
         
         // 处理颜色转换
         let projectColor: Color = {
-            if let colorData = color,
-               let uiColor = UIColor(data: colorData) {
-                return Color(uiColor: uiColor)
+            if let colorHex = color {
+                return Color(hex: colorHex) ?? .blue
             }
             return .blue
         }()

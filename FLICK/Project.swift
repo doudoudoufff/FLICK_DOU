@@ -9,7 +9,12 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
     @Published var producer: String
     @Published var startDate: Date
     @Published var status: Status
-    @Published var color: Color
+    @Published var color: Color {
+        didSet {
+            // 当颜色发生变化时，确保通知观察者
+            objectWillChange.send()
+        }
+    }
     @Published var tasks: [ProjectTask]
     @Published var invoices: [Invoice]
     @Published var locations: [Location]  // 确保 locations 在 accounts 之前
@@ -46,13 +51,11 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
     }
     
     public enum Status: String, Codable, CaseIterable {
-        case preProduction = "前期"
-        case production = "拍摄"
-        case postProduction = "后期"
+        case inProgress = "进行中"
         case completed = "完成"
         case cancelled = "取消"
         
-        public static var all: Self { .preProduction }  // 用于过滤器
+        public static var all: Self { .inProgress }  // 用于过滤器
     }
     
     init(
@@ -61,7 +64,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         director: String = "",
         producer: String = "",
         startDate: Date = Date(),
-        status: Status = .preProduction,
+        status: Status = .inProgress,
         color: Color = .blue,
         tasks: [ProjectTask] = [],
         invoices: [Invoice] = [],
@@ -149,7 +152,7 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         entity.producer = producer
         entity.startDate = startDate
         entity.status = status.rawValue
-        entity.color = color.toData()
+        entity.color = color.toHex()
         entity.isLocationScoutingEnabled = isLocationScoutingEnabled
         entity.logoData = logoData
         
@@ -175,6 +178,19 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         // 打印预算值（调试）
         print("Project.fromEntity - 加载预算值: \(entity.budget)")
         
+        // 颜色读取日志 - 使用Hex字符串
+        let color: Color = {
+            if let colorHex = entity.color {
+                print("Project.fromEntity - CoreData读取到colorHex: \(colorHex)")
+                let color = Color(hex: colorHex) ?? .blue
+                print("Project.fromEntity - 还原出来的颜色Hex: \(color.toHex())")
+                return color
+            } else {
+                print("Project.fromEntity - CoreData中没有color字段，使用默认蓝色")
+                return .blue
+            }
+        }()
+        
         let tasks: [ProjectTask] = (entity.tasks?.allObjects as? [TaskEntity])?.compactMap { taskEntity in
             guard let task = taskEntity as? TaskEntity else { return nil }
             return ProjectTask.fromEntity(task)
@@ -190,8 +206,8 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             director: entity.director ?? "",
             producer: entity.producer ?? "",
             startDate: startDate,
-            status: Status(rawValue: status) ?? .preProduction,
-            color: entity.color.flatMap(Color.init(data:)) ?? .blue,
+            status: Status(rawValue: status) ?? .inProgress,
+            color: color,
             tasks: tasks,
             invoices: invoices,
             locations: [],
@@ -256,8 +272,8 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             director: entity.director ?? "",
             producer: entity.producer ?? "",
             startDate: startDate,
-            status: Status(rawValue: status) ?? .preProduction,
-            color: entity.color.flatMap(Color.init(data:)) ?? .blue,
+            status: Status(rawValue: status) ?? .inProgress,
+            color: Color(hex: entity.color ?? "#1976D2") ?? .blue,
             tasks: [],
             invoices: [],
             locations: [],
@@ -267,26 +283,5 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
             logoData: entity.logoData,
             budget: entity.budget
         )
-    }
-}
-
-// 添加 Color 扩展来支持十六进制转换
-extension Color {
-    func toHex() -> UInt? {
-        guard let components = UIColor(self).cgColor.components else { return nil }
-        
-        let r = UInt(components[0] * 255.0)
-        let g = UInt(components[1] * 255.0)
-        let b = UInt(components[2] * 255.0)
-        
-        return (r << 16) + (g << 8) + b
-    }
-    
-    init?(hex: UInt) {
-        let r = Double((hex >> 16) & 0xFF) / 255.0
-        let g = Double((hex >> 8) & 0xFF) / 255.0
-        let b = Double(hex & 0xFF) / 255.0
-        
-        self.init(red: r, green: g, blue: b)
     }
 } 

@@ -4,7 +4,7 @@ struct ProjectsView: View {
     @EnvironmentObject var projectStore: ProjectStore
     @State private var showingAddProject = false
     @State private var searchText = ""
-    @State private var selectedStatus: Project.Status = .production
+    @State private var selectedStatus: Project.Status = .inProgress
     @State private var projectToDelete: Project? = nil
     @State private var isRefreshing = false
     
@@ -61,9 +61,41 @@ struct ProjectsView: View {
                 Color(.systemGroupedBackground).edgesIgnoringSafeArea(.all)
                 
             VStack(spacing: 0) {
-                    // 简化版状态筛选器
-                    StatusTabBar(selectedStatus: $selectedStatus)
-                        .padding(.top, 10)
+                    // 替换StatusTabBar为分段选择器
+                    HStack(spacing: 16) {
+                        ForEach([Project.Status.inProgress, Project.Status.completed], id: \.self) { status in
+                            Button(action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedStatus = status
+                                }
+                            }) {
+                                HStack(spacing: 7) {
+                                    Image(systemName: status == .inProgress ? "bolt.horizontal.fill" : "checkmark.seal.fill")
+                                        .font(.system(size: 19, weight: .bold))
+                                    Text(status == .inProgress ? "进行中" : "已完成")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundColor(selectedStatus == status ? .white : .primary)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 24)
+                                .background(
+                                    ZStack {
+                                        if selectedStatus == status {
+                                            LinearGradient(gradient: Gradient(colors: [Color.accentColor, Color.blue]), startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        } else {
+                                            Color(.systemGray5)
+                                        }
+                                    }
+                                )
+                                .cornerRadius(20)
+                                .shadow(color: selectedStatus == status ? Color.accentColor.opacity(0.18) : .clear, radius: 6, x: 0, y: 2)
+                                .scaleEffect(selectedStatus == status ? 1.06 : 1.0)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
                     
                     if projectStore.projects.isEmpty {
                         // 无项目时的提示
@@ -119,6 +151,7 @@ struct ProjectsView: View {
                 List {
                     ForEach(searchedProjects, id: \.id) { project in
                         ProjectListRow(project: project)
+                            .environmentObject(projectStore)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .listRowBackground(Color.clear)
@@ -210,7 +243,7 @@ struct ProjectsView: View {
     private func statusTitle(for status: Project.Status) -> String {
         switch status {
         case .all: return ""
-        case .production: return "进行中"
+        case .inProgress: return "进行中"
         case .completed: return "已完成"
         case .cancelled: return "已取消"
         default: return ""
@@ -220,15 +253,12 @@ struct ProjectsView: View {
     private var filteredProjects: [Project] {
         projectStore.projects.filter { project in
             switch selectedStatus {
-            case .all: return true
-            case .production: 
-                // "进行中"包含前期、拍摄、后期状态
-                return project.status == .preProduction || 
-                       project.status == .production || 
-                       project.status == .postProduction
-            case .completed: return project.status == .completed
-            case .cancelled: return project.status == .cancelled
-            default: return true
+            case .inProgress:
+                return project.status == .inProgress
+            case .completed:
+                return project.status == .completed
+            default:
+                return false
             }
         }
     }
@@ -243,117 +273,9 @@ struct ProjectsView: View {
     }
 }
 
-// 简化版状态标签栏
-struct StatusTabBar: View {
-    @Binding var selectedStatus: Project.Status
-    @Namespace private var animation
-    
-    // 定义状态选项 - 简化为两个状态
-    private let statusOptions: [Project.Status] = [
-        .production, .completed  // 使用 .production 代表"进行中"，.completed 代表"已完成"
-    ]
-    
-    // 获取状态显示名称
-    private func getStatusName(_ status: Project.Status) -> String {
-        switch status {
-        case .production: return "进行中"  // 包含前期、拍摄、后期
-        case .completed: return "已完成"
-        default: return ""
-        }
-    }
-    
-    // 获取状态对应图标
-    private func getStatusIcon(_ status: Project.Status) -> String {
-        switch status {
-        case .production: return "bolt.horizontal.circle.fill"  // 更现代的图标表示进行中
-        case .completed: return "checkmark.circle.fill"  // 使用filled版本的图标
-        default: return ""
-        }
-    }
-    
-    // 获取状态对应颜色
-    private func getStatusColor(_ status: Project.Status) -> Color {
-        switch status {
-        case .production: return Color(red: 0.0, green: 0.6, blue: 1.0)  // 更亮的蓝色
-        case .completed: return Color(red: 0.2, green: 0.8, blue: 0.4)  // 更鲜艳的绿色
-        default: return .gray
-        }
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // 分段选择器
-            HStack(spacing: 25) {
-                ForEach(statusOptions, id: \.self) { status in
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedStatus = status
-                        }
-                    }) {
-                        VStack(spacing: 10) {
-                            // 背景与图标
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(selectedStatus == status 
-                                          ? getStatusColor(status) 
-                                          : getStatusColor(status).opacity(0.1))
-                                    .frame(width: 64, height: 64)
-                                    .shadow(color: selectedStatus == status 
-                                            ? getStatusColor(status).opacity(0.4) 
-                                            : Color.clear, 
-                                            radius: 8, x: 0, y: 4)
-                                
-                                VStack(spacing: 6) {
-                                    Image(systemName: status == .production ? "bolt.horizontal" : "checkmark")
-                                        .font(.system(size: 22, weight: .semibold))
-                                        .foregroundColor(selectedStatus == status 
-                                                        ? .white 
-                                                        : getStatusColor(status))
-                                    
-                                    Text(getStatusName(status))
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(selectedStatus == status 
-                                                        ? .white 
-                                                        : getStatusColor(status))
-                                }
-                                .scaleEffect(selectedStatus == status ? 1.05 : 1.0)
-                            }
-                            
-                            // 不需要下方文字，已包含在方形中
-                        }
-                        .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
-                        .padding(.vertical, 12)
-                    }
-                    .buttonStyle(ScaleButtonStyle())
-                }
-            }
-            .padding(.horizontal, 30)
-            .padding(.top, 16)
-            .padding(.bottom, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(.systemBackground))
-                    .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 5)
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-        }
-    }
-}
-
-// 自定义按钮样式
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
 // 项目卡片组件
 struct ProjectCard: View {
-    let project: Project
+    @ObservedObject var project: Project
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -444,7 +366,7 @@ struct InfoRow: View {
 // 新增项目行组件
 struct ProjectListRow: View {
     @EnvironmentObject var projectStore: ProjectStore
-    let project: Project
+    @ObservedObject var project: Project
     @State private var isDeleting = false
     
     var body: some View {
@@ -487,21 +409,6 @@ struct ProjectListRow: View {
                 Label("删除", systemImage: "trash")
             }
             .tint(.red)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ProjectDeleted"))) { notification in
-            // 监听项目删除完成通知，重置状态
-            if let deletedProjectId = notification.userInfo?["projectId"] as? UUID,
-               deletedProjectId == project.id {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isDeleting = false
-                }
-                
-                // 检查是否有错误
-                if let error = notification.userInfo?["error"] {
-                    print("项目删除失败: \(error)")
-                    // 这里可以显示错误提示给用户
-                }
-            }
         }
     }
 }

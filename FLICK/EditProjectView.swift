@@ -52,7 +52,7 @@ struct EditProjectView: View {
                 }
                 
                 Section(header: Text("项目颜色")) {
-                    ColorPicker("选择颜色", selection: $selectedColor)
+                    ColorPickerView(selectedColor: $selectedColor)
                 }
                 
                 Section(header: Text("项目LOGO")) {
@@ -107,6 +107,7 @@ struct EditProjectView: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
+                        print("[EditProjectView] 点击保存，当前project.color: \(selectedColor.toHex())，context: \(projectStore.context)")
                         project.name = name
                         project.director = director
                         project.producer = producer
@@ -114,7 +115,11 @@ struct EditProjectView: View {
                         project.status = status
                         project.color = selectedColor
                         project.logoData = logoData
+                        
                         projectStore.updateProject(project)
+                        
+                        projectStore.objectWillChange.send()
+                        
                         isPresented = false
                     }
                     .disabled(name.isEmpty)

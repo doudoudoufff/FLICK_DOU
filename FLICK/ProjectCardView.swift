@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProjectCardView: View {
-    let project: Project
+    @Binding var project: Project
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -53,12 +53,8 @@ struct StatusBadge: View {
     
     var statusInfo: (text: String, color: Color) {
         switch status {
-        case .preProduction:
-            return ("筹备中", .orange)
-        case .production:
-            return ("拍摄中", .blue)
-        case .postProduction:
-            return ("后期中", .purple)
+        case .inProgress:
+            return ("进行中", .blue)
         case .completed:
             return ("已完成", .green)
         case .cancelled:

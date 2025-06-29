@@ -8,9 +8,8 @@ struct AddProjectView: View {
     @State private var director = ""
     @State private var producer = ""
     @State private var startDate = Date()
-    @State private var status: Project.Status = .preProduction
+    @State private var status: Project.Status = .inProgress
     @State private var selectedColor: Color = .blue
-    @State private var showingColorPicker = false
     
     var body: some View {
         NavigationView {
@@ -31,7 +30,7 @@ struct AddProjectView: View {
                 }
                 
                 Section(header: Text("项目颜色")) {
-                    ColorPicker("选择颜色", selection: $selectedColor)
+                    ColorPickerView(selectedColor: $selectedColor)
                 }
             }
             .navigationTitle("新建项目")

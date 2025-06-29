@@ -8,6 +8,7 @@ struct ProjectListView: View {
         List {
             ForEach(projectStore.projects) { project in
                 ProjectRowView(project: project)
+                    .environmentObject(projectStore)
             }
             .onDelete { indexSet in
                 for index in indexSet {
@@ -33,27 +34,36 @@ struct ProjectListView: View {
 
 // 抽取项目行视图为单独的组件
 struct ProjectRowView: View {
-    let project: Project
+    @ObservedObject var project: Project
+    @EnvironmentObject var projectStore: ProjectStore
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Circle()
-                    .fill(project.color)
-                    .frame(width: 12, height: 12)
-                Text(project.name)
-                    .font(.headline)
+        NavigationLink {
+            if let binding = projectStore.binding(for: project.id) {
+                ProjectDetailView(project: binding)
+            } else {
+                Text("项目不存在")
             }
-            
-            HStack {
-                Label(project.director, systemImage: "megaphone")
-                Spacer()
-                Text(project.startDate.chineseStyleShortString())
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Circle()
+                        .fill(project.color)
+                        .frame(width: 12, height: 12)
+                    Text(project.name)
+                        .font(.headline)
+                }
+                
+                HStack {
+                    Label(project.director, systemImage: "megaphone")
+                    Spacer()
+                    Text(project.startDate.chineseStyleShortString())
+                }
+                .font(.subheadline)
+                .foregroundColor(.secondary)
             }
-            .font(.subheadline)
-            .foregroundColor(.secondary)
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
     }
 }
 

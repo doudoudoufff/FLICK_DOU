@@ -777,7 +777,9 @@ struct CreditsView: View {
 
                 ContributorRow(name: "Wei Wenjun", role: "Project Manager")
                 
-                ContributorRow(name: "Wang Xiaotiao", role: "Test")
+                ContributorRow(name: "Wang Xiaotiao", role: "Friend")
+
+                ContributorRow(name: "Du Zhuohang", role: "Friend")
                 
                 ContributorRow(name: "Yang Xinlei", role: "Test")
                 

@@ -1,6 +1,13 @@
 import SwiftUI
 import CoreData
 
+// MARK: - Character Extensions
+extension Character {
+    var isHexDigit: Bool {
+        return self.isNumber || "ABCDEFabcdef".contains(self)
+    }
+}
+
 class ProjectStore: ObservableObject {
     static var shared: ProjectStore!
     @Published var projects: [Project] = []
@@ -185,6 +192,9 @@ class ProjectStore: ObservableObject {
     }
     
     private func performLoadProjects() {
+        // 首先进行强制数据清理
+        forceCleanupOldData()
+        
         let request = ProjectEntity.fetchRequest()
         
         // 使用创建日期作为排序依据，确保稳定排序
@@ -204,11 +214,61 @@ class ProjectStore: ObservableObject {
             }
             
             var loadedProjects: [Project] = []
+            var needsMigration = false
+            
             for entity in entities {
+                // 数据迁移：处理颜色字段类型变更
+                var needsColorMigration = false
+                
+                // 检查1：如果color字段是nil或空字符串，设置默认值
+                if entity.color == nil || entity.color?.isEmpty == true {
+                    print("检测到空颜色字段，设置默认蓝色")
+                    entity.color = "#1976D2"
+                    needsColorMigration = true
+                }
+                // 检查2：如果color字段不是有效的Hex格式，重置为默认值
+                else if let colorHex = entity.color {
+                    let isValidFormat = colorHex.hasPrefix("#") && 
+                                      (colorHex.count == 7 || colorHex.count == 8 || colorHex.count == 9) && // 7位(#RRGGBB)、8位(#RRGGBB)或9位(#RRGGBBAA)
+                                      colorHex.dropFirst().allSatisfy { $0.isHexDigit }
+                    
+                    if !isValidFormat {
+                        print("检测到无效颜色格式: \(colorHex)，重置为默认蓝色")
+                        entity.color = "#1976D2"
+                        needsColorMigration = true
+                    }
+                }
+                
+                // 数据迁移：处理状态字段变更
+                var needsStatusMigration = false
+                
+                if let statusValue = entity.status {
+                    // 检查是否为旧的状态值，需要迁移
+                    if statusValue == "前期" || statusValue == "拍摄" || statusValue == "后期" {
+                        print("检测到旧状态值: \(statusValue)，迁移为进行中")
+                        entity.status = "进行中"
+                        needsStatusMigration = true
+                    }
+                }
+                
+                if needsColorMigration || needsStatusMigration {
+                    needsMigration = true
+                }
+                
                 let project = mapProjectEntityToProject(entity)
                 // 验证预算值正确传递到Project对象
                 print("映射后 - 项目 '\(project.name)' 预算值: \(project.budget)")
                 loadedProjects.append(project)
+            }
+            
+            // 如果有数据迁移，保存更改
+            if needsMigration {
+                do {
+                    try context.save()
+                    print("✓ 颜色数据迁移完成并保存")
+                } catch {
+                    print("❌ 颜色数据迁移保存失败: \(error)")
+                }
             }
             
             // 直接替换整个数组，避免部分更新
@@ -260,7 +320,7 @@ class ProjectStore: ObservableObject {
                     projectEntity.producer = project.producer
                     projectEntity.startDate = project.startDate
                     projectEntity.status = project.status.rawValue
-                    projectEntity.color = project.color.toData()
+                    projectEntity.color = project.color.toHex()
                     projectEntity.isLocationScoutingEnabled = project.isLocationScoutingEnabled
                     projectEntity.logoData = project.logoData
                     
@@ -460,39 +520,15 @@ class ProjectStore: ObservableObject {
         // 批量保存所有更改
         do {
             try context.save()
-            print("✓ CoreData 保存成功")
-            
-            // 立即验证预算值是否正确保存
-            print("=== 立即验证预算值是否保存成功 ===")
-            let budgetVerifyRequest = ProjectEntity.fetchRequest()
-            let projectEntities = try context.fetch(budgetVerifyRequest)
-            for entity in projectEntities {
-                print("验证保存后 - 项目 '\(entity.name ?? "未命名")' 预算值: \(entity.budget)")
-            }
-            print("=== 验证完成 ===")
-            
-            // 记录保存时间
-            UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "lastSaveTime")
-            
-            // 验证保存结果
-            let verifyRequest = ProjectEntity.fetchRequest()
-            let count = try context.count(for: verifyRequest)
-            print("✓ 验证: 数据库中有 \(count) 个项目实体")
-        } catch {
-            print("""
-            ❌ 保存失败:
-            错误类型: \(type(of: error))
-            错误描述: \(error.localizedDescription)
-            堆栈跟踪: \(error)
-            """)
-            
-            // 尝试进一步诊断错误
-            if let nsError = error as NSError? {
-                print("错误代码: \(nsError.code), 域: \(nsError.domain)")
-                for (key, value) in nsError.userInfo {
-                    print("- \(key): \(value)")
+            print("[saveProjects] ✓ 批量保存到CoreData成功，context: \(context)")
+            // 保存后再次fetch所有实体，确认颜色
+            if let projectEntities = try? context.fetch(ProjectEntity.fetchRequest()) {
+                for entity in projectEntities {
+                    print("[saveProjects] 保存后实体颜色: \(entity.color ?? "无数据")，context: \(context)")
                 }
             }
+        } catch {
+            print("❌ 批量保存项目到CoreData失败: \(error)")
         }
         
         // 如果启用了 iCloud 同步，则触发同步
@@ -738,37 +774,84 @@ class ProjectStore: ObservableObject {
     // 更新项目
     func updateProject(_ updatedProject: Project) {
         print("更新项目预算值: \(updatedProject.budget)")
+        print("更新项目颜色: \(updatedProject.color.toHex())")
         
+        print("[updateProject] 内存project.color: \(updatedProject.color.toHex())，context: \(context)")
         // 更新内存中的项目
         if let index = projects.firstIndex(where: { $0.id == updatedProject.id }) {
-            projects[index] = updatedProject
+            // 创建一个新的项目对象，以确保所有属性都被正确更新
+            let newProject = Project(
+                id: updatedProject.id,
+                name: updatedProject.name,
+                director: updatedProject.director,
+                producer: updatedProject.producer,
+                startDate: updatedProject.startDate,
+                status: updatedProject.status,
+                color: updatedProject.color,
+                tasks: updatedProject.tasks,
+                invoices: updatedProject.invoices,
+                locations: updatedProject.locations,
+                accounts: updatedProject.accounts,
+                transactions: updatedProject.transactions,
+                isLocationScoutingEnabled: updatedProject.isLocationScoutingEnabled,
+                logoData: updatedProject.logoData,
+                budget: updatedProject.budget
+            )
+            projects[index] = newProject
             print("✓ 已更新内存中的项目数据")
         }
-        
         // 更新CoreData实体
-        if let projectEntity = try? context.fetch(ProjectEntity.fetchRequest())
-            .first(where: { $0.id == updatedProject.id }) {
+        print("[updateProject] 开始查找CoreData实体，项目ID: \(updatedProject.id)")
+        let allEntities = try? context.fetch(ProjectEntity.fetchRequest())
+        print("[updateProject] CoreData中所有项目实体数量: \(allEntities?.count ?? 0)")
+        for entity in allEntities ?? [] {
+            print("[updateProject] 实体ID: \(entity.id?.uuidString ?? "nil"), 名称: \(entity.name ?? "nil")")
+        }
+        
+        // 使用NSPredicate进行精确查询
+        let fetchRequest = ProjectEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", updatedProject.id as CVarArg)
+        
+        do {
+            let results = try context.fetch(fetchRequest)
+            print("[updateProject] 查询结果数量: \(results.count)")
             
-            print("CoreData中原始预算值: \(projectEntity.budget)")
-            
-            // 更新 CoreData 实体
-            projectEntity.name = updatedProject.name
-            projectEntity.director = updatedProject.director
-            projectEntity.producer = updatedProject.producer
-            projectEntity.startDate = updatedProject.startDate
-            projectEntity.status = updatedProject.status.rawValue
-            projectEntity.color = updatedProject.color.toData()
-            projectEntity.isLocationScoutingEnabled = updatedProject.isLocationScoutingEnabled
-            projectEntity.logoData = updatedProject.logoData  // 添加LOGO数据的更新
-            projectEntity.budget = updatedProject.budget      // 添加预算数据的更新
-            
-            print("更新后CoreData中的预算值: \(projectEntity.budget)")
-            
-            // 保存更改
-            saveContext()
-            
-            // 通知UI刷新，但不重新加载项目列表
-            objectWillChange.send()
+            if let projectEntity = results.first {
+                print("[updateProject] CoreData原始颜色: \(projectEntity.color ?? "无数据")，context: \(context)")
+                let colorHex = updatedProject.color.toHex()
+                print("[updateProject] 即将保存到CoreData的colorHex: \(colorHex)")
+                projectEntity.color = colorHex
+                
+                // 更新 CoreData 实体
+                projectEntity.name = updatedProject.name
+                projectEntity.director = updatedProject.director
+                projectEntity.producer = updatedProject.producer
+                projectEntity.startDate = updatedProject.startDate
+                projectEntity.status = updatedProject.status.rawValue
+                projectEntity.isLocationScoutingEnabled = updatedProject.isLocationScoutingEnabled
+                projectEntity.logoData = updatedProject.logoData  // 添加LOGO数据的更新
+                projectEntity.budget = updatedProject.budget      // 添加预算数据的更新
+                
+                print("更新后CoreData中的预算值: \(projectEntity.budget)")
+                print("更新后CoreData中的颜色数据: \(projectEntity.color ?? "无效")")
+                print("保存到CoreData的颜色Hex: \(colorHex)")
+                
+                // 保存更改
+                try context.save()
+                print("[updateProject] ✓ CoreData保存成功，context: \(context)")
+                // 保存后重新fetch实体，确认CoreData实际存储的颜色
+                if let verifyEntity = try? context.fetch(ProjectEntity.fetchRequest()).first(where: { $0.id == updatedProject.id }) {
+                    print("[updateProject] CoreData保存后实际颜色: \(verifyEntity.color ?? "无数据")，context: \(context)")
+                }
+                
+                // 通知UI刷新，但不重新加载项目列表
+                objectWillChange.send()
+            } else {
+                print("[updateProject] ❌ 未找到对应的CoreData实体，项目ID: \(updatedProject.id)")
+                print("[updateProject] 所有实体ID: \(allEntities?.map { $0.id?.uuidString ?? "nil" } ?? [])")
+            }
+        } catch {
+            print("[updateProject] ❌ 查询CoreData实体失败: \(error)")
         }
     }
     
@@ -1730,7 +1813,7 @@ class ProjectStore: ObservableObject {
             director: "王导演",
             producer: "赵制片",
             startDate: Date().addingTimeInterval(86400 * 7), // 一周后开机
-            status: .preProduction,
+            status: .inProgress,
             color: .blue,
             tasks: [
                 ProjectTask(
@@ -1796,7 +1879,7 @@ class ProjectStore: ObservableObject {
             director: "张导演",
             producer: "李制片",
             startDate: Date().addingTimeInterval(86400 * 3), // 三天后开机
-            status: .preProduction,
+            status: .inProgress,
             color: .orange,
             tasks: [
                 ProjectTask(
@@ -1940,6 +2023,19 @@ class ProjectStore: ObservableObject {
         // 打印预算信息
         print("从CoreData加载预算值: \(entity.budget)")
         
+        // 颜色读取日志
+        let color: Color = {
+            if let colorHex = entity.color {
+                print("mapProjectEntityToProject: CoreData读取到colorHex: \(colorHex)")
+                let color = Color(hex: colorHex) ?? .blue
+                print("mapProjectEntityToProject: 还原出来的颜色Hex: \(color.toHex())")
+                return color
+            } else {
+                print("mapProjectEntityToProject: CoreData中没有color字段，使用默认蓝色")
+                return .blue
+            }
+        }()
+        
         // 初始化项目，使用正确的颜色处理方法
         var project = Project(
             id: entity.id ?? UUID(),
@@ -1947,8 +2043,8 @@ class ProjectStore: ObservableObject {
             director: entity.director ?? "",
             producer: entity.producer ?? "",
             startDate: entity.startDate ?? Date(),
-            status: Project.Status(rawValue: entity.status ?? "") ?? .preProduction,
-            color: entity.color != nil ? (Color(data: entity.color!) ?? .blue) : .blue,
+            status: Project.Status(rawValue: entity.status ?? "") ?? .inProgress,
+            color: color,
             isLocationScoutingEnabled: entity.isLocationScoutingEnabled,
             logoData: entity.logoData,  // 添加logo数据的加载
             budget: entity.budget       // 添加预算数据的加载
@@ -2357,6 +2453,85 @@ class ProjectStore: ObservableObject {
             )
         ]
     }
+    
+    // MARK: - 数据清理和迁移
+    
+    /// 强制清理CoreData中的旧格式数据
+    private func forceCleanupOldData() {
+        print("开始强制清理旧格式数据...")
+        
+        let request = ProjectEntity.fetchRequest()
+        
+        do {
+            let entities = try context.fetch(request)
+            var hasChanges = false
+            
+            for entity in entities {
+                print("检查项目 '\(entity.name ?? "未命名")' 的颜色字段...")
+                
+                // 检查color字段的实际类型
+                let colorValue = entity.color
+                print("颜色字段类型: \(type(of: colorValue)), 值: \(colorValue ?? "nil")")
+                
+                // 如果是nil，设置默认值
+                if colorValue == nil {
+                    print("颜色字段为nil，设置默认蓝色")
+                    entity.color = "#1976D2"
+                    hasChanges = true
+                }
+                // 如果是空字符串或无效格式，设置默认值
+                else if let colorHex = colorValue {
+                    let isValidFormat = colorHex.hasPrefix("#") && 
+                                      (colorHex.count == 7 || colorHex.count == 8 || colorHex.count == 9) && // 7位(#RRGGBB)、8位(#RRGGBB)或9位(#RRGGBBAA)
+                                      colorHex.dropFirst().allSatisfy { $0.isHexDigit }
+                    
+                    print("颜色格式检查: '\(colorHex)'")
+                    print("  - 以#开头: \(colorHex.hasPrefix("#"))")
+                    print("  - 长度: \(colorHex.count) (期望7、8或9)")
+                    print("  - 所有字符都是Hex: \(colorHex.dropFirst().allSatisfy { $0.isHexDigit })")
+                    print("  - 格式有效: \(isValidFormat)")
+                    
+                    if colorHex.isEmpty || !isValidFormat {
+                        print("颜色格式无效: \(colorHex)，设置默认蓝色")
+                        entity.color = "#1976D2"
+                        hasChanges = true
+                    } else {
+                        print("✓ 颜色格式正确: \(colorHex)")
+                    }
+                }
+                
+                // 检查状态字段，进行状态迁移
+                print("检查项目 '\(entity.name ?? "未命名")' 的状态字段...")
+                if let statusValue = entity.status {
+                    print("状态字段值: \(statusValue)")
+                    
+                    // 检查是否为旧的状态值，需要迁移
+                    if statusValue == "前期" || statusValue == "拍摄" || statusValue == "后期" {
+                        print("检测到旧状态值: \(statusValue)，迁移为进行中")
+                        entity.status = "进行中"
+                        hasChanges = true
+                    } else {
+                        print("✓ 状态值正确: \(statusValue)")
+                    }
+                } else {
+                    print("状态字段为nil，设置默认状态")
+                    entity.status = "进行中"
+                    hasChanges = true
+                }
+            }
+            
+            if hasChanges {
+                try context.save()
+                print("✓ 强制数据清理完成")
+            } else {
+                print("✓ 无需清理，数据格式正确")
+            }
+        } catch {
+            print("❌ 强制数据清理失败: \(error)")
+        }
+    }
+    
+    // MARK: - 项目加载
 }
 
 // 用于获取项目 Binding 的扩展

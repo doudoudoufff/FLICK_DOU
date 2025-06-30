@@ -58,6 +58,20 @@ class Project: ObservableObject, Identifiable, Codable, Hashable {
         public static var all: Self { .inProgress }  // 用于过滤器
     }
     
+    // 默认项目颜色数组
+    static let defaultColors: [Color] = [
+        .blue,
+        .red,
+        .green,
+        .orange,
+        .purple,
+        .pink,
+        .indigo,
+        .teal,
+        .brown,
+        .mint
+    ]
+    
     init(
         id: UUID = UUID(),
         name: String,

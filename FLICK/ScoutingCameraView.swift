@@ -7,6 +7,8 @@ struct ScoutingCameraView: View {
     @EnvironmentObject private var projectStore: ProjectStore
     @State private var currentSheetType: SheetType? = nil
     @State private var scoutingImage: UIImage? = nil
+    @State private var newProjectName: String = ""
+    @State private var showNewProjectField = false
 
     // 用于区分当前显示的Sheet类型
     enum SheetType: Identifiable {
@@ -67,6 +69,8 @@ struct ScoutingArchiveSheet: View {
     @State private var selectedProject: Project?
     @State private var selectedLocation: Location?
     @State private var newLocationName: String = ""
+    @State private var newProjectName: String = ""
+    @State private var showNewProjectField = false
     @State private var note: String = ""
     @State private var isSaving = false
     @State private var animateImage = false
@@ -106,25 +110,113 @@ struct ScoutingArchiveSheet: View {
                             .font(.body)
                             .foregroundStyle(.primary)
                         
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                            ForEach(projectStore.projects) { project in
-                                    Button(action: {
-                                        selectedProject = project
-                                        // 重置场景选择
-                                        selectedLocation = nil
-                                    }) {
-                                        Text(project.name)
-                                            .font(.system(size: 14))
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
-                                            .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
-                                            .cornerRadius(16)
+                        if projectStore.projects.isEmpty {
+                            // 没有项目时显示创建提示
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("暂无项目，请创建")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.vertical, 4)
+                                
+                                // 快速创建项目
+                                HStack {
+                                    TextField("创建新项目", text: $newProjectName)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color(.systemGray6))
+                                        .cornerRadius(8)
+                                    
+                                    Button {
+                                        if !newProjectName.isEmpty {
+                                            let newProject = Project(name: newProjectName)
+                                            projectStore.addProject(newProject)
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                                selectedProject = newProject
+                                                newProjectName = ""
+                                                projectStore.loadProjects()
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: "plus.circle.fill")
+                                            .foregroundStyle(newProjectName.isEmpty ? .gray : .blue)
+                                            .font(.system(size: 22))
                                     }
+                                    .disabled(newProjectName.isEmpty)
+                                }
                             }
-                        }
-                            .padding(.vertical, 4)
+                        } else {
+                            // 有项目时显示项目列表
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(projectStore.projects) { project in
+                                        Button(action: {
+                                            selectedProject = project
+                                            selectedLocation = nil
+                                        }) {
+                                            Text(project.name)
+                                                .font(.system(size: 14))
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 6)
+                                                .background(selectedProject?.id == project.id ? project.color : Color(.systemGray5))
+                                                .foregroundColor(selectedProject?.id == project.id ? .white : .primary)
+                                                .cornerRadius(16)
+                                        }
+                                    }
+                                    // 新建按钮
+                                    Button(action: {
+                                        showNewProjectField = true
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "plus")
+                                                .font(.system(size: 12, weight: .medium))
+                                            Text("新建")
+                                                .font(.system(size: 14))
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color(.systemGray5))
+                                        .foregroundColor(.primary)
+                                        .cornerRadius(16)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
+                            // 新建输入框
+                            if showNewProjectField {
+                                HStack {
+                                    TextField("创建新项目", text: $newProjectName)
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .background(Color(.systemGray6))
+                                        .cornerRadius(8)
+                                    Button {
+                                        if !newProjectName.isEmpty {
+                                            let newProject = Project(name: newProjectName)
+                                            projectStore.addProject(newProject)
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                                selectedProject = newProject
+                                                newProjectName = ""
+                                                showNewProjectField = false
+                                                projectStore.loadProjects()
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: "plus.circle.fill")
+                                            .foregroundStyle(newProjectName.isEmpty ? .gray : .blue)
+                                            .font(.system(size: 22))
+                                    }
+                                    .disabled(newProjectName.isEmpty)
+                                    // 取消按钮
+                                    Button {
+                                        newProjectName = ""
+                                        showNewProjectField = false
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.gray)
+                                            .font(.system(size: 22))
+                                    }
+                                }
+                            }
                         }
                     }
                     
@@ -145,7 +237,7 @@ struct ScoutingArchiveSheet: View {
                             } else {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 8) {
-                                ForEach(project.locations) { location in
+                                        ForEach(project.locations) { location in
                                             Button(action: {
                                                 selectedLocation = location
                                             }) {
@@ -167,6 +259,10 @@ struct ScoutingArchiveSheet: View {
                             HStack {
                                 TextField("创建新场景", text: $newLocationName)
                                     .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(8)
+                                
                                 Button {
                                     if !newLocationName.isEmpty {
                                         // 创建带有默认地址的新场景

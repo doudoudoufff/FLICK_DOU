@@ -754,67 +754,340 @@ struct DefinitionItemView: View {
 
 // 特别鸣谢视图
 struct CreditsView: View {
+    @State private var animateCards = false
+    
     var body: some View {
-        List {
-            // 顶部标题区域
-            Section {
-                HStack {
-                    Image(systemName: "medal.fill")
-                        .font(.title2)
-                        .foregroundStyle(.red)
-                    Text("感谢以下人员对FLICK的贡献")
-                        .font(.headline)
+        ScrollView {
+            VStack(spacing: 0) {
+                // 顶部视觉区域
+                ZStack {
+                    // 背景渐变
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.9, green: 0.2, blue: 0.3),
+                            Color(red: 0.8, green: 0.1, blue: 0.4)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .overlay(
+                        // 添加纹理效果
+                        Rectangle()
+                            .fill(Color.white.opacity(0.1))
+                            .blendMode(.overlay)
+                    )
+                    
+                    // 动态背景图形
+                    ZStack {
+                        // 装饰性圆形
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 160)
+                            .offset(x: -80, y: -30)
+                        
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 100)
+                            .offset(x: 100, y: 40)
+                        
+                        // 小圆点装饰
+                        ForEach(0..<6) { i in
+                            Circle()
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: 5, height: 5)
+                                .offset(
+                                    x: CGFloat.random(in: -120...120),
+                                    y: CGFloat.random(in: -60...60)
+                                )
+                        }
+                    }
+                    
+                    // 内容
+                    VStack(spacing: 16) {
+                        // 感谢图标
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: 70, height: 70)
+                            
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 32))
+                                .foregroundStyle(.white)
+                        }
+                        .scaleEffect(animateCards ? 1.1 : 1.0)
+                        .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animateCards)
+                        
+                        // 标题
+                        VStack(spacing: 6) {
+                            Text("特别鸣谢")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(.white)
+                            
+                            Text("感谢以下人员对FLICK的贡献")
+                                .font(.system(size: 15))
+                                .foregroundStyle(.white.opacity(0.9))
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .padding(.top, 20)
+                    .padding(.bottom, 30)
                 }
-                .padding(.vertical, 8)
-                .listRowBackground(Color(.systemGroupedBackground))
-            }
-            
-            // 测试团队
-            Section(header: Text("测试团队")) {
-                ContributorRow(name: "Zhang Jingrou", role: "Friend")
+                .frame(height: 200)
                 
-                ContributorRow(name: "17", role: "Friend")
-
-                ContributorRow(name: "Wei Wenjun", role: "Project Manager")
-                
-                ContributorRow(name: "Wang Xiaotiao", role: "Friend")
-
-                ContributorRow(name: "Du Zhuohang", role: "Friend")
-                
-                ContributorRow(name: "Yang Xinlei", role: "Test")
-                
-                ContributorRow(name: "Sun Shangqian", role: "Friend")
-                
-                ContributorRow(name: "Wu Hanzhen", role: "Friend")
-                
-                ContributorRow(name: "Zhu Keen", role: "Friend")
-                
-                ContributorRow(name: "Li XinYue", role: "Friend")
-
-                ContributorRow(name: "Jenny Yang", role: "Friend")
+                // 内容卡片区域
+                VStack(spacing: 0) {
+                    // 测试团队卡片
+                    VStack(spacing: 20) {
+                        // 团队标题
+                        HStack {
+                            Image(systemName: "person.3.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.9, green: 0.2, blue: 0.3),
+                                            Color(red: 0.8, green: 0.1, blue: 0.4)
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                            
+                            Text("测试团队")
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 0.9, green: 0.2, blue: 0.3),
+                                            Color(red: 0.8, green: 0.1, blue: 0.4)
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
+                        
+                        // 贡献者网格
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            // 项目经理
+                            ContributorCard(
+                                name: "Wei Wenjun",
+                                role: "Project Manager",
+                                icon: "person.badge.plus.fill",
+                                color: Color(red: 0.1, green: 0.4, blue: 0.9),
+                                delay: 0.1
+                            )
+                            
+                            // 测试人员
+                            ContributorCard(
+                                name: "Yang Xinlei",
+                                role: "Test",
+                                icon: "checkmark.circle.fill",
+                                color: Color(red: 0.2, green: 0.8, blue: 0.4),
+                                delay: 0.2
+                            )
+                            
+                            // 朋友们
+                            ContributorCard(
+                                name: "Zhang Jingrou",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.3
+                            )
+                            
+                            ContributorCard(
+                                name: "17",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.4
+                            )
+                            
+                            ContributorCard(
+                                name: "Wang Xiaotiao",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.5
+                            )
+                            
+                            ContributorCard(
+                                name: "Du Zhuohang",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.6
+                            )
+                            
+                            ContributorCard(
+                                name: "Sun Shangqian",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.7
+                            )
+                            
+                            ContributorCard(
+                                name: "Wu Hanzhen",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.8
+                            )
+                            
+                            ContributorCard(
+                                name: "Zhu Keen",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 0.9
+                            )
+                            
+                            ContributorCard(
+                                name: "Li XinYue",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 1.0
+                            )
+                            
+                            ContributorCard(
+                                name: "Jenny Yang",
+                                role: "Friend",
+                                icon: "heart.fill",
+                                color: Color(red: 0.9, green: 0.2, blue: 0.3),
+                                delay: 1.1
+                            )
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 24)
+                    }
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: -4)
+                    )
+                    .offset(y: -15)
+                    .opacity(animateCards ? 1 : 0)
+                    .animation(.easeOut(duration: 0.8).delay(0.3), value: animateCards)
+                    
+                    // 底部感谢信息
+                    VStack(spacing: 14) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 22))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.9, green: 0.2, blue: 0.3),
+                                        Color(red: 0.8, green: 0.1, blue: 0.4)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        Text("感谢每一位贡献者的支持")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("FLICK 因你们而更精彩")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 16)
+                    .padding(.bottom, 30)
+                    .opacity(animateCards ? 1 : 0)
+                    .animation(.easeOut(duration: 0.8).delay(1.2), value: animateCards)
+                }
             }
         }
-        .listStyle(InsetGroupedListStyle())
+        .background(Color(.systemGroupedBackground))
+        .preferredColorScheme(.light)
         .navigationTitle("致谢")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            animateCards = true
+        }
     }
 }
 
-// 贡献者行组件
-struct ContributorRow: View {
+// 贡献者卡片组件
+struct ContributorCard: View {
     let name: String
     let role: String
+    let icon: String
+    let color: Color
+    let delay: Double
+    
+    @State private var isPressed = false
+    @State private var isVisible = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(name)
-                .font(.headline)
+        VStack(spacing: 12) {
+            // 头像区域
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 60, height: 60)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
             
-            Text(role)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            // 信息区域
+            VStack(spacing: 4) {
+                Text(name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                
+                Text(role)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
-        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+        )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .opacity(isVisible ? 1 : 0)
+        .animation(.easeOut(duration: 0.6).delay(delay), value: isVisible)
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.1)) {
+                    isPressed = false
+                }
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                isVisible = true
+            }
+        }
     }
 }
 
